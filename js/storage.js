@@ -1,5 +1,6 @@
 import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
+import { isTime } from "./util.js";
 
 export function loadTasks() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -50,13 +51,35 @@ export function saveLastBackup(isoTimestamp) {
   localStorage.setItem(LAST_BACKUP_KEY, isoTimestamp);
 }
 
-// Ersetzt Tasks, Arbeitszeiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
-export function restoreData(tasks, work, settings) {
+// Zusätzliche Prüfungen für Einstellungen, bei denen der Typ allein nicht reicht
+const SETTING_CHECKS = {
+  bannerVon: isTime,
+  bannerBis: isTime,
+  theme: (v) => ["system", "light", "dark"].includes(v),
+  pauseRules: (v) => v.every((r) => Number.isFinite(r?.stunden) && Number.isFinite(r?.minuten)),
+};
+
+function isValidSetting(key, value) {
+  const def = DEFAULT_SETTINGS[key];
+  const sameType = Array.isArray(def)
+    ? Array.isArray(value)
+    : typeof value === typeof def && (typeof def !== "number" || Number.isFinite(value));
+  return sameType && (!SETTING_CHECKS[key] || SETTING_CHECKS[key](value));
+}
+
+// Übernimmt nur bekannte Einstellungen mit gültigem Wert, alles andere bleibt beim Standard.
+// So passen auch Backups älterer oder neuerer Versionen mit mehr oder weniger Einstellungen.
+function sanitizeSettings(settings) {
   const merged = structuredClone(DEFAULT_SETTINGS);
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
-    if (key in settings) merged[key] = settings[key];
+    if (key in settings && isValidSetting(key, settings[key])) merged[key] = settings[key];
   }
-  if (!Array.isArray(merged.pauseRules)) merged.pauseRules = structuredClone(DEFAULT_SETTINGS.pauseRules);
+  return merged;
+}
+
+// Ersetzt Tasks, Arbeitszeiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
+export function restoreData(tasks, work, settings) {
+  const merged = sanitizeSettings(settings);
   state.tasks = tasks;
   state.work = work;
   state.settings = merged;

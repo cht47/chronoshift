@@ -5,7 +5,7 @@ import { state } from "./state.js";
 import { clearAllData, loadLastBackup, restoreData, saveLastBackup, saveTasks, saveWork } from "./storage.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
-import { $, dateFromISO, isoOf, todayISO } from "./util.js";
+import { $, dateFromISO, isDate, isTime, isoOf, todayISO } from "./util.js";
 import { compareWorkAsc, computeWorktimeStats } from "./worktime-calc.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
 
@@ -42,8 +42,6 @@ $("backupCreateBtn").addEventListener("click", () => {
   updateBackupInfo();
 });
 
-const isDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
-const isTime = (v) => typeof v === "string" && /^\d{2}:\d{2}$/.test(v);
 const isOptionalTime = (v) => v === null || v === undefined || isTime(v);
 
 function isValidTask(e) {

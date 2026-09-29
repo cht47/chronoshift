@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = "chronoshift-v9";
+const CACHE_NAME = "chronoshift-v10";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -7,8 +7,11 @@ const FILES_TO_CACHE = [
   "./locales/de.json",
   "./locales/en.json",
   "./manifest.json",
+  "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",
+  "./icon-maskable-512.png",
+  "./apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (evt) => {

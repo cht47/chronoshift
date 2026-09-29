@@ -86,7 +86,9 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `locales/*.json` | UI texts per language |
 | `pico.min.css` | [Pico CSS](https://picocss.com) v2.0.6, bundled locally |
 | `service-worker.js` | Offline support (network first, cache as fallback) |
-| `manifest.json`, `icon-*.png` | PWA manifest and app icons |
+| `manifest.json` | PWA manifest |
+| `icon.svg` | App icon source, also used as favicon |
+| `icon-*.png`, `apple-touch-icon.png` | App icons rendered from `icon.svg` (regular, Android maskable, iOS) |
 
 ### Releasing a new version
 - Update `APP_VERSION` in `index.html` (shown in the settings).

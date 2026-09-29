@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.2-beta
+**Version:** 1.0.3-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -44,6 +44,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Light, dark or system theme
 - German and English, following the device language by default
 - Weekly hours and work days (daily target is calculated)
+- Backup and restore of all tasks, work time and settings as a JSON file, with a reminder when the last backup is older than 30 days
 - Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice
 - Delete today's tasks, all tasks, work time older than 90 days, or reset everything (with a 5-second safety countdown)
 
@@ -61,7 +62,8 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - All data is stored **only on your device** (browser `localStorage`). Nothing is sent to a server.
 - The app loads no external resources: no CDN, no fonts, no tracking.
 - Storage is limited by the browser to about 5 MB – enough for many years of entries. Current usage is shown under *Settings*.
-- **Clearing your browser data deletes all entries.** Use the Excel export as a backup.
+- **Clearing your browser data deletes all entries.** Create a backup under *Settings → Backup* regularly; it can be restored on any device. A task that is currently running is not part of the backup.
+- The app asks the browser to keep its data even when storage runs low (persistent storage).
 - Data is stored per browser and device and is not synced between devices.
 
 ## 🛠️ Development

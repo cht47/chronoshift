@@ -125,6 +125,18 @@
     "resetConfirmLabel": "Delete everything",
     "exportDone": "Saved: {file} – you'll find it in your Downloads folder."
   },
+  "backup": {
+    "title": "Backup",
+    "create": "Create backup",
+    "restore": "Restore backup",
+    "file": "chronoshift-backup-{date}.json",
+    "last": "Last backup: {date}. The backup contains tasks, work time and settings.",
+    "lastNever": "No backup created yet. The backup contains tasks, work time and settings.",
+    "invalid": "This file is not a valid ChronoShift backup.",
+    "confirmRestore": "Restore the backup from {date}? {tasks} tasks, {work} work time entries and the settings will replace the current data.",
+    "restoreLabel": "Restore",
+    "restored": "Backup restored: {tasks} tasks, {work} work time entries."
+  },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",
     "workFile": "chronoshift-worktime-{date}.xlsx",

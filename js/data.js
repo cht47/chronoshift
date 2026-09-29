@@ -1,13 +1,112 @@
 import { refreshAll } from "./app.js";
-import { WORKTIME_RETENTION_DAYS } from "./config.js";
+import { APP_VERSION, DAY_MS, WORKTIME_RETENTION_DAYS } from "./config.js";
 import { fmtDate, t } from "./i18n.js";
 import { state } from "./state.js";
-import { clearAllData, saveTasks, saveWork } from "./storage.js";
+import { clearAllData, loadLastBackup, restoreData, saveLastBackup, saveTasks, saveWork } from "./storage.js";
 import { taskDateISO } from "./tasks.js";
-import { confirmAction, downloadFile, showInfo } from "./ui.js";
+import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
 import { $, dateFromISO, isoOf, todayISO } from "./util.js";
 import { compareWorkAsc, computeWorktimeStats } from "./worktime-calc.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
+
+// ----- Backup -----
+// Enthält Tasks, Arbeitszeiten und Einstellungen, aber keinen laufenden Timer:
+// Beim Wiederherstellen Tage später würde er sonst einen Task liefern, der seitdem "läuft".
+const BACKUP_APP = "ChronoShift";
+const BACKUP_FORMAT = 1;
+const BACKUP_STALE_DAYS = 30;
+const RESTORED_FLAG = "chronoshift.restored";
+
+const backupInfo = $("backupInfo");
+const backupFileInput = $("backupFileInput");
+
+export function updateBackupInfo() {
+  const last = loadLastBackup();
+  const hasData = state.tasks.length > 0 || state.work.length > 0;
+  const stale = !last || Date.now() - Date.parse(last) > BACKUP_STALE_DAYS * DAY_MS;
+  backupInfo.textContent = last ? t("backup.last", { date: fmtDate(isoOf(new Date(last))) }) : t("backup.lastNever");
+  backupInfo.classList.toggle("warn", hasData && stale);
+}
+
+$("backupCreateBtn").addEventListener("click", () => {
+  const backup = {
+    app: BACKUP_APP,
+    format: BACKUP_FORMAT,
+    version: APP_VERSION,
+    created: new Date().toISOString(),
+    data: { tasks: state.tasks, worktime: state.work, settings: state.settings },
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  downloadFile(blob, t("backup.file", { date: todayISO() }));
+  saveLastBackup(backup.created);
+  updateBackupInfo();
+});
+
+const isDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const isTime = (v) => typeof v === "string" && /^\d{2}:\d{2}$/.test(v);
+const isOptionalTime = (v) => v === null || v === undefined || isTime(v);
+
+function isValidTask(e) {
+  return Number.isFinite(e?.id) && typeof e.task === "string" && Number.isFinite(e.stopMs) && Number.isFinite(e.durationMin);
+}
+
+function isValidWork(e) {
+  return Number.isFinite(e?.id) && isDate(e.datum) && isTime(e.beginn) && isTime(e.ende) && isOptionalTime(e.pauseVon) && isOptionalTime(e.pauseBis);
+}
+
+// Wirft bei allem, was nicht wie ein ChronoShift-Backup aussieht, damit nie halbe Daten übernommen werden
+function parseBackup(text) {
+  const backup = JSON.parse(text);
+  const data = backup?.data;
+  const valid =
+    backup?.app === BACKUP_APP &&
+    backup.format === BACKUP_FORMAT &&
+    !Number.isNaN(Date.parse(backup.created)) &&
+    Array.isArray(data?.tasks) &&
+    Array.isArray(data.worktime) &&
+    data.settings !== null &&
+    typeof data.settings === "object" &&
+    data.tasks.every(isValidTask) &&
+    data.worktime.every(isValidWork);
+  if (!valid) throw new Error("invalid backup");
+  return backup;
+}
+
+$("backupRestoreBtn").addEventListener("click", () => backupFileInput.click());
+
+backupFileInput.addEventListener("change", async () => {
+  const file = backupFileInput.files[0];
+  backupFileInput.value = "";
+  if (!file) return;
+
+  let backup;
+  try {
+    backup = parseBackup(await file.text());
+  } catch {
+    showInfo(t("backup.invalid"));
+    return;
+  }
+
+  const { tasks, worktime, settings } = backup.data;
+  const counts = { tasks: tasks.length, work: worktime.length };
+  confirmAction(
+    t("backup.confirmRestore", { date: fmtDate(isoOf(new Date(backup.created))), ...counts }),
+    t("backup.restoreLabel"),
+    () => {
+      restoreData(tasks, worktime, settings);
+      // Neu laden, damit Sprache, Design und alle Ansichten sauber aus den wiederhergestellten Daten starten
+      sessionStorage.setItem(RESTORED_FLAG, JSON.stringify(counts));
+      location.reload();
+    }
+  );
+});
+
+export function showRestoreResult() {
+  const restored = sessionStorage.getItem(RESTORED_FLAG);
+  if (!restored) return;
+  sessionStorage.removeItem(RESTORED_FLAG);
+  showToast(t("backup.restored", JSON.parse(restored)));
+}
 
 // ----- Export -----
 $("exportTasksBtn").addEventListener("click", () => {

@@ -1,4 +1,4 @@
-import { ALL_KEYS, DEFAULT_SETTINGS, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
 
 export function loadTasks() {
@@ -40,6 +40,29 @@ export function loadTimer() {
 export function saveTimer(timer) {
   if (timer) localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(timer));
   else localStorage.removeItem(TIMER_STATE_KEY);
+}
+
+export function loadLastBackup() {
+  return localStorage.getItem(LAST_BACKUP_KEY);
+}
+
+export function saveLastBackup(isoTimestamp) {
+  localStorage.setItem(LAST_BACKUP_KEY, isoTimestamp);
+}
+
+// Ersetzt Tasks, Arbeitszeiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
+export function restoreData(tasks, work, settings) {
+  const merged = structuredClone(DEFAULT_SETTINGS);
+  for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    if (key in settings) merged[key] = settings[key];
+  }
+  if (!Array.isArray(merged.pauseRules)) merged.pauseRules = structuredClone(DEFAULT_SETTINGS.pauseRules);
+  state.tasks = tasks;
+  state.work = work;
+  state.settings = merged;
+  saveTasks();
+  saveWork();
+  saveSettings();
 }
 
 export function storageChars() {

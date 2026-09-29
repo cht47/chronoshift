@@ -195,6 +195,17 @@
         </div>
       </div>
 
+      <div class="section-label"><span data-i18n="backup.title"></span></div>
+      <div class="list-group">
+        <button type="button" class="action-row" id="backupCreateBtn"><span data-icon="save"></span><span
+            data-i18n="backup.create"></span></button>
+        <button type="button" class="action-row" id="backupRestoreBtn"><span data-icon="upload"></span><span
+            data-i18n="backup.restore"></span></button>
+      </div>
+      <p class="hint" id="backupInfo" style="margin: 0.5rem 0.25rem 0;"></p>
+      <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
+      <input type="file" id="backupFileInput" hidden />
+
       <div class="section-label"><span data-i18n="settings.export"></span></div>
       <div class="list-group">
         <button type="button" class="action-row" id="exportTasksBtn"><span data-icon="download"></span><span

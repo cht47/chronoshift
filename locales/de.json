@@ -125,6 +125,18 @@
     "resetConfirmLabel": "Alles löschen",
     "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner."
   },
+  "backup": {
+    "title": "Backup",
+    "create": "Backup erstellen",
+    "restore": "Backup wiederherstellen",
+    "file": "chronoshift-backup-{date}.json",
+    "last": "Letzte Sicherung: {date}. Das Backup enthält Tasks, Arbeitszeiten und Einstellungen.",
+    "lastNever": "Noch keine Sicherung erstellt. Das Backup enthält Tasks, Arbeitszeiten und Einstellungen.",
+    "invalid": "Die Datei ist kein gültiges ChronoShift-Backup.",
+    "confirmRestore": "Backup vom {date} wiederherstellen? {tasks} Tasks, {work} Arbeitszeiten und die Einstellungen ersetzen die aktuellen Daten.",
+    "restoreLabel": "Wiederherstellen",
+    "restored": "Backup wiederhergestellt: {tasks} Tasks, {work} Arbeitszeiten."
+  },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",
     "workFile": "chronoshift-arbeitszeit-{date}.xlsx",

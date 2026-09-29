@@ -1,0 +1,724 @@
+:root {
+  --pico-font-size: 100%;
+  --app-max: 40rem;
+  --nav-h: 4.25rem;
+  --radius: 0.9rem;
+  --hover: color-mix(in srgb, var(--pico-color) 8%, transparent);
+  /* Pico überschreibt --pico-color lokal bei Buttons mit aria-current; hier der Wert der Seite */
+  --app-text: var(--pico-color);
+}
+
+/* Hell: leicht grauer Grund, damit sich die weißen Karten abheben; kräftigere Farben für Kontrast */
+:root[data-theme="light"],
+:root:not([data-theme]) {
+  --pico-background-color: #f2f3f5;
+  --pico-card-background-color: #fff;
+  --c-task: #0969da;
+  --c-work: #e16f24;
+  --c-ok: #1a7f37;
+  --c-warn: #bc4c00;
+  --c-danger: #cf222e;
+}
+
+[data-theme="dark"] {
+  --c-task: #3b9eff;
+  --c-work: #f0883e;
+  --c-ok: #3fb950;
+  --c-warn: #f0883e;
+  --c-danger: #e5534b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --pico-background-color: #13171f;
+    --pico-card-background-color: #181c25;
+    --c-task: #3b9eff;
+    --c-work: #f0883e;
+    --c-ok: #3fb950;
+    --c-warn: #f0883e;
+    --c-danger: #e5534b;
+  }
+}
+
+body {
+  background: var(--pico-background-color);
+}
+
+/* Erst anzeigen, wenn die Sprachdatei geladen ist */
+html:not(.i18n-ready) body {
+  visibility: hidden;
+}
+
+/* ---------- App-Gerüst ---------- */
+.app-header {
+  padding: env(safe-area-inset-top) 0 0;
+}
+
+.app-header-inner {
+  max-width: var(--app-max);
+  margin: 0 auto;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.app-name {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pico-muted-color);
+}
+
+.view-title {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.25;
+}
+
+.app-main {
+  max-width: var(--app-max);
+  margin: 0 auto;
+  padding: 0.75rem 1rem calc(var(--nav-h) + env(safe-area-inset-bottom) + 1.5rem);
+}
+
+/* ---------- Bottom-Navigation ---------- */
+.bottom-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  background: var(--pico-card-background-color);
+  border-top: 1px solid var(--pico-muted-border-color);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav-inner {
+  max-width: var(--app-max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.nav-item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.25rem 0.7rem;
+  cursor: pointer;
+  color: var(--pico-muted-color);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 2rem;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.nav-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.nav-item[aria-current="page"] {
+  color: var(--app-text);
+}
+
+.nav-item[aria-current="page"] .nav-icon {
+  background: color-mix(in srgb, var(--pico-primary) 28%, transparent);
+  color: var(--pico-primary);
+}
+
+.nav-item:focus-visible .nav-icon {
+  outline: 2px solid var(--pico-primary);
+}
+
+/* ---------- Toast ---------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 0.75rem);
+  transform: translateX(-50%);
+  z-index: 20;
+  width: max-content;
+  max-width: min(calc(100vw - 2rem), 36rem);
+  padding: 0.7rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--pico-contrast-background);
+  color: var(--pico-contrast-inverse);
+  font-size: 0.88rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Bausteine ---------- */
+.card {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card label:not(:has([role="switch"])) {
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.card label > input:not([role="switch"]),
+.card label > select {
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.card label:last-child > input,
+.card label:last-child > select,
+.card .two-col:last-child input {
+  margin-bottom: 0;
+}
+
+.section-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 1.5rem 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pico-muted-color);
+}
+
+.section-label > span + span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--chip-c);
+  background: color-mix(in srgb, var(--chip-c) 16%, transparent);
+}
+
+.chip-ok,
+.rest-rested {
+  --chip-c: var(--c-ok);
+  color: var(--c-ok);
+}
+
+.chip-warn,
+.rest-active {
+  --chip-c: var(--c-warn);
+  color: var(--c-warn);
+}
+
+.rest-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  background: color-mix(in srgb, var(--chip-c) 14%, transparent);
+}
+
+.rest-chip svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+button.btn-danger {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  color: #fff;
+}
+
+.icon-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: var(--pico-muted-color);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover,
+.icon-btn:focus-visible {
+  background: var(--hover);
+  color: var(--pico-color);
+}
+
+.icon-btn.danger-icon:hover,
+.icon-btn.danger-icon:focus-visible {
+  color: var(--c-danger);
+}
+
+.icon-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* ---------- Listen ---------- */
+.list-group {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.4rem 0.7rem 0.75rem;
+}
+
+.list-row + .list-row {
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.row-accent {
+  width: 0.25rem;
+  align-self: stretch;
+  border-radius: 999px;
+  margin-right: 0.25rem;
+}
+
+.row-accent.task,
+.dot.task {
+  background: var(--c-task);
+}
+
+.row-accent.work,
+.dot.work {
+  background: var(--c-work);
+}
+
+.list-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-row-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.list-row-meta {
+  font-size: 0.82rem;
+  color: var(--pico-muted-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.list-row-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 0.25rem;
+}
+
+.empty-state {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--pico-muted-color);
+}
+
+.action-row {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-row + .action-row {
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.action-row:hover,
+.action-row:focus-visible {
+  background: var(--hover);
+}
+
+.action-row svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--pico-muted-color);
+}
+
+.action-row.danger,
+.action-row.danger svg {
+  color: var(--c-danger);
+}
+
+.action-row.accent,
+.action-row.accent svg {
+  color: var(--pico-primary);
+}
+
+.action-row.accent .hint {
+  font-weight: 400;
+}
+
+/* Abstand zur Darstellung, wenn der Installations-Bereich darüber steht */
+#installSection:not([hidden]) + .section-label {
+  margin-top: 1.5rem !important;
+}
+
+/* ---------- Zeit erfassen ---------- */
+.timer-card {
+  text-align: center;
+  padding: 1.5rem 1rem 1rem;
+}
+
+.timer-display {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 1.4em;
+  margin: 0.25rem 0 1rem;
+  font-size: 0.85rem;
+  color: var(--pico-muted-color);
+}
+
+.live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--c-danger);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.timer-card input {
+  margin-bottom: 0.75rem;
+}
+
+#startStopBtn {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+#startStopBtn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+#startStopBtn.stop {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  color: #fff;
+}
+
+/* ---------- Arbeitszeit ---------- */
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-sub {
+  font-size: 0.85rem;
+  color: var(--pico-muted-color);
+}
+
+#weekProgress {
+  margin: 0.6rem 0 0.9rem;
+  height: 0.45rem;
+}
+
+.rest-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+  font-size: 0.9rem;
+}
+
+.rest-line svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.form-title {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.form-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.form-actions button {
+  margin: 0;
+}
+
+/* ---------- Kalender ---------- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.cal-title {
+  font-weight: 600;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.cal-weekday {
+  padding-bottom: 0.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pico-muted-color);
+}
+
+.cal-cell {
+  all: unset;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: 0.7rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cal-cell:hover,
+.cal-cell:focus-visible {
+  background: var(--hover);
+}
+
+.cal-cell.today .cal-num {
+  color: var(--pico-primary);
+  font-weight: 700;
+}
+
+.cal-cell.selected,
+.cal-cell.selected:hover {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+}
+
+.cal-cell.selected .cal-num {
+  color: inherit;
+}
+
+.cal-dots {
+  display: flex;
+  gap: 3px;
+  height: 5px;
+}
+
+.dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.cal-cell.selected .dot {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--pico-muted-color);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend .dot {
+  width: 7px;
+  height: 7px;
+}
+
+/* ---------- Einstellungen ---------- */
+.segmented {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.7rem;
+  background: var(--hover);
+}
+
+.segmented button {
+  all: unset;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--pico-muted-color);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  font-weight: 600;
+}
+
+.segmented button:focus-visible {
+  outline: 2px solid var(--pico-primary);
+}
+
+.pause-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.pause-rule-row select,
+.pause-rule-row input {
+  margin: 0;
+}
+
+.pause-rule-row select {
+  width: 6rem;
+}
+
+.pause-rule-row input {
+  width: 5rem;
+}
+
+.pause-rule-row .icon-btn {
+  margin-left: auto;
+}
+
+#addPauseRuleBtn {
+  width: 100%;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.card label:has([role="switch"]) {
+  margin-bottom: 0;
+}
+
+.app-footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--pico-muted-color);
+}
+
+.app-footer a {
+  color: inherit;
+}
+
+#ruhezeitOptionsWrap,
+#bannerWindowWrap,
+#pauseRulesWrap {
+  margin-top: 1rem;
+}

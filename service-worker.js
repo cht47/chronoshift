@@ -1,11 +1,28 @@
 // service-worker.js
-// Bei jedem Release zusammen mit APP_VERSION in index.html erhöhen
-const VERSION = "1.0.1-beta";
+// Bei jedem Release zusammen mit APP_VERSION in js/config.js erhöhen
+const VERSION = "1.0.2-beta";
 const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./pico.min.css",
+  "./css/app.css",
+  "./js/app.js",
+  "./js/calendar.js",
+  "./js/config.js",
+  "./js/data.js",
+  "./js/i18n.js",
+  "./js/icons.js",
+  "./js/rest.js",
+  "./js/settings.js",
+  "./js/state.js",
+  "./js/storage.js",
+  "./js/tasks.js",
+  "./js/ui.js",
+  "./js/util.js",
+  "./js/worktime-calc.js",
+  "./js/worktime.js",
+  "./js/xlsx.js",
   "./locales/de.json",
   "./locales/en.json",
   "./manifest.json",

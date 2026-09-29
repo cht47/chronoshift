@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.1-beta
+**Version:** 1.0.2-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -66,7 +66,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 
 ## 🛠️ Development
 
-The app is plain HTML, CSS and JavaScript – no framework, no build step.
+The app is plain HTML, CSS and JavaScript (ES modules) – no framework, no build step.
 
 Serve the folder with any static web server, for example:
 
@@ -82,7 +82,14 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 
 | File | Purpose |
 |---|---|
-| `index.html` | The whole app: markup, styles and JavaScript |
+| `index.html` | Markup of all views and dialogs |
+| `css/app.css` | App styles on top of Pico CSS |
+| `js/app.js` | Entry point: startup, navigation, service worker registration |
+| `js/config.js` | Version, storage keys, default settings, languages |
+| `js/state.js`, `js/storage.js` | Shared app state and loading/saving in `localStorage` |
+| `js/tasks.js`, `js/worktime.js`, `js/calendar.js`, `js/settings.js`, `js/data.js` | One module per area of the app |
+| `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
+| `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |
 | `locales/*.json` | UI texts per language |
 | `pico.min.css` | [Pico CSS](https://picocss.com) v2.0.6, bundled locally |
 | `service-worker.js` | Offline support (network first, cache as fallback) |
@@ -92,7 +99,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 
 ### Releasing a new version
 - Increase the version with every release, e.g. `1.0.1-beta` → `1.0.2-beta`, in two places:
-  - `APP_VERSION` in `index.html` (shown in the settings)
+  - `APP_VERSION` in `js/config.js` (shown in the settings)
   - `VERSION` in `service-worker.js` (renews the offline cache so every device picks up the update)
 - If you add, rename or remove files that must work offline, also update `FILES_TO_CACHE` in `service-worker.js`.
 
@@ -102,7 +109,7 @@ The app ships with German and English. By default it follows the device language
 
 To add a language:
 1. Copy `locales/en.json` to `locales/<code>.json` (e.g. `fr.json`) and translate the values. Keep the keys and `{placeholders}` unchanged.
-2. Add the language to `LANGUAGES` in `index.html`, e.g. `fr: "Français"`.
+2. Add the language to `LANGUAGES` in `js/config.js`, e.g. `fr: "Français"`.
 3. Add the file to `FILES_TO_CACHE` in `service-worker.js` so it is available offline.
 
 Texts missing from a translation automatically fall back to English.

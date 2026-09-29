@@ -1,0 +1,240 @@
+import { refreshAll, updateViewTitle } from "./app.js";
+import { LANGUAGES } from "./config.js";
+import { applyI18n, fmtNumber, loadLocale, systemLanguage, t } from "./i18n.js";
+import { icon } from "./icons.js";
+import { updateRestUi } from "./rest.js";
+import { state } from "./state.js";
+import { saveSettings, storageChars } from "./storage.js";
+import { setRunningUi } from "./tasks.js";
+import { showInfo } from "./ui.js";
+import { $, esc, fmtMin } from "./util.js";
+import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
+
+const setLanguage = $("setLanguage");
+const setWochensoll = $("setWochensoll");
+const setArbeitstage = $("setArbeitstage");
+const tagessollInfo = $("tagessollInfo");
+const setRuhezeitFeature = $("setRuhezeitFeature");
+const ruhezeitOptionsWrap = $("ruhezeitOptionsWrap");
+const ruhezeitHint = $("ruhezeitHint");
+const setRestHours = $("setRestHours");
+const setRuhezeitEnabled = $("setRuhezeitEnabled");
+const bannerWindowWrap = $("bannerWindowWrap");
+const setBannerVon = $("setBannerVon");
+const setBannerBis = $("setBannerBis");
+const setPauseAutoEnabled = $("setPauseAutoEnabled");
+const pauseRulesWrap = $("pauseRulesWrap");
+const pauseRulesContainer = $("pauseRulesContainer");
+const storageInfo = $("storageInfo");
+
+function updateTagessollInfo() {
+  const { wochensollstunden, arbeitstage } = state.settings;
+  const tage = arbeitstage > 0 ? arbeitstage : 1;
+  tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(Math.round((wochensollstunden * 60) / tage)) });
+}
+
+export function updateStorageInfo() {
+  storageInfo.textContent = t("settings.storage", {
+    size: fmtNumber(storageChars() / 1024, 1),
+    tasks: state.tasks.length,
+    work: state.work.length,
+  });
+}
+
+// ----- Sprache -----
+function renderLanguageSelect() {
+  const systemOption = `<option value="system">${esc(t("settings.languageSystem", { language: LANGUAGES[systemLanguage()] }))}</option>`;
+  const options = Object.entries(LANGUAGES).map(([code, name]) => `<option value="${code}">${esc(name)}</option>`);
+  setLanguage.innerHTML = systemOption + options.join("");
+  setLanguage.value = state.settings.language in LANGUAGES ? state.settings.language : "system";
+}
+
+setLanguage.addEventListener("change", async () => {
+  state.settings.language = setLanguage.value;
+  saveSettings();
+  await loadLocale();
+  applyI18n();
+  setRunningUi(state.running);
+  updateWorktimeFormText();
+  renderSettingsForm();
+  refreshAll();
+  updateViewTitle();
+});
+
+// ----- Installation -----
+// Chrome, Edge und Samsung Internet bieten beforeinstallprompt; Safari auf iOS hat keine API, dort nur eine Anleitung
+let deferredInstallPrompt = null;
+const installSection = $("installSection");
+
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+}
+
+function isIos() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function updateInstallUi() {
+  installSection.hidden = isStandalone() || !(deferredInstallPrompt || isIos());
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  deferredInstallPrompt = e;
+  updateInstallUi();
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  updateInstallUi();
+});
+
+$("installBtn").addEventListener("click", async () => {
+  if (!deferredInstallPrompt) {
+    showInfo(t("settings.installIos"));
+    return;
+  }
+  const installPrompt = deferredInstallPrompt;
+  deferredInstallPrompt = null;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  updateInstallUi();
+});
+
+// ----- Darstellung -----
+const themeButtons = document.querySelectorAll("#themeSwitch button");
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+export function applyTheme() {
+  const root = document.documentElement;
+  if (state.settings.theme === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", state.settings.theme);
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.body).backgroundColor;
+  themeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeValue === state.settings.theme)));
+}
+
+themeButtons.forEach((btn) =>
+  btn.addEventListener("click", () => {
+    state.settings.theme = btn.dataset.themeValue;
+    saveSettings();
+    applyTheme();
+  })
+);
+
+darkQuery.addEventListener("change", () => {
+  if (state.settings.theme === "system") applyTheme();
+});
+
+// ----- Formular -----
+export function renderSettingsForm() {
+  const s = state.settings;
+  updateInstallUi();
+  renderLanguageSelect();
+  setWochensoll.value = s.wochensollstunden;
+  setArbeitstage.value = s.arbeitstage;
+  setRuhezeitFeature.checked = s.ruhezeitEnabled;
+  ruhezeitOptionsWrap.hidden = !s.ruhezeitEnabled;
+  ruhezeitHint.hidden = !s.ruhezeitEnabled;
+  setRestHours.value = s.restHours;
+  setRuhezeitEnabled.checked = s.ruhezeitBannerEnabled;
+  bannerWindowWrap.hidden = !s.ruhezeitBannerEnabled;
+  setBannerVon.value = s.bannerVon;
+  setBannerBis.value = s.bannerBis;
+  setPauseAutoEnabled.checked = s.pauseAutoEnabled;
+  pauseRulesWrap.hidden = !s.pauseAutoEnabled;
+  updateTagessollInfo();
+  updateStorageInfo();
+  renderPauseRules();
+}
+
+function renderPauseRules() {
+  pauseRulesContainer.innerHTML = "";
+  state.settings.pauseRules.forEach((rule, idx) => {
+    const row = document.createElement("div");
+    row.className = "pause-rule-row";
+    const hourOptions = Array.from({ length: 24 }, (_, i) => i + 1)
+      .map((h) => `<option value="${h}" ${h === rule.stunden ? "selected" : ""}>${h} h</option>`)
+      .join("");
+    row.innerHTML = `
+      <span>${esc(t("settings.ruleFrom"))}</span>
+      <select class="rule-hours" aria-label="${esc(t("settings.ruleHoursAria"))}">${hourOptions}</select>
+      <input type="number" min="1" max="99" inputmode="numeric" class="rule-minutes" aria-label="${esc(t("settings.ruleMinutesAria"))}" value="${rule.minuten}" />
+      <span>min</span>
+      <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("settings.ruleRemove"))}">${icon("x")}</button>
+    `;
+    row.querySelector(".rule-hours").addEventListener("change", (e) => {
+      rule.stunden = Number(e.target.value);
+      saveSettings();
+      renderWorkEntries();
+    });
+    row.querySelector(".rule-minutes").addEventListener("input", (e) => {
+      rule.minuten = Math.min(99, Math.max(1, Number(e.target.value) || 1));
+      saveSettings();
+      renderWorkEntries();
+    });
+    row.querySelector(".icon-btn").addEventListener("click", () => {
+      state.settings.pauseRules.splice(idx, 1);
+      saveSettings();
+      renderPauseRules();
+      renderWorkEntries();
+    });
+    pauseRulesContainer.appendChild(row);
+  });
+}
+
+$("addPauseRuleBtn").addEventListener("click", () => {
+  const maxH = Math.max(0, ...state.settings.pauseRules.map((r) => r.stunden));
+  state.settings.pauseRules.push({ stunden: Math.min(24, maxH + 1), minuten: 15 });
+  saveSettings();
+  renderPauseRules();
+  renderWorkEntries();
+});
+
+// Eingabefelder nicht neu befüllen, sonst springt der Wert beim Tippen
+setWochensoll.addEventListener("input", () => {
+  state.settings.wochensollstunden = Number(setWochensoll.value) || 0;
+  saveSettings();
+  updateTagessollInfo();
+  renderWorkEntries();
+});
+setArbeitstage.addEventListener("input", () => {
+  state.settings.arbeitstage = Number(setArbeitstage.value) || 0;
+  saveSettings();
+  updateTagessollInfo();
+});
+setRuhezeitFeature.addEventListener("change", () => {
+  state.settings.ruhezeitEnabled = setRuhezeitFeature.checked;
+  ruhezeitOptionsWrap.hidden = !state.settings.ruhezeitEnabled;
+  ruhezeitHint.hidden = !state.settings.ruhezeitEnabled;
+  saveSettings();
+  updateRestUi();
+});
+// Ungültige Zwischenstände beim Tippen (leer, 0) nicht übernehmen
+setRestHours.addEventListener("input", () => {
+  const h = Number(setRestHours.value);
+  if (h < 1 || h > 24) return;
+  state.settings.restHours = h;
+  saveSettings();
+  updateRestUi();
+});
+setRuhezeitEnabled.addEventListener("change", () => {
+  state.settings.ruhezeitBannerEnabled = setRuhezeitEnabled.checked;
+  bannerWindowWrap.hidden = !state.settings.ruhezeitBannerEnabled;
+  saveSettings();
+  updateRestUi();
+});
+setBannerVon.addEventListener("change", () => {
+  state.settings.bannerVon = setBannerVon.value || "00:00";
+  saveSettings();
+  updateRestUi();
+});
+setBannerBis.addEventListener("change", () => {
+  state.settings.bannerBis = setBannerBis.value || "00:00";
+  saveSettings();
+  updateRestUi();
+});
+setPauseAutoEnabled.addEventListener("change", () => {
+  state.settings.pauseAutoEnabled = setPauseAutoEnabled.checked;
+  pauseRulesWrap.hidden = !state.settings.pauseAutoEnabled;
+  saveSettings();
+  renderWorkEntries();
+});

@@ -1326,7 +1326,12 @@
 
     // Trennzeichen kommt aus der Sprachdatei: deutsches Excel erwartet ";" statt ","
     function csvRow(fields) {
-      return fields.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(t("csv.separator")) + "\r\n";
+      const sep = t("csv.separator");
+      const field = (v) => {
+        const s = String(v ?? "");
+        return /[",;\r\n]/.test(s) || s !== s.trim() ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      return fields.map(field).join(sep) + "\r\n";
     }
 
     function fmtCsvDate(date) {
@@ -1338,8 +1343,8 @@
     }
 
     function downloadCSV(csv, filename) {
-      // BOM, damit Excel die Datei als UTF-8 erkennt und Umlaute korrekt anzeigt
-      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+      // Bewusst ohne BOM: manche Tabellen-Apps (u. a. auf Android) zeigen sie als "ï»¿" an
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

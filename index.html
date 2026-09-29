@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>ChronoShift</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Pico CSS v2.0.6, lokal statt CDN: offline nutzbar und keine Daten an Dritte -->
+  <link rel="stylesheet" href="pico.min.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#13171f" />
+
+  <!-- Theme vor dem ersten Rendern setzen, sonst blitzt kurz das falsche Design auf -->
+  <script>
+    try {
+      const theme = JSON.parse(localStorage.getItem("chronoshift.settings") || "{}").theme || "system";
+      if (theme === "system") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", theme);
+    } catch (e) { }
+  </script>
+
+  <style>
+    :root {
+      --pico-font-size: 100%;
+      --app-max: 40rem;
+      --nav-h: 4.25rem;
+      --radius: 0.9rem;
+      --hover: color-mix(in srgb, var(--pico-color) 8%, transparent);
+      /* Pico überschreibt --pico-color lokal bei Buttons mit aria-current; hier der Wert der Seite */
+      --app-text: var(--pico-color);
+    }
+
+    /* Hell: leicht grauer Grund, damit sich die weißen Karten abheben; kräftigere Farben für Kontrast */
+    :root[data-theme="light"],
+    :root:not([data-theme]) {
+      --pico-background-color: #f2f3f5;
+      --pico-card-background-color: #fff;
+      --c-task: #0969da;
+      --c-work: #e16f24;
+      --c-ok: #1a7f37;
+      --c-warn: #bc4c00;
+      --c-danger: #cf222e;
+    }
+
+    [data-theme="dark"] {
+      --c-task: #3b9eff;
+      --c-work: #f0883e;
+      --c-ok: #3fb950;
+      --c-warn: #f0883e;
+      --c-danger: #e5534b;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) {
+        --pico-background-color: #13171f;
+        --pico-card-background-color: #181c25;
+        --c-task: #3b9eff;
+        --c-work: #f0883e;
+        --c-ok: #3fb950;
+        --c-warn: #f0883e;
+        --c-danger: #e5534b;
+      }
+    }
+
+    body {
+      background: var(--pico-background-color);
+    }
+
+    /* Erst anzeigen, wenn die Sprachdatei geladen ist */
+    html:not(.i18n-ready) body {
+      visibility: hidden;
+    }
+
+    /* ---------- App-Gerüst ---------- */
+    .app-header {
+      padding: env(safe-area-inset-top) 0 0;
+    }
+
+    .app-header-inner {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      padding: 1rem 1rem 0.25rem;
+    }
+
+    .app-name {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--pico-muted-color);
+    }
+
+    .view-title {
+      margin: 0;
+      font-size: 1.6rem;
+      line-height: 1.25;
+    }
+
+    .app-main {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      padding: 0.75rem 1rem calc(var(--nav-h) + env(safe-area-inset-bottom) + 1.5rem);
+    }
+
+    /* ---------- Bottom-Navigation ---------- */
+    .bottom-nav {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 10;
+      background: var(--pico-card-background-color);
+      border-top: 1px solid var(--pico-muted-border-color);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bottom-nav-inner {
+      max-width: var(--app-max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-item {
+      all: unset;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.6rem 0.25rem 0.7rem;
+      cursor: pointer;
+      color: var(--pico-muted-color);
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1.2;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5rem;
+      height: 2rem;
+      border-radius: 999px;
+      transition: background 0.2s;
+    }
+
+    .nav-icon svg {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+
+    .nav-item[aria-current="page"] {
+      color: var(--app-text);
+    }
+
+    .nav-item[aria-current="page"] .nav-icon {
+      background: color-mix(in srgb, var(--pico-primary) 28%, transparent);
+      color: var(--pico-primary);
+    }
+
+    .nav-item:focus-visible .nav-icon {
+      outline: 2px solid var(--pico-primary);
+    }
+
+    /* ---------- Bausteine ---------- */
+    .card {
+      background: var(--pico-card-background-color);
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .card label:not(:has([role="switch"])) {
+      font-size: 0.8rem;
+      color: var(--pico-muted-color);
+    }
+
+    .card label > input:not([role="switch"]),
+    .card label > select {
+      margin-top: 0.25rem;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+
+    .card label:last-child > input,
+    .card label:last-child > select,
+    .card .two-col:last-child input {
+      margin-bottom: 0;
+    }
+
+    .section-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin: 1.5rem 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--pico-muted-color);
+    }
+
+    .section-label > span + span {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+
+    .hint {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--pico-muted-color);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      color: var(--chip-c);
+      background: color-mix(in srgb, var(--chip-c) 16%, transparent);
+    }
+
+    .chip-ok,
+    .rest-rested {
+      --chip-c: var(--c-ok);
+      color: var(--c-ok);
+    }
+
+    .chip-warn,
+    .rest-active {
+      --chip-c: var(--c-warn);
+      color: var(--c-warn);
+    }
+
+    .rest-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 0.75rem;
+      font-size: 0.85rem;
+      background: color-mix(in srgb, var(--chip-c) 14%, transparent);
+    }
+
+    .rest-chip svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    button.btn-danger {
+      background: var(--c-danger);
+      border-color: var(--c-danger);
+      color: #fff;
+    }
+
+    .icon-btn {
+      all: unset;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      color: var(--pico-muted-color);
+      cursor: pointer;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-btn:hover,
+    .icon-btn:focus-visible {
+      background: var(--hover);
+      color: var(--pico-color);
+    }
+
+    .icon-btn.danger-icon:hover,
+    .icon-btn.danger-icon:focus-visible {
+      color: var(--c-danger);
+    }
+
+    .icon-btn svg {
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
+    /* ---------- Listen ---------- */
+    .list-group {
+      background: var(--pico-card-background-color);
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 0.4rem 0.7rem 0.75rem;
+    }
+
+    .list-row + .list-row {
+      border-top: 1px solid var(--pico-muted-border-color);
+    }
+
+    .row-accent {
+      width: 0.25rem;
+      align-self: stretch;
+      border-radius: 999px;
+      margin-right: 0.25rem;
+    }
+
+    .row-accent.task,
+    .dot.task {
+      background: var(--c-task);
+    }
+
+    .row-accent.work,
+    .dot.work {
+      background: var(--c-work);
+    }
+
+    .list-row-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-row-title {
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .list-row-meta {
+      font-size: 0.82rem;
+      color: var(--pico-muted-color);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .list-row-value {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      padding: 0 0.25rem;
+    }
+
+    .empty-state {
+      padding: 1.5rem 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--pico-muted-color);
+    }
+
+    .action-row {
+      all: unset;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .action-row + .action-row {
+      border-top: 1px solid var(--pico-muted-border-color);
+    }
+
+    .action-row:hover,
+    .action-row:focus-visible {
+      background: var(--hover);
+    }
+
+    .action-row svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      color: var(--pico-muted-color);
+    }
+
+    .action-row.danger,
+    .action-row.danger svg {
+      color: var(--c-danger);
+    }
+
+    /* ---------- Zeit erfassen ---------- */
+    .timer-card {
+      text-align: center;
+      padding: 1.5rem 1rem 1rem;
+    }
+
+    .timer-display {
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-sub {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      min-height: 1.4em;
+      margin: 0.25rem 0 1rem;
+      font-size: 0.85rem;
+      color: var(--pico-muted-color);
+    }
+
+    .live-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--c-danger);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .timer-card input {
+      margin-bottom: 0.75rem;
+    }
+
+    #startStopBtn {
+      width: 100%;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    #startStopBtn svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+
+    #startStopBtn.stop {
+      background: var(--c-danger);
+      border-color: var(--c-danger);
+      color: #fff;
+    }
+
+    /* ---------- Arbeitszeit ---------- */
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--pico-muted-color);
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.15rem;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-sub {
+      font-size: 0.85rem;
+      color: var(--pico-muted-color);
+    }
+
+    #weekProgress {
+      margin: 0.6rem 0 0.9rem;
+      height: 0.45rem;
+    }
+
+    .rest-line {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--pico-muted-border-color);
+      font-size: 0.9rem;
+    }
+
+    .rest-line svg {
+      width: 1.05rem;
+      height: 1.05rem;
+    }
+
+    .form-title {
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-actions {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .form-actions button {
+      margin: 0;
+    }
+
+    /* ---------- Kalender ---------- */
+    .cal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .cal-title {
+      font-weight: 600;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.2rem;
+    }
+
+    .cal-weekday {
+      padding-bottom: 0.25rem;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--pico-muted-color);
+    }
+
+    .cal-cell {
+      all: unset;
+      box-sizing: border-box;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      border-radius: 0.7rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cal-cell:hover,
+    .cal-cell:focus-visible {
+      background: var(--hover);
+    }
+
+    .cal-cell.today .cal-num {
+      color: var(--pico-primary);
+      font-weight: 700;
+    }
+
+    .cal-cell.selected,
+    .cal-cell.selected:hover {
+      background: var(--pico-primary-background);
+      color: var(--pico-primary-inverse);
+    }
+
+    .cal-cell.selected .cal-num {
+      color: inherit;
+    }
+
+    .cal-dots {
+      display: flex;
+      gap: 3px;
+      height: 5px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .cal-cell.selected .dot {
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--pico-muted-color);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend .dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    /* ---------- Einstellungen ---------- */
+    .segmented {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.25rem;
+      padding: 0.25rem;
+      border-radius: 0.7rem;
+      background: var(--hover);
+    }
+
+    .segmented button {
+      all: unset;
+      box-sizing: border-box;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--pico-muted-color);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      background: var(--pico-primary-background);
+      color: var(--pico-primary-inverse);
+      font-weight: 600;
+    }
+
+    .segmented button:focus-visible {
+      outline: 2px solid var(--pico-primary);
+    }
+
+    .pause-rule-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .pause-rule-row select,
+    .pause-rule-row input {
+      margin: 0;
+    }
+
+    .pause-rule-row select {
+      width: 6rem;
+    }
+
+    .pause-rule-row input {
+      width: 5rem;
+    }
+
+    .pause-rule-row .icon-btn {
+      margin-left: auto;
+    }
+
+    #addPauseRuleBtn {
+      width: 100%;
+      margin: 0.5rem 0 0;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .card label:has([role="switch"]) {
+      margin-bottom: 0;
+    }
+
+    .app-footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--pico-muted-color);
+    }
+
+    .app-footer a {
+      color: inherit;
+    }
+
+    #ruhezeitOptionsWrap,
+    #bannerWindowWrap,
+    #pauseRulesWrap {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <p class="app-name">ChronoShift</p>
+      <h1 class="view-title" id="viewTitle"></h1>
+      <!-- Ruhezeit-Banner: je nach Einstellung und Zeitfenster -->
+      <div id="restBanner" role="status" hidden></div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- ===================== Zeit erfassen (Tasks) ===================== -->
+    <section id="view-tasks">
+      <div class="card timer-card">
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="timer-sub" id="timerSub"></div>
+        <input type="text" id="taskInput" data-i18n-placeholder="tasks.placeholder" data-i18n-aria="tasks.placeholder"
+          autocomplete="off" enterkeyhint="go" />
+        <button id="startStopBtn"></button>
+      </div>
+
+      <div class="section-label"><span data-i18n="tasks.listTitle"></span><span id="taskListHint"></span></div>
+      <div id="entriesContainer"></div>
+    </section>
+
+    <!-- ===================== Arbeitszeit ===================== -->
+    <section id="view-worktime" hidden>
+      <div class="card">
+        <div class="stat-label"><span data-i18n="worktime.thisWeek"></span> · <span id="weekRange"></span></div>
+        <div class="stat-row">
+          <div><span class="stat-value" id="weekIst"></span> <span class="stat-sub" id="weekSoll"></span></div>
+          <span class="chip" id="weekDelta"></span>
+        </div>
+        <progress id="weekProgress" value="0" max="1"></progress>
+        <div class="rest-line" id="restInfo" role="status" hidden></div>
+      </div>
+
+      <form id="worktimeForm" class="card">
+        <div class="form-title" id="wtFormTitle"></div>
+        <label><span data-i18n="worktime.date"></span>
+          <input type="date" id="wtDatum" required />
+        </label>
+        <div class="two-col">
+          <label><span data-i18n="worktime.start"></span>
+            <input type="time" id="wtBeginn" required />
+          </label>
+          <label><span data-i18n="worktime.end"></span>
+            <input type="time" id="wtEnde" required />
+          </label>
+        </div>
+        <div class="two-col">
+          <label><span data-i18n="worktime.breakFrom"></span>
+            <input type="time" id="wtPauseVon" />
+          </label>
+          <label><span data-i18n="worktime.breakTo"></span>
+            <input type="time" id="wtPauseBis" />
+          </label>
+        </div>
+        <small class="hint" data-i18n="worktime.breakHint"></small>
+        <div class="form-actions">
+          <button type="button" id="wtCancelBtn" class="secondary" data-i18n="common.cancel" hidden></button>
+          <button type="submit" id="wtSaveBtn"></button>
+        </div>
+      </form>
+
+      <div class="section-label"><span data-i18n="worktime.entries"></span></div>
+      <div id="worktimeContainer"></div>
+    </section>
+
+    <!-- ===================== Kalender ===================== -->
+    <section id="view-calendar" hidden>
+      <div class="card">
+        <div class="cal-head">
+          <button type="button" class="icon-btn" id="calPrevBtn" data-i18n-aria="calendar.prev" data-icon="chevronLeft"></button>
+          <span class="cal-title" id="calLabel"></span>
+          <button type="button" class="icon-btn" id="calNextBtn" data-i18n-aria="calendar.next" data-icon="chevronRight"></button>
+        </div>
+        <div class="cal-grid" id="calWeekdays"></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="legend">
+          <span><span class="dot task"></span> <span data-i18n="common.task"></span></span>
+          <span><span class="dot work"></span> <span data-i18n="common.worktime"></span></span>
+        </div>
+      </div>
+      <div id="calDayDetail"></div>
+    </section>
+
+    <!-- ===================== Einstellungen ===================== -->
+    <section id="view-settings" hidden>
+      <div class="section-label" style="margin-top: 0.5rem;"><span data-i18n="settings.appearance"></span></div>
+      <div class="card">
+        <div class="segmented" role="group" data-i18n-aria="settings.theme" id="themeSwitch">
+          <button type="button" data-theme-value="system" data-i18n="settings.themeSystem"></button>
+          <button type="button" data-theme-value="light" data-i18n="settings.themeLight"></button>
+          <button type="button" data-theme-value="dark" data-i18n="settings.themeDark"></button>
+        </div>
+        <label style="margin-top: 1rem;"><span data-i18n="settings.language"></span>
+          <select id="setLanguage"></select>
+        </label>
+      </div>
+
+      <div class="section-label"><span data-i18n="settings.worktime"></span></div>
+      <div class="card">
+        <div class="two-col">
+          <label><span data-i18n="settings.weeklyHours"></span>
+            <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
+          </label>
+          <label><span data-i18n="settings.workDays"></span>
+            <input type="number" id="setArbeitstage" min="1" max="7" step="1" inputmode="numeric" />
+          </label>
+        </div>
+        <small class="hint" id="tagessollInfo"></small>
+      </div>
+
+      <div class="section-label"><span data-i18n="settings.rest"></span></div>
+      <div class="card">
+        <label>
+          <input type="checkbox" id="setRuhezeitFeature" role="switch" />
+          <span data-i18n="settings.restShow"></span>
+        </label>
+        <div id="ruhezeitOptionsWrap">
+          <label><span data-i18n="settings.restHours"></span>
+            <input type="number" id="setRestHours" min="1" max="24" step="0.5" inputmode="decimal" />
+          </label>
+          <small class="hint" style="margin: -0.25rem 0 1rem;" data-i18n="settings.restHoursHint"></small>
+          <label>
+            <input type="checkbox" id="setRuhezeitEnabled" role="switch" />
+            <span data-i18n="settings.restBanner"></span>
+          </label>
+          <div id="bannerWindowWrap">
+            <div class="two-col">
+              <label><span data-i18n="settings.bannerFrom"></span>
+                <input type="time" id="setBannerVon" />
+              </label>
+              <label><span data-i18n="settings.bannerTo"></span>
+                <input type="time" id="setBannerBis" />
+              </label>
+            </div>
+            <small class="hint" data-i18n="settings.bannerHint"></small>
+          </div>
+        </div>
+        <small class="hint" id="ruhezeitHint" style="margin-top: 0.75rem;" data-i18n="settings.restHint"></small>
+      </div>
+
+      <div class="section-label"><span data-i18n="settings.breaks"></span></div>
+      <div class="card">
+        <label>
+          <input type="checkbox" id="setPauseAutoEnabled" role="switch" />
+          <span data-i18n="settings.breaksAuto"></span>
+        </label>
+        <div id="pauseRulesWrap">
+          <small class="hint" style="margin-bottom: 0.75rem;" data-i18n="settings.breaksHint"></small>
+          <div id="pauseRulesContainer"></div>
+          <button type="button" id="addPauseRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
+        </div>
+      </div>
+
+      <div class="section-label"><span data-i18n="settings.export"></span></div>
+      <div class="list-group">
+        <button type="button" class="action-row" id="exportTasksBtn"><span data-icon="download"></span><span
+            data-i18n="settings.exportTasks"></span></button>
+        <button type="button" class="action-row" id="exportWorkBtn"><span data-icon="download"></span><span
+            data-i18n="settings.exportWork"></span></button>
+      </div>
+
+      <div class="section-label"><span data-i18n="settings.delete"></span></div>
+      <div class="list-group">
+        <button type="button" class="action-row" id="deleteTodayTasksBtn"><span data-icon="trash"></span><span
+            data-i18n="settings.deleteTodayTasks"></span></button>
+        <button type="button" class="action-row" id="deleteAllTasksBtn"><span data-icon="trash"></span><span
+            data-i18n="settings.deleteAllTasks"></span></button>
+        <button type="button" class="action-row" id="deleteOldWorkBtn"><span data-icon="trash"></span><span
+            data-i18n="settings.deleteOldWork"></span></button>
+        <button type="button" class="action-row danger" id="resetAllBtn"><span data-icon="alert"></span><span
+            data-i18n="settings.resetAll"></span></button>
+      </div>
+      <p class="hint" id="storageInfo" style="margin: 0.75rem 0.25rem 0;"></p>
+
+      <div class="app-footer">
+        <div>© <span id="copyrightYears"></span> Daniel Herbst · <a href="https://github.com/cht47/chronoshift/blob/main/LICENSE"
+            target="_blank" rel="noopener">MIT + Commons Clause</a></div>
+        <div><span id="appVersion"></span> · <a href="https://github.com/cht47/chronoshift" target="_blank"
+            rel="noopener">GitHub</a></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom-Navigation -->
+  <nav class="bottom-nav" data-i18n-aria="nav.label">
+    <div class="bottom-nav-inner">
+      <button type="button" class="nav-item" id="tab-tasks" data-view="tasks">
+        <span class="nav-icon" data-icon="timer"></span><span data-i18n="nav.tasks"></span>
+      </button>
+      <button type="button" class="nav-item" id="tab-worktime" data-view="worktime">
+        <span class="nav-icon" data-icon="briefcase"></span><span data-i18n="nav.worktime"></span>
+      </button>
+      <button type="button" class="nav-item" id="tab-calendar" data-view="calendar">
+        <span class="nav-icon" data-icon="calendar"></span><span data-i18n="nav.calendar"></span>
+      </button>
+      <button type="button" class="nav-item" id="tab-settings" data-view="settings">
+        <span class="nav-icon" data-icon="settings"></span><span data-i18n="nav.settings"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Modal: allgemeiner Hinweis -->
+  <dialog id="infoModal">
+    <article>
+      <header>
+        <h3 data-i18n="common.notice"></h3>
+      </header>
+      <p id="infoModalText"></p>
+      <footer>
+        <button class="secondary" id="infoModalOkBtn" data-i18n="common.ok"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <!-- Modal: Bestätigung (optional mit Countdown) -->
+  <dialog id="confirmModal">
+    <article>
+      <header>
+        <h3 data-i18n="common.confirm"></h3>
+      </header>
+      <p id="confirmText"></p>
+      <footer>
+        <button class="secondary" id="confirmNoBtn" data-i18n="common.cancel"></button>
+        <button id="confirmYesBtn" class="btn-danger"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <script>
+    // ========== Konstanten ==========
+    const APP_VERSION = "1.0.0-beta";
+    const FIRST_YEAR = 2025;
+
+    // Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen
+    const STORAGE_KEY = "chronoshift.tasks";
+    const TIMER_STATE_KEY = "chronoshift.timer";
+    const WORKTIME_KEY = "chronoshift.worktime";
+    const SETTINGS_KEY = "chronoshift.settings";
+    const ALL_KEYS = [STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY, SETTINGS_KEY];
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const WORKTIME_RETENTION_DAYS = 90;
+
+    // Verfügbare Sprachen: Datei locales/<code>.json + Eintrag hier (Name in der jeweiligen Sprache)
+    const LANGUAGES = { de: "Deutsch", en: "English" };
+    const FALLBACK_LANG = "en";
+
+    const DEFAULT_SETTINGS = {
+      wochensollstunden: 38,
+      arbeitstage: 5,
+      ruhezeitEnabled: true,
+      restHours: 11,
+      ruhezeitBannerEnabled: true,
+      bannerVon: "00:00",
+      bannerBis: "00:00",
+      pauseAutoEnabled: true,
+      pauseRules: [
+        { stunden: 4, minuten: 15 },
+        { stunden: 6, minuten: 30 },
+        { stunden: 9, minuten: 15 },
+      ],
+      theme: "system",
+      language: "system",
+    };
+
+    const VIEWS = ["tasks", "worktime", "calendar", "settings"];
+
+    // Icons nach Lucide (ISC-Lizenz), siehe THIRD_PARTY_LICENSES.md
+    const ICONS = {
+      timer: '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>',
+      briefcase: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+      calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+      settings: '<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+      play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+      stop: '<rect width="14" height="14" x="5" y="5" rx="2"/>',
+      trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+      pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+      chevronRight: '<path d="m9 18 6-6-6-6"/>',
+      download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+      alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+      check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    };
+
+    function icon(name) {
+      return `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+    }
+
+    // ========== State ==========
+    let running = false;
+    let currentStartTime = null;
+    let currentTask = "";
+    let tickTimer = null;
+    let settings = structuredClone(DEFAULT_SETTINGS);
+    let workTimeEntries = [];
+    let editingWorkId = null;
+    let calYear, calMonth, calSelectedISO = null;
+    let currentView = "tasks";
+
+    // ========== DOM-Referenzen ==========
+    const $ = (id) => document.getElementById(id);
+
+    const viewTitle = $("viewTitle");
+    const restBanner = $("restBanner");
+
+    const taskInput = $("taskInput");
+    const startStopBtn = $("startStopBtn");
+    const timerDisplay = $("timerDisplay");
+    const timerSub = $("timerSub");
+    const entriesContainer = $("entriesContainer");
+    const taskListHint = $("taskListHint");
+
+    const infoModal = $("infoModal");
+    const infoModalText = $("infoModalText");
+    const confirmModal = $("confirmModal");
+    const confirmText = $("confirmText");
+    const confirmYesBtn = $("confirmYesBtn");
+
+    const weekRange = $("weekRange");
+    const weekIst = $("weekIst");
+    const weekSoll = $("weekSoll");
+    const weekDelta = $("weekDelta");
+    const weekProgress = $("weekProgress");
+    const restInfo = $("restInfo");
+    const worktimeForm = $("worktimeForm");
+    const wtFormTitle = $("wtFormTitle");
+    const wtDatum = $("wtDatum");
+    const wtBeginn = $("wtBeginn");
+    const wtEnde = $("wtEnde");
+    const wtPauseVon = $("wtPauseVon");
+    const wtPauseBis = $("wtPauseBis");
+    const wtSaveBtn = $("wtSaveBtn");
+    const wtCancelBtn = $("wtCancelBtn");
+    const worktimeContainer = $("worktimeContainer");
+
+    const calGrid = $("calGrid");
+    const calWeekdays = $("calWeekdays");
+    const calLabel = $("calLabel");
+    const calDayDetail = $("calDayDetail");
+
+    const setLanguage = $("setLanguage");
+    const setWochensoll = $("setWochensoll");
+    const setArbeitstage = $("setArbeitstage");
+    const tagessollInfo = $("tagessollInfo");
+    const setRuhezeitFeature = $("setRuhezeitFeature");
+    const ruhezeitOptionsWrap = $("ruhezeitOptionsWrap");
+    const ruhezeitHint = $("ruhezeitHint");
+    const setRestHours = $("setRestHours");
+    const setRuhezeitEnabled = $("setRuhezeitEnabled");
+    const bannerWindowWrap = $("bannerWindowWrap");
+    const setBannerVon = $("setBannerVon");
+    const setBannerBis = $("setBannerBis");
+    const setPauseAutoEnabled = $("setPauseAutoEnabled");
+    const pauseRulesWrap = $("pauseRulesWrap");
+    const pauseRulesContainer = $("pauseRulesContainer");
+    const storageInfo = $("storageInfo");
+
+    // ========== Init ==========
+    document.addEventListener("DOMContentLoaded", async () => {
+      document.querySelectorAll("[data-icon]").forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
+      $("appVersion").textContent = `v${APP_VERSION}`;
+      const year = new Date().getFullYear();
+      $("copyrightYears").textContent = year > FIRST_YEAR ? `${FIRST_YEAR}–${year}` : String(FIRST_YEAR);
+      loadSettings();
+      applyTheme();
+      await loadLocale();
+      applyI18n();
+      document.documentElement.classList.add("i18n-ready");
+
+      loadEntries();
+      loadWorkEntries();
+      restoreTimerState();
+      resetWorktimeForm();
+      initCalendarState();
+      renderSettingsForm();
+      refreshAll();
+      setInterval(updateRestUi, 60000);
+      switchView("tasks");
+    });
+
+    function refreshAll() {
+      renderEntries();
+      renderWorkEntries();
+      renderCalendar();
+      updateRestUi();
+      updateStorageInfo();
+    }
+
+    // ========== Sprache ==========
+    let currentLang = FALLBACK_LANG;
+    let intlLocale = FALLBACK_LANG;
+    let messages = {};
+    let fallbackMessages = {};
+
+    function browserLanguages() {
+      return navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || FALLBACK_LANG];
+    }
+
+    function systemLanguage() {
+      for (const tag of browserLanguages()) {
+        const base = tag.toLowerCase().split("-")[0];
+        if (base in LANGUAGES) return base;
+      }
+      return FALLBACK_LANG;
+    }
+
+    async function fetchLocale(code) {
+      const res = await fetch(`locales/${code}.json`);
+      if (!res.ok) throw new Error(`locales/${code}.json: ${res.status}`);
+      return res.json();
+    }
+
+    async function loadLocale() {
+      currentLang = settings.language in LANGUAGES ? settings.language : systemLanguage();
+      // Regionale Variante des Browsers nutzen (z. B. en-GB statt en-US für das Datumsformat)
+      intlLocale = browserLanguages().find((tag) => tag.toLowerCase().split("-")[0] === currentLang) || currentLang;
+      document.documentElement.lang = currentLang;
+      try {
+        fallbackMessages = await fetchLocale(FALLBACK_LANG);
+      } catch (err) {
+        console.warn(err);
+        fallbackMessages = {};
+      }
+      try {
+        messages = currentLang === FALLBACK_LANG ? fallbackMessages : await fetchLocale(currentLang);
+      } catch (err) {
+        console.warn(err);
+        messages = fallbackMessages;
+      }
+    }
+
+    // Fehlt ein Text in der gewählten Sprache, wird Englisch verwendet, sonst der Schlüssel selbst
+    function t(key, params = {}) {
+      const lookup = (obj) => key.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+      const text = lookup(messages) ?? lookup(fallbackMessages) ?? key;
+      return String(text).replace(/\{(\w+)\}/g, (match, name) => (name in params ? params[name] : match));
+    }
+
+    function applyI18n() {
+      const params = { days: WORKTIME_RETENTION_DAYS };
+      document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n, params)));
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => (el.placeholder = t(el.dataset.i18nPlaceholder)));
+      document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+    }
+
+    function renderLanguageSelect() {
+      const systemOption = `<option value="system">${esc(t("settings.languageSystem", { language: LANGUAGES[systemLanguage()] }))}</option>`;
+      const options = Object.entries(LANGUAGES).map(([code, name]) => `<option value="${code}">${esc(name)}</option>`);
+      setLanguage.innerHTML = systemOption + options.join("");
+      setLanguage.value = settings.language in LANGUAGES ? settings.language : "system";
+    }
+
+    setLanguage.addEventListener("change", async () => {
+      settings.language = setLanguage.value;
+      saveSettings();
+      await loadLocale();
+      applyI18n();
+      setRunningUi(running);
+      updateWorktimeFormText();
+      renderSettingsForm();
+      refreshAll();
+      viewTitle.textContent = t("nav." + currentView);
+    });
+
+    // ========== Navigation ==========
+    function switchView(view) {
+      currentView = view;
+      VIEWS.forEach((v) => {
+        $("view-" + v).hidden = v !== view;
+        if (v === view) $("tab-" + v).setAttribute("aria-current", "page");
+        else $("tab-" + v).removeAttribute("aria-current");
+      });
+      viewTitle.textContent = t("nav." + view);
+      window.scrollTo(0, 0);
+      if (view === "tasks") renderEntries();
+      if (view === "worktime") renderWorkEntries();
+      if (view === "calendar") renderCalendar();
+      if (view === "settings") renderSettingsForm();
+    }
+
+    document.querySelectorAll(".nav-item").forEach((btn) => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+
+    // ========== Hilfsfunktionen ==========
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    }
+
+    function isoOf(d) {
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
+
+    function todayISO() {
+      return isoOf(new Date());
+    }
+
+    function dateFromISO(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function combineDateTime(iso, hhmm) {
+      const [y, m, d] = iso.split("-").map(Number);
+      const [hh, mm] = hhmm.split(":").map(Number);
+      return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
+    }
+
+    // Festes Format "dd.mm.yy hh:mm" für gespeicherte Tasks und den CSV-Export, unabhängig von der Sprache
+    function formatStamp(ms) {
+      const d = new Date(ms);
+      return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${clockOf(ms)}`;
+    }
+
+    // Uhrzeiten bewusst immer im 24-Stunden-Format, passend zu den gespeicherten "08:50"-Werten
+    function clockOf(ms) {
+      const d = new Date(ms);
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function fmtDateParts(date, options) {
+      return new Intl.DateTimeFormat(intlLocale, options).format(date);
+    }
+
+    function fmtDate(iso) {
+      return fmtDateParts(dateFromISO(iso), { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function fmtDateTime(ms) {
+      return `${fmtDateParts(new Date(ms), { day: "2-digit", month: "2-digit", year: "2-digit" })} ${clockOf(ms)}`;
+    }
+
+    function fmtNumber(n, fractionDigits) {
+      const options = fractionDigits === undefined ? {} : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits };
+      return new Intl.NumberFormat(intlLocale, options).format(n);
+    }
+
+    function fmtMin(min) {
+      const sign = min < 0 ? "-" : "";
+      const abs = Math.abs(min);
+      return `${sign}${Math.floor(abs / 60)}h ${pad2(abs % 60)}min`;
+    }
+
+    function fmtDur(min) {
+      return min < 60 ? `${min} min` : fmtMin(min);
+    }
+
+    function csvRow(fields) {
+      return fields.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",") + "\n";
+    }
+
+    function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderList(container, entries, builder, emptyText) {
+      container.innerHTML = "";
+      const group = document.createElement("div");
+      group.className = "list-group";
+      if (!entries.length) {
+        group.innerHTML = `<div class="empty-state">${esc(emptyText)}</div>`;
+      } else {
+        entries.forEach((e) => group.appendChild(builder(e)));
+      }
+      container.appendChild(group);
+    }
+
+    // ========== Dialoge ==========
+    function showInfo(msg) {
+      infoModalText.textContent = msg;
+      infoModal.showModal();
+    }
+
+    $("infoModalOkBtn").addEventListener("click", () => infoModal.close());
+
+    let confirmCallback = null;
+    let confirmTimer = null;
+
+    function confirmAction(msg, label, onConfirm, countdownSec = 0) {
+      clearInterval(confirmTimer);
+      confirmText.textContent = msg;
+      confirmCallback = onConfirm;
+      let left = countdownSec;
+      const update = () => {
+        confirmYesBtn.disabled = left > 0;
+        confirmYesBtn.textContent = left > 0 ? `${label} (${left})` : label;
+      };
+      update();
+      if (left > 0) {
+        confirmTimer = setInterval(() => {
+          left--;
+          update();
+          if (left <= 0) clearInterval(confirmTimer);
+        }, 1000);
+      }
+      confirmModal.showModal();
+    }
+
+    confirmModal.addEventListener("close", () => {
+      clearInterval(confirmTimer);
+      confirmCallback = null;
+    });
+    $("confirmNoBtn").addEventListener("click", () => confirmModal.close());
+    confirmYesBtn.addEventListener("click", () => {
+      const cb = confirmCallback;
+      confirmModal.close();
+      if (cb) cb();
+    });
+
+    // ========== Einstellungen ==========
+    function loadSettings() {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      settings = structuredClone(DEFAULT_SETTINGS);
+      if (stored) {
+        Object.assign(settings, JSON.parse(stored));
+        if (!Array.isArray(settings.pauseRules)) settings.pauseRules = structuredClone(DEFAULT_SETTINGS.pauseRules);
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    function updateTagessollInfo() {
+      const tage = settings.arbeitstage > 0 ? settings.arbeitstage : 1;
+      tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(Math.round((settings.wochensollstunden * 60) / tage)) });
+    }
+
+    function updateStorageInfo() {
+      const chars = ALL_KEYS.reduce((sum, k) => sum + k.length + (localStorage.getItem(k) || "").length, 0);
+      storageInfo.textContent = t("settings.storage", {
+        size: fmtNumber(chars / 1024, 1),
+        tasks: window.timeEntries.length,
+        work: workTimeEntries.length,
+      });
+    }
+
+    // ----- Darstellung -----
+    const themeButtons = document.querySelectorAll("#themeSwitch button");
+    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function applyTheme() {
+      const root = document.documentElement;
+      if (settings.theme === "system") root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", settings.theme);
+      document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.body).backgroundColor;
+      themeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeValue === settings.theme)));
+    }
+
+    themeButtons.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        settings.theme = btn.dataset.themeValue;
+        saveSettings();
+        applyTheme();
+      })
+    );
+
+    darkQuery.addEventListener("change", () => {
+      if (settings.theme === "system") applyTheme();
+    });
+
+    function renderSettingsForm() {
+      renderLanguageSelect();
+      setWochensoll.value = settings.wochensollstunden;
+      setArbeitstage.value = settings.arbeitstage;
+      setRuhezeitFeature.checked = settings.ruhezeitEnabled;
+      ruhezeitOptionsWrap.hidden = !settings.ruhezeitEnabled;
+      ruhezeitHint.hidden = !settings.ruhezeitEnabled;
+      setRestHours.value = settings.restHours;
+      setRuhezeitEnabled.checked = settings.ruhezeitBannerEnabled;
+      bannerWindowWrap.hidden = !settings.ruhezeitBannerEnabled;
+      setBannerVon.value = settings.bannerVon;
+      setBannerBis.value = settings.bannerBis;
+      setPauseAutoEnabled.checked = settings.pauseAutoEnabled;
+      pauseRulesWrap.hidden = !settings.pauseAutoEnabled;
+      updateTagessollInfo();
+      updateStorageInfo();
+      renderPauseRules();
+    }
+
+    function renderPauseRules() {
+      pauseRulesContainer.innerHTML = "";
+      settings.pauseRules.forEach((rule, idx) => {
+        const row = document.createElement("div");
+        row.className = "pause-rule-row";
+        const hourOptions = Array.from({ length: 24 }, (_, i) => i + 1)
+          .map((h) => `<option value="${h}" ${h === rule.stunden ? "selected" : ""}>${h} h</option>`)
+          .join("");
+        row.innerHTML = `
+          <span>${esc(t("settings.ruleFrom"))}</span>
+          <select class="rule-hours" aria-label="${esc(t("settings.ruleHoursAria"))}">${hourOptions}</select>
+          <input type="number" min="1" max="99" inputmode="numeric" class="rule-minutes" aria-label="${esc(t("settings.ruleMinutesAria"))}" value="${rule.minuten}" />
+          <span>min</span>
+          <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("settings.ruleRemove"))}">${icon("x")}</button>
+        `;
+        row.querySelector(".rule-hours").addEventListener("change", (e) => {
+          rule.stunden = Number(e.target.value);
+          saveSettings();
+          renderWorkEntries();
+        });
+        row.querySelector(".rule-minutes").addEventListener("input", (e) => {
+          rule.minuten = Math.min(99, Math.max(1, Number(e.target.value) || 1));
+          saveSettings();
+          renderWorkEntries();
+        });
+        row.querySelector(".icon-btn").addEventListener("click", () => {
+          settings.pauseRules.splice(idx, 1);
+          saveSettings();
+          renderPauseRules();
+          renderWorkEntries();
+        });
+        pauseRulesContainer.appendChild(row);
+      });
+    }
+
+    $("addPauseRuleBtn").addEventListener("click", () => {
+      const maxH = Math.max(0, ...settings.pauseRules.map((r) => r.stunden));
+      settings.pauseRules.push({ stunden: Math.min(24, maxH + 1), minuten: 15 });
+      saveSettings();
+      renderPauseRules();
+      renderWorkEntries();
+    });
+
+    // Eingabefelder nicht neu befüllen, sonst springt der Wert beim Tippen
+    setWochensoll.addEventListener("input", () => {
+      settings.wochensollstunden = Number(setWochensoll.value) || 0;
+      saveSettings();
+      updateTagessollInfo();
+      renderWorkEntries();
+    });
+    setArbeitstage.addEventListener("input", () => {
+      settings.arbeitstage = Number(setArbeitstage.value) || 0;
+      saveSettings();
+      updateTagessollInfo();
+    });
+    setRuhezeitFeature.addEventListener("change", () => {
+      settings.ruhezeitEnabled = setRuhezeitFeature.checked;
+      ruhezeitOptionsWrap.hidden = !settings.ruhezeitEnabled;
+      ruhezeitHint.hidden = !settings.ruhezeitEnabled;
+      saveSettings();
+      updateRestUi();
+    });
+    // Ungültige Zwischenstände beim Tippen (leer, 0) nicht übernehmen
+    setRestHours.addEventListener("input", () => {
+      const h = Number(setRestHours.value);
+      if (h < 1 || h > 24) return;
+      settings.restHours = h;
+      saveSettings();
+      updateRestUi();
+    });
+    setRuhezeitEnabled.addEventListener("change", () => {
+      settings.ruhezeitBannerEnabled = setRuhezeitEnabled.checked;
+      bannerWindowWrap.hidden = !settings.ruhezeitBannerEnabled;
+      saveSettings();
+      updateRestUi();
+    });
+    setBannerVon.addEventListener("change", () => {
+      settings.bannerVon = setBannerVon.value || "00:00";
+      saveSettings();
+      updateRestUi();
+    });
+    setBannerBis.addEventListener("change", () => {
+      settings.bannerBis = setBannerBis.value || "00:00";
+      saveSettings();
+      updateRestUi();
+    });
+    setPauseAutoEnabled.addEventListener("change", () => {
+      settings.pauseAutoEnabled = setPauseAutoEnabled.checked;
+      pauseRulesWrap.hidden = !settings.pauseAutoEnabled;
+      saveSettings();
+      renderWorkEntries();
+    });
+
+    // ----- Daten: Export (Spalten und Formate bleiben sprachunabhängig) -----
+    $("exportTasksBtn").addEventListener("click", () => {
+      if (!window.timeEntries.length) {
+        showInfo(t("data.noTasksToExport"));
+        return;
+      }
+      let csv = csvRow(["Ticket/Task", "Start", "Stop", "Duration(min)"]);
+      window.timeEntries.forEach((e) => {
+        csv += csvRow([e.task, e.startStr, e.stopStr, e.durationMin]);
+      });
+      downloadCSV(csv, "tasks.csv");
+    });
+
+    $("exportWorkBtn").addEventListener("click", () => {
+      if (!workTimeEntries.length) {
+        showInfo(t("data.noWorkToExport"));
+        return;
+      }
+      let csv = csvRow(["Datum", "Beginn", "Ende", "PauseVon", "PauseBis", "PauseMinuten", "PauseArt", "NettoMinuten"]);
+      [...workTimeEntries].sort(compareWorkAsc).forEach((e) => {
+        const s = computeWorktimeStats(e);
+        csv += csvRow([e.datum, e.beginn, e.ende, e.pauseVon, e.pauseBis, s.pauseMin, s.pauseManual ? "manuell" : "automatisch", s.nettoMin]);
+      });
+      downloadCSV(csv, "arbeitszeit.csv");
+    });
+
+    // ----- Daten: Löschen -----
+    $("deleteTodayTasksBtn").addEventListener("click", () => {
+      const today = todayISO();
+      const count = window.timeEntries.filter((e) => taskDateISO(e) === today).length;
+      if (!count) {
+        showInfo(t("data.noTasksToday"));
+        return;
+      }
+      confirmAction(t("data.confirmDeleteToday", { count }), t("common.delete"), () => {
+        window.timeEntries = window.timeEntries.filter((e) => taskDateISO(e) !== today);
+        saveEntries();
+        refreshAll();
+      });
+    });
+
+    $("deleteAllTasksBtn").addEventListener("click", () => {
+      if (!window.timeEntries.length) {
+        showInfo(t("data.noTasks"));
+        return;
+      }
+      confirmAction(t("data.confirmDeleteAll", { count: window.timeEntries.length }), t("common.delete"), () => {
+        window.timeEntries = [];
+        saveEntries();
+        refreshAll();
+      });
+    });
+
+    $("deleteOldWorkBtn").addEventListener("click", () => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - WORKTIME_RETENTION_DAYS);
+      const cutoffISO = isoOf(cutoff);
+      const count = workTimeEntries.filter((e) => e.datum < cutoffISO).length;
+      if (!count) {
+        showInfo(t("data.noOldWork", { days: WORKTIME_RETENTION_DAYS }));
+        return;
+      }
+      confirmAction(t("data.confirmDeleteOld", { count, date: fmtDate(cutoffISO) }), t("common.delete"), () => {
+        workTimeEntries = workTimeEntries.filter((e) => e.datum >= cutoffISO);
+        saveWorkEntries();
+        refreshAll();
+      });
+    });
+
+    $("resetAllBtn").addEventListener("click", () => {
+      confirmAction(
+        t("data.confirmReset"),
+        t("data.resetConfirmLabel"),
+        () => {
+          ALL_KEYS.forEach((k) => localStorage.removeItem(k));
+          location.reload();
+        },
+        5
+      );
+    });
+
+    // ========== Ruhezeit ==========
+    function getLastWorkEndMs() {
+      const now = Date.now();
+      let last = null;
+      window.timeEntries.forEach((e) => {
+        if (e.stopMs && (last === null || e.stopMs > last)) last = e.stopMs;
+      });
+      workTimeEntries.forEach((e) => {
+        const { startMs, endMs } = worktimeRange(e);
+        // Vorgetragene Arbeitszeiten zählen erst ab ihrem Beginn
+        if (startMs > now) return;
+        if (last === null || endMs > last) last = endMs;
+      });
+      return last;
+    }
+
+    function restLabel() {
+      return t("rest.label", { hours: fmtNumber(settings.restHours) });
+    }
+
+    function restStatus() {
+      const lastEnd = getLastWorkEndMs();
+      const now = Date.now();
+      // Laufender Task verschiebt die Ruhezeit nur, wenn er nach dem letzten Arbeitsende noch läuft
+      if (running && (lastEnd === null || now >= lastEnd)) {
+        return { cls: "rest-active", icon: "hourglass", text: t("rest.taskRunning", { label: restLabel() }), short: t("rest.taskRunningShort") };
+      }
+      if (lastEnd === null) return null;
+      const restEndMs = lastEnd + settings.restHours * 60 * 60 * 1000;
+      const time = fmtDateTime(restEndMs);
+      if (now < restEndMs) {
+        return { cls: "rest-active", icon: "hourglass", text: t("rest.until", { label: restLabel(), time }), short: t("rest.untilShort", { time }) };
+      }
+      return { cls: "rest-rested", icon: "check", text: t("rest.rested", { time }), short: t("rest.restedShort", { time }) };
+    }
+
+    function minutesOfDay(hhmm) {
+      const [h, m] = hhmm.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function isInBannerWindow() {
+      const von = minutesOfDay(settings.bannerVon);
+      const bis = minutesOfDay(settings.bannerBis);
+      const d = new Date();
+      const now = d.getHours() * 60 + d.getMinutes();
+      if (von === bis) return true;
+      return von < bis ? now >= von && now < bis : now >= von || now < bis;
+    }
+
+    function updateRestUi() {
+      const status = settings.ruhezeitEnabled ? restStatus() : null;
+
+      const showBanner = status && settings.ruhezeitBannerEnabled && isInBannerWindow();
+      restBanner.hidden = !showBanner;
+      if (showBanner) {
+        restBanner.className = "rest-chip " + status.cls;
+        restBanner.innerHTML = `${icon(status.icon)}<span>${esc(status.text)}</span>`;
+      }
+
+      restInfo.hidden = !status;
+      if (status) {
+        restInfo.innerHTML = `<span class="${status.cls}">${icon(status.icon)}</span><span><strong>${esc(restLabel())}</strong> <span class="${status.cls}">${esc(status.short)}</span></span>`;
+      }
+    }
+
+    // ========== Zeit erfassen (Tasks) ==========
+    function loadEntries() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      window.timeEntries = stored ? JSON.parse(stored) : [];
+    }
+
+    function saveEntries() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(window.timeEntries));
+    }
+
+    function taskDateISO(entry) {
+      return isoOf(new Date(entry.stopMs));
+    }
+
+    function updateTimerDisplay() {
+      if (!running) {
+        timerDisplay.textContent = "00:00:00";
+        timerSub.textContent = t("tasks.ready");
+        return;
+      }
+      const sec = Math.max(0, Math.floor((Date.now() - currentStartTime) / 1000));
+      timerDisplay.textContent = `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor(sec / 60) % 60)}:${pad2(sec % 60)}`;
+      const since = isoOf(new Date(currentStartTime)) === todayISO() ? clockOf(currentStartTime) : fmtDateTime(currentStartTime);
+      timerSub.innerHTML = `<span class="live-dot"></span>${esc(t("tasks.runningSince", { time: since }))}`;
+    }
+
+    // Die Dauer wird beim Stoppen aus Start- und Stoppzeit berechnet; der Timer dient nur der Anzeige
+    function setRunningUi(isRunning) {
+      taskInput.disabled = isRunning;
+      startStopBtn.classList.toggle("stop", isRunning);
+      startStopBtn.innerHTML = isRunning ? `${icon("stop")}${esc(t("tasks.stop"))}` : `${icon("play")}${esc(t("tasks.start"))}`;
+      clearInterval(tickTimer);
+      if (isRunning) tickTimer = setInterval(updateTimerDisplay, 1000);
+      updateTimerDisplay();
+    }
+
+    function restoreTimerState() {
+      const savedState = localStorage.getItem(TIMER_STATE_KEY);
+      const state = savedState ? JSON.parse(savedState) : null;
+      if (state && state.running) {
+        running = true;
+        currentStartTime = state.startTime;
+        currentTask = state.task;
+        taskInput.value = currentTask;
+      }
+      setRunningUi(running);
+    }
+
+    taskInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !running) {
+        e.preventDefault();
+        startStopBtn.click();
+      }
+    });
+
+    startStopBtn.addEventListener("click", () => {
+      if (!running) {
+        if (!taskInput.value.trim()) {
+          showInfo(t("tasks.missingDescription"));
+          return;
+        }
+        running = true;
+        currentStartTime = Date.now();
+        currentTask = taskInput.value.trim();
+        localStorage.setItem(TIMER_STATE_KEY, JSON.stringify({ running: true, startTime: currentStartTime, task: currentTask }));
+        taskInput.blur();
+        setRunningUi(true);
+        updateRestUi();
+      } else {
+        running = false;
+        const stopTime = Date.now();
+
+        // Rundungsfehler vermeiden: Differenz anhand der vollen Minuten berechnen (ohne Sekunden)
+        const startDate = new Date(currentStartTime);
+        startDate.setSeconds(0, 0);
+        const stopDate = new Date(stopTime);
+        stopDate.setSeconds(0, 0);
+        const diffMin = Math.round((stopDate.getTime() - startDate.getTime()) / 60000);
+
+        window.timeEntries.push({
+          id: Date.now(),
+          task: currentTask,
+          startMs: currentStartTime,
+          startStr: formatStamp(currentStartTime),
+          stopStr: formatStamp(stopTime),
+          stopMs: stopTime,
+          durationMin: diffMin,
+        });
+        saveEntries();
+        localStorage.removeItem(TIMER_STATE_KEY);
+
+        taskInput.value = "";
+        setRunningUi(false);
+        refreshAll();
+      }
+    });
+
+    function deleteEntry(id) {
+      window.timeEntries = window.timeEntries.filter((e) => e.id !== id);
+      saveEntries();
+      refreshAll();
+    }
+
+    // Alte Einträge haben kein startMs, dort bleibt der gespeicherte Text
+    function taskStartText(e) {
+      return e.startMs ? fmtDateTime(e.startMs) : e.startStr;
+    }
+
+    function taskTimeRange(e) {
+      if (!e.startMs) return `${e.startStr} – ${e.stopStr}`;
+      if (isoOf(new Date(e.startMs)) !== isoOf(new Date(e.stopMs))) return `${fmtDateTime(e.startMs)} – ${fmtDateTime(e.stopMs)}`;
+      const day = fmtDateParts(new Date(e.stopMs), { weekday: "short", day: "2-digit", month: "2-digit" });
+      return `${day} · ${clockOf(e.startMs)}–${clockOf(e.stopMs)}`;
+    }
+
+    function buildTaskRow(entry) {
+      const row = document.createElement("div");
+      row.className = "list-row";
+      row.innerHTML = `
+        <span class="row-accent task"></span>
+        <div class="list-row-main">
+          <div class="list-row-title">${esc(entry.task)}</div>
+          <div class="list-row-meta">${esc(taskTimeRange(entry))}</div>
+        </div>
+        <span class="list-row-value">${fmtDur(entry.durationMin)}</span>
+        <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("tasks.deleteAria"))}">${icon("trash")}</button>
+      `;
+      row.querySelector(".icon-btn").addEventListener("click", () =>
+        confirmAction(t("tasks.confirmDelete", { name: entry.task, date: taskStartText(entry) }), t("common.delete"), () => deleteEntry(entry.id))
+      );
+      return row;
+    }
+
+    // Heutige Tasks, mindestens aber die zwei letzten
+    function visibleTaskEntries() {
+      const today = todayISO();
+      const sorted = [...window.timeEntries].sort((a, b) => b.stopMs - a.stopMs);
+      const todays = sorted.filter((e) => taskDateISO(e) === today);
+      return todays.length >= 2 ? todays : sorted.slice(0, 2);
+    }
+
+    function renderEntries() {
+      const visible = visibleTaskEntries();
+      const hidden = window.timeEntries.length - visible.length;
+      taskListHint.textContent = hidden > 0 ? t("tasks.moreInCalendar", { count: hidden }) : "";
+      renderList(entriesContainer, visible, buildTaskRow, t("tasks.empty"));
+    }
+
+    // ========== Arbeitszeit ==========
+    function worktimeRange(entry) {
+      const startMs = combineDateTime(entry.datum, entry.beginn);
+      let endMs = combineDateTime(entry.datum, entry.ende);
+      if (endMs <= startMs) endMs += DAY_MS; // Nachtschicht über Mitternacht
+      return { startMs, endMs };
+    }
+
+    function worktimePauseRange(entry) {
+      if (!entry.pauseVon || !entry.pauseBis) return null;
+      const { startMs } = worktimeRange(entry);
+      let pVon = combineDateTime(entry.datum, entry.pauseVon);
+      let pBis = combineDateTime(entry.datum, entry.pauseBis);
+      if (pVon < startMs) pVon += DAY_MS;
+      if (pBis <= pVon) pBis += DAY_MS;
+      return { pVon, pBis };
+    }
+
+    function computeAutoPauseMinutes(bruttoMin) {
+      if (!settings.pauseAutoEnabled) return 0;
+      return settings.pauseRules.reduce((sum, r) => (bruttoMin >= r.stunden * 60 ? sum + (Number(r.minuten) || 0) : sum), 0);
+    }
+
+    function computeWorktimeStats(entry) {
+      const { startMs, endMs } = worktimeRange(entry);
+      const bruttoMin = Math.round((endMs - startMs) / 60000);
+      const manualPause = worktimePauseRange(entry);
+      const pauseManual = !!manualPause;
+      const pauseMin = pauseManual
+        ? Math.round((manualPause.pBis - manualPause.pVon) / 60000)
+        : computeAutoPauseMinutes(bruttoMin);
+      return { bruttoMin, pauseMin, pauseManual, nettoMin: Math.max(0, bruttoMin - pauseMin), startMs, endMs };
+    }
+
+    function compareWorkAsc(a, b) {
+      return (a.datum + a.beginn).localeCompare(b.datum + b.beginn);
+    }
+
+    function loadWorkEntries() {
+      const stored = localStorage.getItem(WORKTIME_KEY);
+      workTimeEntries = stored ? JSON.parse(stored) : [];
+    }
+
+    function saveWorkEntries() {
+      localStorage.setItem(WORKTIME_KEY, JSON.stringify(workTimeEntries));
+    }
+
+    function updateWorktimeFormText() {
+      const editing = editingWorkId !== null ? workTimeEntries.find((x) => x.id === editingWorkId) : null;
+      wtFormTitle.textContent = editing ? t("worktime.editTitle", { date: fmtDate(editing.datum) }) : t("worktime.formTitle");
+      wtSaveBtn.textContent = t(editing ? "common.update" : "common.save");
+      wtCancelBtn.hidden = !editing;
+    }
+
+    function resetWorktimeForm() {
+      worktimeForm.reset();
+      wtDatum.value = todayISO();
+      editingWorkId = null;
+      updateWorktimeFormText();
+    }
+
+    worktimeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (wtBeginn.value === wtEnde.value) {
+        showInfo(t("worktime.errorSameStartEnd"));
+        return;
+      }
+      if (!!wtPauseVon.value !== !!wtPauseBis.value) {
+        showInfo(t("worktime.errorBreakIncomplete"));
+        return;
+      }
+      if (wtPauseVon.value && wtPauseVon.value === wtPauseBis.value) {
+        showInfo(t("worktime.errorBreakSame"));
+        return;
+      }
+      const entry = {
+        id: editingWorkId ?? Date.now(),
+        datum: wtDatum.value,
+        beginn: wtBeginn.value,
+        ende: wtEnde.value,
+        pauseVon: wtPauseVon.value || null,
+        pauseBis: wtPauseBis.value || null,
+      };
+      const pause = worktimePauseRange(entry);
+      if (pause) {
+        const { startMs, endMs } = worktimeRange(entry);
+        if (pause.pVon < startMs || pause.pBis > endMs) {
+          showInfo(t("worktime.errorBreakOutside"));
+          return;
+        }
+      }
+
+      const save = () => {
+        const idx = workTimeEntries.findIndex((x) => x.id === entry.id);
+        if (idx >= 0) workTimeEntries[idx] = entry;
+        else workTimeEntries.push(entry);
+        saveWorkEntries();
+        resetWorktimeForm();
+        refreshAll();
+      };
+
+      if (entry.ende < entry.beginn) {
+        confirmAction(t("worktime.confirmNightShift", { end: entry.ende, start: entry.beginn }), t("common.save"), save);
+      } else {
+        save();
+      }
+    });
+
+    wtCancelBtn.addEventListener("click", resetWorktimeForm);
+
+    function editWorkEntry(id) {
+      const entry = workTimeEntries.find((x) => x.id === id);
+      if (!entry) return;
+      wtDatum.value = entry.datum;
+      wtBeginn.value = entry.beginn;
+      wtEnde.value = entry.ende;
+      wtPauseVon.value = entry.pauseVon || "";
+      wtPauseBis.value = entry.pauseBis || "";
+      editingWorkId = id;
+      updateWorktimeFormText();
+      worktimeForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function deleteWorkEntry(id) {
+      workTimeEntries = workTimeEntries.filter((x) => x.id !== id);
+      if (editingWorkId === id) resetWorktimeForm();
+      saveWorkEntries();
+      refreshAll();
+    }
+
+    function pauseTextFor(entry, stats) {
+      if (stats.pauseManual) return t("worktime.breakManual", { from: entry.pauseVon, to: entry.pauseBis });
+      if (stats.pauseMin > 0) return t("worktime.breakAuto", { duration: fmtDur(stats.pauseMin) });
+      return t("worktime.noBreak");
+    }
+
+    function buildWorkRow(entry) {
+      const stats = computeWorktimeStats(entry);
+      const title = fmtDateParts(dateFromISO(entry.datum), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+      const row = document.createElement("div");
+      row.className = "list-row";
+      row.innerHTML = `
+        <span class="row-accent work"></span>
+        <div class="list-row-main">
+          <div class="list-row-title">${esc(title)}</div>
+          <div class="list-row-meta">${esc(entry.beginn)}–${esc(entry.ende)} · ${esc(pauseTextFor(entry, stats))}</div>
+        </div>
+        <span class="list-row-value">${fmtDur(stats.nettoMin)}</span>
+        <button type="button" class="icon-btn" aria-label="${esc(t("worktime.editAria"))}">${icon("pencil")}</button>
+        <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("worktime.deleteAria"))}">${icon("trash")}</button>
+      `;
+      const [editBtn, deleteBtn] = row.querySelectorAll(".icon-btn");
+      editBtn.addEventListener("click", () => {
+        switchView("worktime");
+        editWorkEntry(entry.id);
+      });
+      deleteBtn.addEventListener("click", () =>
+        confirmAction(
+          t("worktime.confirmDelete", { date: fmtDate(entry.datum), from: entry.beginn, to: entry.ende }),
+          t("common.delete"),
+          () => deleteWorkEntry(entry.id)
+        )
+      );
+      return row;
+    }
+
+    function renderWorkEntries() {
+      const sorted = [...workTimeEntries].sort((a, b) => compareWorkAsc(b, a));
+      renderList(worktimeContainer, sorted, buildWorkRow, t("worktime.empty"));
+      renderWeekSummary();
+    }
+
+    function renderWeekSummary() {
+      const now = new Date();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const mondayISO = isoOf(monday);
+      const sundayISO = isoOf(sunday);
+
+      const nettoSum = workTimeEntries
+        .filter((e) => e.datum >= mondayISO && e.datum <= sundayISO)
+        .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
+      const sollMin = Math.round(settings.wochensollstunden * 60);
+      const diff = nettoSum - sollMin;
+
+      weekRange.textContent = new Intl.DateTimeFormat(intlLocale, { day: "2-digit", month: "2-digit", year: "numeric" }).formatRange(monday, sunday);
+      weekIst.textContent = fmtMin(nettoSum);
+      weekSoll.textContent = t("worktime.ofTarget", { target: fmtMin(sollMin) });
+      weekDelta.textContent = `${diff >= 0 ? "+" : ""}${fmtMin(diff)}`;
+      weekDelta.className = "chip " + (diff >= 0 ? "chip-ok" : "chip-warn");
+      weekProgress.max = Math.max(1, sollMin);
+      weekProgress.value = Math.min(nettoSum, sollMin);
+    }
+
+    // ========== Kalender ==========
+    function initCalendarState() {
+      const now = new Date();
+      calYear = now.getFullYear();
+      calMonth = now.getMonth();
+      calSelectedISO = todayISO();
+    }
+
+    // Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon"
+    function weekdayLabels() {
+      const monday = new Date(2024, 0, 1);
+      return Array.from({ length: 7 }, (_, i) =>
+        fmtDateParts(new Date(2024, 0, monday.getDate() + i), { weekday: "short" }).replace(/\.$/, "")
+      );
+    }
+
+    function renderCalendar() {
+      calLabel.textContent = fmtDateParts(new Date(calYear, calMonth, 1), { month: "long", year: "numeric" });
+      calWeekdays.innerHTML = weekdayLabels().map((l) => `<div class="cal-weekday">${esc(l)}</div>`).join("");
+
+      const startOffset = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Montag = 0
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const taskDates = new Set(window.timeEntries.map(taskDateISO));
+      const workDates = new Set(workTimeEntries.map((e) => e.datum));
+      const todayIso = todayISO();
+
+      let html = "<div></div>".repeat(startOffset);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(calYear, calMonth, day);
+        const iso = isoOf(date);
+        const classes = ["cal-cell"];
+        if (iso === todayIso) classes.push("today");
+        if (iso === calSelectedISO) classes.push("selected");
+        const label = fmtDateParts(date, { weekday: "long", day: "numeric", month: "long" });
+        html += `<button type="button" class="${classes.join(" ")}" data-date="${iso}" aria-label="${esc(label)}">
+          <span class="cal-num">${day}</span>
+          <span class="cal-dots">
+            ${taskDates.has(iso) ? '<span class="dot task"></span>' : ""}
+            ${workDates.has(iso) ? '<span class="dot work"></span>' : ""}
+          </span>
+        </button>`;
+      }
+      calGrid.innerHTML = html;
+      calGrid.querySelectorAll("[data-date]").forEach((cell) => {
+        cell.addEventListener("click", () => {
+          calSelectedISO = cell.dataset.date;
+          renderCalendar();
+        });
+      });
+
+      renderDayDetail();
+    }
+
+    function renderDayDetail() {
+      calDayDetail.innerHTML = "";
+      if (!calSelectedISO) return;
+
+      const dayTasks = window.timeEntries.filter((e) => taskDateISO(e) === calSelectedISO).sort((a, b) => a.stopMs - b.stopMs);
+      const dayWork = workTimeEntries.filter((e) => e.datum === calSelectedISO).sort(compareWorkAsc);
+      const title = fmtDateParts(dateFromISO(calSelectedISO), { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+
+      calDayDetail.insertAdjacentHTML("beforeend", `<div class="section-label"><span>${esc(title)}</span></div>`);
+      const container = document.createElement("div");
+      renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e) : buildTaskRow(e)), t("calendar.empty"));
+      calDayDetail.appendChild(container);
+    }
+
+    $("calPrevBtn").addEventListener("click", () => {
+      calMonth--;
+      if (calMonth < 0) {
+        calMonth = 11;
+        calYear--;
+      }
+      renderCalendar();
+    });
+    $("calNextBtn").addEventListener("click", () => {
+      calMonth++;
+      if (calMonth > 11) {
+        calMonth = 0;
+        calYear++;
+      }
+      renderCalendar();
+    });
+
+    // ========== PWA-Service-Worker ==========
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .catch((err) => console.warn("Service Worker Fehler:", err));
+    }
+  </script>
+</body>
+
+</html>

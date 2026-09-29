@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.0-beta
+**Version:** 1.0.1-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -44,7 +44,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Light, dark or system theme
 - German and English, following the device language by default
 - Weekly hours and work days (daily target is calculated)
-- CSV export for tasks and work time (separately)
+- Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice
 - Delete today's tasks, all tasks, work time older than 90 days, or reset everything (with a 5-second safety countdown)
 
 ## 📱 Installation
@@ -61,7 +61,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - All data is stored **only on your device** (browser `localStorage`). Nothing is sent to a server.
 - The app loads no external resources: no CDN, no fonts, no tracking.
 - Storage is limited by the browser to about 5 MB – enough for many years of entries. Current usage is shown under *Settings*.
-- **Clearing your browser data deletes all entries.** Use the CSV export as a backup.
+- **Clearing your browser data deletes all entries.** Use the Excel export as a backup.
 - Data is stored per browser and device and is not synced between devices.
 
 ## 🛠️ Development
@@ -91,8 +91,10 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `icon-*.png`, `apple-touch-icon.png` | App icons rendered from `icon.svg` (regular, Android maskable, iOS) |
 
 ### Releasing a new version
-- Update `APP_VERSION` in `index.html` (shown in the settings).
-- If you add, rename or remove files that must work offline, update `FILES_TO_CACHE` and increase `CACHE_NAME` in `service-worker.js`.
+- Increase the version with every release, e.g. `1.0.1-beta` → `1.0.2-beta`, in two places:
+  - `APP_VERSION` in `index.html` (shown in the settings)
+  - `VERSION` in `service-worker.js` (renews the offline cache so every device picks up the update)
+- If you add, rename or remove files that must work offline, also update `FILES_TO_CACHE` in `service-worker.js`.
 
 ## 🌍 Languages
 

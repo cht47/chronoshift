@@ -103,8 +103,8 @@
     "ruleRemove": "Remove rule",
     "ruleAdd": "+ Add rule",
     "export": "Export",
-    "exportTasks": "Export tasks as CSV",
-    "exportWork": "Export work time as CSV",
+    "exportTasks": "Export tasks as Excel file",
+    "exportWork": "Export work time as Excel file",
     "delete": "Delete",
     "deleteTodayTasks": "Delete today's tasks",
     "deleteAllTasks": "Delete all tasks",
@@ -125,10 +125,11 @@
     "resetConfirmLabel": "Delete everything",
     "exportDone": "Saved: {file} – you'll find it in your Downloads folder."
   },
-  "csv": {
-    "separator": ",",
-    "tasksFile": "chronoshift-tasks-{date}.csv",
-    "workFile": "chronoshift-worktime-{date}.csv",
+  "export": {
+    "tasksFile": "chronoshift-tasks-{date}.xlsx",
+    "workFile": "chronoshift-worktime-{date}.xlsx",
+    "tasksSheet": "Tasks",
+    "workSheet": "Work time",
     "task": "Task",
     "start": "Start",
     "stop": "Stop",

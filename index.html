@@ -408,6 +408,20 @@
       color: var(--c-danger);
     }
 
+    .action-row.accent,
+    .action-row.accent svg {
+      color: var(--pico-primary);
+    }
+
+    .action-row.accent .hint {
+      font-weight: 400;
+    }
+
+    /* Abstand zur Darstellung, wenn der Installations-Bereich darüber steht */
+    #installSection:not([hidden]) + .section-label {
+      margin-top: 1.5rem !important;
+    }
+
     /* ---------- Zeit erfassen ---------- */
     .timer-card {
       text-align: center;
@@ -809,6 +823,17 @@
 
     <!-- ===================== Einstellungen ===================== -->
     <section id="view-settings" hidden>
+      <!-- Nur sichtbar, solange die App nicht installiert ist und der Browser eine Installation anbietet -->
+      <div id="installSection" hidden>
+        <div class="section-label" style="margin-top: 0.5rem;"><span data-i18n="settings.app"></span></div>
+        <div class="list-group">
+          <button type="button" class="action-row accent" id="installBtn"><span data-icon="smartphone"></span><span>
+              <span data-i18n="settings.install"></span>
+              <small class="hint" data-i18n="settings.installHint"></small>
+            </span></button>
+        </div>
+      </div>
+
       <div class="section-label" style="margin-top: 0.5rem;"><span data-i18n="settings.appearance"></span></div>
       <div class="card">
         <div class="segmented" role="group" data-i18n-aria="settings.theme" id="themeSwitch">
@@ -1008,6 +1033,7 @@
       alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
       hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
       check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      smartphone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
     };
 
     function icon(name) {
@@ -1375,6 +1401,45 @@
       });
     }
 
+    // ----- Installation -----
+    // Chrome, Edge und Samsung Internet bieten beforeinstallprompt; Safari auf iOS hat keine API, dort nur eine Anleitung
+    let deferredInstallPrompt = null;
+    const installSection = $("installSection");
+
+    function isStandalone() {
+      return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    }
+
+    function isIos() {
+      return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function updateInstallUi() {
+      installSection.hidden = isStandalone() || !(deferredInstallPrompt || isIos());
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      deferredInstallPrompt = e;
+      updateInstallUi();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallUi();
+    });
+
+    $("installBtn").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        showInfo(t("settings.installIos"));
+        return;
+      }
+      const installPrompt = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      updateInstallUi();
+    });
+
     // ----- Darstellung -----
     const themeButtons = document.querySelectorAll("#themeSwitch button");
     const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1400,6 +1465,7 @@
     });
 
     function renderSettingsForm() {
+      updateInstallUi();
       renderLanguageSelect();
       setWochensoll.value = settings.wochensollstunden;
       setArbeitstage.value = settings.arbeitstage;

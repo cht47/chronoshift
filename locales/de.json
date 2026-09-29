@@ -70,6 +70,10 @@
     "empty": "Keine Einträge an diesem Tag."
   },
   "settings": {
+    "app": "App",
+    "install": "App installieren",
+    "installHint": "Auf dem Startbildschirm, auch offline nutzbar",
+    "installIos": "Tippe in Safari unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) und dann auf „Zum Home-Bildschirm“.",
     "appearance": "Darstellung",
     "theme": "Design",
     "themeSystem": "System",

@@ -70,6 +70,10 @@
     "empty": "No entries on this day."
   },
   "settings": {
+    "app": "App",
+    "install": "Install app",
+    "installHint": "On your home screen, works offline",
+    "installIos": "In Safari, tap the Share button at the bottom (square with an arrow pointing up) and then “Add to Home Screen”.",
     "appearance": "Appearance",
     "theme": "Theme",
     "themeSystem": "System",

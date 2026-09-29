@@ -122,6 +122,26 @@
     "noOldWork": "No work time entries older than {days} days.",
     "confirmDeleteOld": "Delete {count} work time entry/entries before {date}?",
     "confirmReset": "Really delete ALL data? Tasks, work time, the running timer and settings will be permanently removed.",
-    "resetConfirmLabel": "Delete everything"
+    "resetConfirmLabel": "Delete everything",
+    "exportDone": "Saved: {file} – you'll find it in your Downloads folder."
+  },
+  "csv": {
+    "separator": ",",
+    "tasksFile": "chronoshift-tasks-{date}.csv",
+    "workFile": "chronoshift-worktime-{date}.csv",
+    "task": "Task",
+    "start": "Start",
+    "stop": "Stop",
+    "minutes": "Minutes",
+    "date": "Date",
+    "workStart": "Start",
+    "workEnd": "End",
+    "breakFrom": "Break from",
+    "breakTo": "Break until",
+    "breakMinutes": "Break (minutes)",
+    "breakType": "Break type",
+    "netMinutes": "Net (minutes)",
+    "breakManual": "manual",
+    "breakAuto": "automatic"
   }
 }

@@ -170,6 +170,24 @@
       outline: 2px solid var(--pico-primary);
     }
 
+    /* ---------- Toast ---------- */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 0.75rem);
+      transform: translateX(-50%);
+      z-index: 20;
+      width: max-content;
+      max-width: min(calc(100vw - 2rem), 36rem);
+      padding: 0.7rem 1rem;
+      border-radius: 0.75rem;
+      background: var(--pico-contrast-background);
+      color: var(--pico-contrast-inverse);
+      font-size: 0.88rem;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+      overflow-wrap: anywhere;
+    }
+
     /* ---------- Bausteine ---------- */
     .card {
       background: var(--pico-card-background-color);
@@ -950,6 +968,9 @@
     </div>
   </nav>
 
+  <!-- Kurze Rückmeldung, blendet sich selbst aus -->
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+
   <!-- Modal: allgemeiner Hinweis -->
   <dialog id="infoModal">
     <article>
@@ -1303,12 +1324,22 @@
       return min < 60 ? `${min} min` : fmtMin(min);
     }
 
+    // Trennzeichen kommt aus der Sprachdatei: deutsches Excel erwartet ";" statt ","
     function csvRow(fields) {
-      return fields.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",") + "\n";
+      return fields.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(t("csv.separator")) + "\r\n";
+    }
+
+    function fmtCsvDate(date) {
+      return fmtDateParts(date, { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function fmtCsvDateTime(ms) {
+      return `${fmtCsvDate(new Date(ms))} ${clockOf(ms)}`;
     }
 
     function downloadCSV(csv, filename) {
-      const blob = new Blob([csv], { type: "text/csv" });
+      // BOM, damit Excel die Datei als UTF-8 erkennt und Umlaute korrekt anzeigt
+      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1317,6 +1348,8 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      // Mobile Browser zeigen beim Download kaum Rückmeldung, besonders in der installierten App
+      showToast(t("data.exportDone", { file: filename }));
     }
 
     function renderList(container, entries, builder, emptyText) {
@@ -1338,6 +1371,16 @@
     }
 
     $("infoModalOkBtn").addEventListener("click", () => infoModal.close());
+
+    let toastTimer = null;
+
+    function showToast(msg) {
+      const toast = $("toast");
+      toast.textContent = msg;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => (toast.hidden = true), 5000);
+    }
 
     let confirmCallback = null;
     let confirmTimer = null;
@@ -1577,17 +1620,19 @@
       renderWorkEntries();
     });
 
-    // ----- Daten: Export (Spalten und Formate bleiben sprachunabhängig) -----
+    // ----- Daten: Export -----
     $("exportTasksBtn").addEventListener("click", () => {
       if (!window.timeEntries.length) {
         showInfo(t("data.noTasksToExport"));
         return;
       }
-      let csv = csvRow(["Ticket/Task", "Start", "Stop", "Duration(min)"]);
-      window.timeEntries.forEach((e) => {
-        csv += csvRow([e.task, e.startStr, e.stopStr, e.durationMin]);
+      let csv = csvRow([t("csv.task"), t("csv.start"), t("csv.stop"), t("csv.minutes")]);
+      [...window.timeEntries].sort((a, b) => a.stopMs - b.stopMs).forEach((e) => {
+        // Alte Einträge ohne startMs behalten ihren gespeicherten Starttext
+        const start = e.startMs ? fmtCsvDateTime(e.startMs) : e.startStr;
+        csv += csvRow([e.task, start, fmtCsvDateTime(e.stopMs), e.durationMin]);
       });
-      downloadCSV(csv, "tasks.csv");
+      downloadCSV(csv, t("csv.tasksFile", { date: todayISO() }));
     });
 
     $("exportWorkBtn").addEventListener("click", () => {
@@ -1595,12 +1640,16 @@
         showInfo(t("data.noWorkToExport"));
         return;
       }
-      let csv = csvRow(["Datum", "Beginn", "Ende", "PauseVon", "PauseBis", "PauseMinuten", "PauseArt", "NettoMinuten"]);
+      let csv = csvRow([
+        t("csv.date"), t("csv.workStart"), t("csv.workEnd"), t("csv.breakFrom"), t("csv.breakTo"),
+        t("csv.breakMinutes"), t("csv.breakType"), t("csv.netMinutes"),
+      ]);
       [...workTimeEntries].sort(compareWorkAsc).forEach((e) => {
         const s = computeWorktimeStats(e);
-        csv += csvRow([e.datum, e.beginn, e.ende, e.pauseVon, e.pauseBis, s.pauseMin, s.pauseManual ? "manuell" : "automatisch", s.nettoMin]);
+        const breakType = s.pauseManual ? t("csv.breakManual") : s.pauseMin > 0 ? t("csv.breakAuto") : "";
+        csv += csvRow([fmtCsvDate(dateFromISO(e.datum)), e.beginn, e.ende, e.pauseVon, e.pauseBis, s.pauseMin, breakType, s.nettoMin]);
       });
-      downloadCSV(csv, "arbeitszeit.csv");
+      downloadCSV(csv, t("csv.workFile", { date: todayISO() }));
     });
 
     // ----- Daten: Löschen -----

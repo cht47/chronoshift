@@ -122,6 +122,26 @@
     "noOldWork": "Keine Arbeitszeiten älter als {days} Tage vorhanden.",
     "confirmDeleteOld": "{count} Arbeitszeit-Eintrag/Einträge vor dem {date} löschen?",
     "confirmReset": "Wirklich ALLE Daten löschen? Tasks, Arbeitszeiten, laufender Timer und Einstellungen werden unwiderruflich entfernt.",
-    "resetConfirmLabel": "Alles löschen"
+    "resetConfirmLabel": "Alles löschen",
+    "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner."
+  },
+  "csv": {
+    "separator": ";",
+    "tasksFile": "chronoshift-tasks-{date}.csv",
+    "workFile": "chronoshift-arbeitszeit-{date}.csv",
+    "task": "Task",
+    "start": "Start",
+    "stop": "Stopp",
+    "minutes": "Minuten",
+    "date": "Datum",
+    "workStart": "Beginn",
+    "workEnd": "Ende",
+    "breakFrom": "Pause von",
+    "breakTo": "Pause bis",
+    "breakMinutes": "Pause (Minuten)",
+    "breakType": "Pausenart",
+    "netMinutes": "Netto (Minuten)",
+    "breakManual": "manuell",
+    "breakAuto": "automatisch"
   }
 }

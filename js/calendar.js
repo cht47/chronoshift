@@ -35,6 +35,8 @@ export function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const taskDates = new Set(state.tasks.map(taskDateISO));
   const workDates = new Set(state.work.map((e) => e.datum));
+  const overlaps = overlappingWorkIds(state.work);
+  const overlapDates = new Set(state.work.filter((e) => overlaps.has(e.id)).map((e) => e.datum));
   const todayIso = todayISO();
 
   let html = "<div></div>".repeat(startOffset);
@@ -50,6 +52,7 @@ export function renderCalendar() {
       <span class="cal-dots">
         ${taskDates.has(iso) ? '<span class="dot task"></span>' : ""}
         ${workDates.has(iso) ? '<span class="dot work"></span>' : ""}
+        ${overlapDates.has(iso) ? '<span class="dot overlap"></span>' : ""}
       </span>
     </button>`;
   }

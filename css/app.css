@@ -350,6 +350,10 @@ button.btn-danger {
   background: var(--c-work);
 }
 
+.dot.overlap {
+  background: var(--c-danger);
+}
+
 .list-row-main {
   flex: 1;
   min-width: 0;

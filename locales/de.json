@@ -68,7 +68,8 @@
   "calendar": {
     "prev": "Vorheriger Monat",
     "next": "Nächster Monat",
-    "empty": "Keine Einträge an diesem Tag."
+    "empty": "Keine Einträge an diesem Tag.",
+    "overlap": "Überschneidung"
   },
   "settings": {
     "app": "App",

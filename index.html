@@ -196,7 +196,7 @@
         </div>
       </div>
 
-      <div class="section-label"><span data-i18n="backup.title"></span></div>
+      <div class="section-label"><span data-i18n="backup.localTitle"></span></div>
       <div class="list-group">
         <button type="button" class="action-row" id="backupCreateBtn"><span data-icon="save"></span><span
             data-i18n="backup.create"></span></button>
@@ -206,6 +206,29 @@
       <p class="hint" id="backupInfo" style="margin: 0.5rem 0.25rem 0;"></p>
       <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
       <input type="file" id="backupFileInput" hidden />
+
+      <div class="section-label"><span data-i18n="backup.cloudTitle"></span></div>
+      <div class="card">
+        <label>
+          <input type="checkbox" id="setGdrive" role="switch" />
+          <span data-i18n="backup.gdriveEnable"></span>
+        </label>
+        <small class="hint" data-i18n="backup.gdriveHint"></small>
+        <small class="hint" style="margin-top: 0.5rem;"><span data-i18n="backup.gdrivePrivacy"></span>
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
+            data-i18n="backup.gdrivePrivacyLink"></a></small>
+      </div>
+      <div id="gdriveActions" hidden>
+        <div class="list-group">
+          <button type="button" class="action-row" id="gdriveSaveBtn"><span data-icon="cloudUpload"></span><span
+              data-i18n="backup.cloudSave"></span></button>
+          <button type="button" class="action-row" id="gdriveRestoreBtn"><span data-icon="cloudDownload"></span><span
+              data-i18n="backup.cloudRestore"></span></button>
+          <button type="button" class="action-row danger" id="gdriveDeleteBtn"><span data-icon="trash"></span><span
+              data-i18n="backup.cloudDelete"></span></button>
+        </div>
+        <p class="hint" id="gdriveInfo" style="margin: 0.5rem 0.25rem 0;"></p>
+      </div>
 
       <div class="section-label"><span data-i18n="settings.export"></span></div>
       <div class="list-group">
@@ -232,7 +255,8 @@
         <div>© <span id="copyrightYears"></span> Daniel Herbst · <a href="https://github.com/cht47/chronoshift/blob/main/LICENSE"
             target="_blank" rel="noopener">MIT + Commons Clause</a></div>
         <div><span id="appVersion"></span> · <a href="https://github.com/cht47/chronoshift" target="_blank"
-            rel="noopener">GitHub</a></div>
+            rel="noopener">GitHub</a> · <a href="privacy.html" target="_blank" rel="noopener"
+            data-i18n="settings.privacy"></a></div>
       </div>
     </section>
   </main>
@@ -282,6 +306,20 @@
       <footer>
         <button class="secondary" id="backupReminderLaterBtn" data-i18n="backup.reminderLater"></button>
         <button id="backupReminderSaveBtn" data-i18n="backup.reminderSave"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <!-- Modal: Auswahl eines Cloud-Backups -->
+  <dialog id="cloudRestoreModal">
+    <article>
+      <header>
+        <h3 data-i18n="backup.cloudRestore"></h3>
+      </header>
+      <p data-i18n="backup.cloudChoose"></p>
+      <div class="list-group dialog-list" id="cloudRestoreList"></div>
+      <footer>
+        <button class="secondary" id="cloudRestoreCancelBtn" data-i18n="common.cancel"></button>
       </footer>
     </article>
   </dialog>

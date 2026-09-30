@@ -204,6 +204,13 @@ dialog > article > footer button:not(:first-of-type) {
   margin-left: 0;
 }
 
+/* Auswahlliste im Dialog, scrollt bei vielen Einträgen */
+.dialog-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 1.25rem;
+}
+
 /* Dialog mit großem Symbol oben (z. B. Backup-Erinnerung): zentriert */
 dialog > article:has(.dialog-icon) > :is(header, p) {
   text-align: center;

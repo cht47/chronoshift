@@ -112,7 +112,8 @@
     "deleteAllTasks": "Alle Tasks löschen",
     "deleteOldWork": "Arbeitszeiten älter als {days} Tage löschen",
     "resetAll": "Alle Daten zurücksetzen",
-    "storage": "Speicher: ca. {size} KB von ca. 5 MB · {tasks} Tasks · {work} Arbeitszeiten"
+    "storage": "Speicher: ca. {size} KB von ca. 5 MB · {tasks} Tasks · {work} Arbeitszeiten",
+    "privacy": "Datenschutz"
   },
   "data": {
     "noTasksToExport": "Es gibt keine Task-Einträge zum Exportieren!",
@@ -128,7 +129,6 @@
     "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner."
   },
   "backup": {
-    "title": "Backup",
     "create": "Backup erstellen",
     "restore": "Backup wiederherstellen",
     "file": "chronoshift-backup-{date}.json",
@@ -142,7 +142,29 @@
     "reminderLater": "Später",
     "reminderSave": "Jetzt sichern",
     "reminderStale": "Deine letzte Sicherung ist vom {date}. Erstelle eine neue, damit keine Daten verloren gehen.",
-    "reminderNever": "Du hast noch kein Backup erstellt. Sichere deine Daten, damit sie bei einem Gerätewechsel oder gelöschten Browserdaten nicht verloren gehen."
+    "reminderNever": "Du hast noch kein Backup erstellt. Sichere deine Daten, damit sie bei einem Gerätewechsel oder gelöschten Browserdaten nicht verloren gehen.",
+    "localTitle": "Lokales Backup",
+    "cloudTitle": "Cloud-Backup",
+    "gdriveEnable": "Google Drive verwenden",
+    "gdriveHint": "Speichert Backups in deinem Google Drive. Nur ChronoShift kann sie lesen, die letzten 10 bleiben erhalten.",
+    "cloudSave": "In Google Drive sichern",
+    "cloudRestore": "Aus Google Drive wiederherstellen",
+    "cloudDelete": "Backups in Google Drive löschen",
+    "cloudChoose": "Welches Backup soll wiederhergestellt werden?",
+    "cloudSaving": "Wird in Google Drive gesichert …",
+    "cloudSaved": "In Google Drive gesichert.",
+    "cloudEmpty": "In Google Drive gibt es noch keine Backups.",
+    "cloudConfirmDelete": "Alle Backups von ChronoShift in deinem Google Drive endgültig löschen? Die Daten auf diesem Gerät bleiben erhalten.",
+    "cloudDeleteLabel": "Löschen",
+    "cloudDeleted": "{count} Backup(s) in Google Drive gelöscht.",
+    "cloudCancelled": "Die Anmeldung bei Google wurde abgebrochen.",
+    "cloudError": "Google Drive ist gerade nicht erreichbar. Bitte prüfe die Internetverbindung und versuche es erneut.",
+    "cloudPopupBlocked": "Das Fenster für die Google-Anmeldung wurde blockiert. Bitte erlaube Popups für diese Seite und versuche es erneut.",
+    "gdrivePrivacy": "Datenschutz: Erst wenn du auf einen der Buttons tippst, verbindet sich die App mit Google (Google Ireland Ltd.). Dabei werden deine IP-Adresse und das Backup übertragen. Google kann Daten auch in den USA verarbeiten (EU-US Data Privacy Framework).",
+    "gdrivePrivacyLink": "Datenschutzerklärung von Google",
+    "cloudRetry": "Die Google-Anmeldung ist jetzt bereit. Bitte tippe noch einmal.",
+    "cloudLast": "Letzte Sicherung in Google Drive: {date}",
+    "cloudLastNever": "Noch keine Sicherung in Google Drive."
   },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",

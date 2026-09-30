@@ -8,8 +8,17 @@ export const TIMER_STATE_KEY = "chronoshift.timer";
 export const WORKTIME_KEY = "chronoshift.worktime";
 export const SETTINGS_KEY = "chronoshift.settings";
 export const LAST_BACKUP_KEY = "chronoshift.lastBackup";
+export const LAST_CLOUD_BACKUP_KEY = "chronoshift.lastCloudBackup";
 export const NEXT_REMINDER_KEY = "chronoshift.nextBackupReminder";
-export const ALL_KEYS = [STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY, SETTINGS_KEY, LAST_BACKUP_KEY, NEXT_REMINDER_KEY];
+export const ALL_KEYS = [
+  STORAGE_KEY,
+  TIMER_STATE_KEY,
+  WORKTIME_KEY,
+  SETTINGS_KEY,
+  LAST_BACKUP_KEY,
+  LAST_CLOUD_BACKUP_KEY,
+  NEXT_REMINDER_KEY,
+];
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const WORKTIME_RETENTION_DAYS = 90;
@@ -34,6 +43,7 @@ export const DEFAULT_SETTINGS = {
   ],
   theme: "system",
   language: "system",
+  gdriveEnabled: false,
 };
 
 export const VIEWS = ["tasks", "worktime", "calendar", "settings"];

@@ -46,6 +46,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - German and English, following the device language by default
 - Weekly hours and work days (daily target is calculated)
 - Backup and restore of all tasks, work time and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
+- Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept
 - Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice
 - Delete today's tasks, all tasks, work time older than 90 days, or reset everything (with a 5-second safety countdown)
 
@@ -61,11 +62,12 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ## 🔒 Data & privacy
 
 - All data is stored **only on your device** (browser `localStorage`). Nothing is sent to a server.
-- The app loads no external resources: no CDN, no fonts, no tracking.
+- The app loads no external resources: no CDN, no fonts, no tracking. The only exception is the optional Google Drive backup: the app connects to Google only when you tap one of its buttons.
 - Storage is limited by the browser to about 5 MB – enough for many years of entries. Current usage is shown under *Settings*.
 - **Clearing your browser data deletes all entries.** Create a backup under *Settings → Backup* regularly; it can be restored on any device. A task that is currently running is not part of the backup.
 - The app asks the browser to keep its data even when storage runs low (persistent storage).
 - Data is stored per browser and device and is not synced between devices.
+- Full privacy policy: https://cht47.github.io/chronoshift/privacy.html
 
 ## 🛠️ Development
 
@@ -92,11 +94,13 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/state.js`, `js/storage.js` | Shared app state and loading/saving in `localStorage` |
 | `js/tasks.js`, `js/worktime.js`, `js/calendar.js`, `js/settings.js`, `js/data.js` | One module per area of the app |
 | `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
+| `js/gdrive.js` | Google Drive cloud backup (sign-in and Drive API, loaded only when used) |
 | `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |
 | `locales/*.json` | UI texts per language |
 | `pico.min.css` | [Pico CSS](https://picocss.com) v2.0.6, bundled locally |
 | `service-worker.js` | Offline support (network first, cache as fallback) |
 | `manifest.json` | PWA manifest |
+| `privacy.html` | Privacy policy (German and English) |
 | `icon.svg` | App icon source, also used as favicon |
 | `icon-*.png`, `apple-touch-icon.png` | App icons rendered from `icon.svg` (regular, Android maskable, iOS) |
 
@@ -127,8 +131,6 @@ ChronoShift is source-available under the MIT License with the Commons Clause (s
 
 - ✅ Free to use, modify and share – privately and within companies
 - ❌ Selling the software, or paid services based on it (e.g. hosting, customization, support), is not permitted
-
-For commercial licensing or custom versions, please contact the author.
 
 Third-party components (Pico CSS, Lucide icons) keep their own licenses, see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
 

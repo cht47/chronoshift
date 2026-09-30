@@ -5,12 +5,14 @@ const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
+  "./privacy.html",
   "./pico.min.css",
   "./css/app.css",
   "./js/app.js",
   "./js/calendar.js",
   "./js/config.js",
   "./js/data.js",
+  "./js/gdrive.js",
   "./js/i18n.js",
   "./js/icons.js",
   "./js/rest.js",
@@ -52,12 +54,12 @@ self.addEventListener("activate", (evt) => {
 // Network-first: online immer die aktuelle Version, offline aus dem Cache
 self.addEventListener("fetch", (evt) => {
   if (evt.request.method !== "GET") return;
+  // Fremde Adressen (Google-Anmeldung, Drive-API) gehen unverändert ans Netz und landen nie im Offline-Cache
+  if (new URL(evt.request.url).origin !== self.location.origin) return;
   // GitHub Pages erlaubt dem Browser 10 Minuten HTTP-Cache; "no-cache" fragt trotzdem beim Server nach (meist nur 304).
   // Eigene Request über die URL, weil sich Navigations-Requests nicht mit neuen Optionen kopieren lassen.
-  const sameOrigin = new URL(evt.request.url).origin === self.location.origin;
-  const request = sameOrigin ? new Request(evt.request.url, { cache: "no-cache" }) : evt.request;
   evt.respondWith(
-    fetch(request)
+    fetch(new Request(evt.request.url, { cache: "no-cache" }))
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();

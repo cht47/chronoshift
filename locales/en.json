@@ -112,7 +112,8 @@
     "deleteAllTasks": "Delete all tasks",
     "deleteOldWork": "Delete work time older than {days} days",
     "resetAll": "Reset all data",
-    "storage": "Storage: approx. {size} KB of approx. 5 MB · {tasks} tasks · {work} work time entries"
+    "storage": "Storage: approx. {size} KB of approx. 5 MB · {tasks} tasks · {work} work time entries",
+    "privacy": "Privacy"
   },
   "data": {
     "noTasksToExport": "There are no tasks to export.",
@@ -128,7 +129,6 @@
     "exportDone": "Saved: {file} – you'll find it in your Downloads folder."
   },
   "backup": {
-    "title": "Backup",
     "create": "Create backup",
     "restore": "Restore backup",
     "file": "chronoshift-backup-{date}.json",
@@ -142,7 +142,29 @@
     "reminderLater": "Later",
     "reminderSave": "Back up now",
     "reminderStale": "Your last backup is from {date}. Create a new one so no data gets lost.",
-    "reminderNever": "You haven't created a backup yet. Save your data so it isn't lost when you switch devices or clear your browser data."
+    "reminderNever": "You haven't created a backup yet. Save your data so it isn't lost when you switch devices or clear your browser data.",
+    "localTitle": "Local backup",
+    "cloudTitle": "Cloud backup",
+    "gdriveEnable": "Use Google Drive",
+    "gdriveHint": "Stores backups in your Google Drive. Only ChronoShift can read them, the latest 10 are kept.",
+    "cloudSave": "Save to Google Drive",
+    "cloudRestore": "Restore from Google Drive",
+    "cloudDelete": "Delete backups in Google Drive",
+    "cloudChoose": "Which backup do you want to restore?",
+    "cloudSaving": "Saving to Google Drive …",
+    "cloudSaved": "Saved to Google Drive.",
+    "cloudEmpty": "There are no backups in Google Drive yet.",
+    "cloudConfirmDelete": "Permanently delete all ChronoShift backups in your Google Drive? The data on this device stays untouched.",
+    "cloudDeleteLabel": "Delete",
+    "cloudDeleted": "{count} backup(s) deleted from Google Drive.",
+    "cloudCancelled": "Google sign-in was cancelled.",
+    "cloudError": "Google Drive is not reachable right now. Please check your internet connection and try again.",
+    "cloudPopupBlocked": "The Google sign-in window was blocked. Please allow pop-ups for this site and try again.",
+    "gdrivePrivacy": "Privacy: The app only connects to Google (Google Ireland Ltd.) when you tap one of the buttons. Your IP address and the backup are transferred. Google may also process data in the USA (EU-US Data Privacy Framework).",
+    "gdrivePrivacyLink": "Google Privacy Policy",
+    "cloudRetry": "Google sign-in is ready now. Please tap again.",
+    "cloudLast": "Last backup in Google Drive: {date}",
+    "cloudLastNever": "No backup in Google Drive yet."
   },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",

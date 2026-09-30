@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>ChronoShift – Datenschutz / Privacy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="pico.min.css" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <!-- Gleiches Design wie in der App eingestellt -->
+  <script>
+    try {
+      const theme = JSON.parse(localStorage.getItem("chronoshift.settings") || "{}").theme || "system";
+      if (theme !== "system") document.documentElement.setAttribute("data-theme", theme);
+    } catch (e) { }
+  </script>
+  <style>
+    main {
+      max-width: 44rem;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.25rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      margin-top: 2.5rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.75rem 0 0.5rem;
+    }
+
+    .muted {
+      color: var(--pico-muted-color);
+      font-size: 0.9rem;
+    }
+
+    hr {
+      margin: 3rem 0 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>ChronoShift</h1>
+    <p class="muted"><a href="#de">Deutsch</a> · <a href="#en">English</a> · <a href="./">Zur App / Open the app</a></p>
+
+    <!-- ===================== Deutsch ===================== -->
+    <section id="de" lang="de">
+      <h2>Datenschutzerklärung</h2>
+      <p class="muted">Stand: 30.09.2026</p>
+
+      <h3>Verantwortlich</h3>
+      <p>Daniel Herbst<br />E-Mail: <a href="mailto:chronoshift-support@googlegroups.com">chronoshift-support@googlegroups.com</a></p>
+
+      <h3>Grundsatz: Deine Daten bleiben auf deinem Gerät</h3>
+      <p>ChronoShift speichert alle Einträge (Tasks, Arbeitszeiten) und Einstellungen ausschließlich lokal im Speicher
+        deines Browsers auf deinem Gerät. Es gibt kein Benutzerkonto, keinen eigenen Server, keine Analyse- oder
+        Tracking-Dienste, keine Werbung und keine Cookies. Der Entwickler hat keinen Zugriff auf deine Daten.</p>
+      <p>Lokale Backups und Excel-Exporte werden als Datei auf deinem Gerät gespeichert. Was du mit diesen Dateien
+        machst, liegt bei dir.</p>
+
+      <h3>Bereitstellung über GitHub Pages</h3>
+      <p>Die App wird über GitHub Pages bereitgestellt, einen Dienst der GitHub, Inc., 88 Colin P. Kelly Jr. Street,
+        San Francisco, CA 94107, USA. Beim Aufruf der App und beim Laden von Updates verarbeitet GitHub technisch
+        notwendige Daten, insbesondere deine IP-Adresse, um die Seite auszuliefern und die Sicherheit des Dienstes zu
+        gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren und
+        funktionsfähigen Bereitstellung). Details: <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement"
+          target="_blank" rel="noopener">Datenschutzerklärung von GitHub</a>.</p>
+      <p>Nach der Installation funktioniert die App auch offline; eine Verbindung zu GitHub besteht dann nur, um nach
+        Updates zu suchen.</p>
+
+      <h3>Cloud-Backup mit Google Drive (optional)</h3>
+      <p>Wenn du in den Einstellungen „Google Drive verwenden“ einschaltest und auf einen der Cloud-Buttons tippst,
+        verbindet sich die App mit Google. Anbieter ist die Google Ireland Limited, Gordon House, Barrow Street,
+        Dublin 4, Irland. Ohne dieses Tippen findet keine Verbindung zu Google statt.</p>
+      <p>Dabei werden übertragen: deine IP-Adresse, die Anmeldung mit deinem Google-Konto und der Inhalt des Backups
+        (Tasks, Arbeitszeiten und Einstellungen). Die Backups liegen in einem eigenen App-Ordner in deinem Google
+        Drive, auf den nur ChronoShift zugreifen kann. Der Entwickler hat keinen Zugriff auf dein Google-Konto oder
+        deine Backups. Die App bewahrt die letzten 10 Backups auf und löscht ältere automatisch.</p>
+      <p>Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du im Anmeldefenster von Google
+        erteilst. Du kannst sie jederzeit widerrufen, indem du den Zugriff in deinem Google-Konto unter
+        <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener">Drittanbieter-Apps und -Dienste</a>
+        entfernst. Deine Backups löschst du in der App über „Backups in Google Drive löschen“.</p>
+      <p>Google kann Daten auch in den USA verarbeiten. Google ist nach dem EU-US Data Privacy Framework zertifiziert,
+        für das ein Angemessenheitsbeschluss der EU-Kommission besteht. Details:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Google</a>.</p>
+      <p>Die Nutzung von Informationen, die ChronoShift über Google-APIs erhält, entspricht der
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>,
+        einschließlich der Anforderungen zur eingeschränkten Nutzung (Limited Use).</p>
+
+      <h3>Deine Rechte</h3>
+      <p>Da deine Daten nur auf deinem Gerät und gegebenenfalls in deinem eigenen Google Drive liegen, hast du selbst
+        die volle Kontrolle: Du kannst sie in der App jederzeit einsehen, exportieren und löschen („Alle Daten
+        zurücksetzen“, „Backups in Google Drive löschen“). Unabhängig davon hast du nach der DSGVO das Recht auf
+        Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie
+        das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde. Bei Fragen erreichst du mich unter der oben
+        genannten E-Mail-Adresse.</p>
+    </section>
+
+    <hr />
+
+    <!-- ===================== English ===================== -->
+    <section id="en" lang="en">
+      <h2>Privacy Policy</h2>
+      <p class="muted">Last updated: September 30, 2026</p>
+
+      <h3>Controller</h3>
+      <p>Daniel Herbst<br />Email: <a href="mailto:chronoshift-support@googlegroups.com">chronoshift-support@googlegroups.com</a></p>
+
+      <h3>Principle: your data stays on your device</h3>
+      <p>ChronoShift stores all entries (tasks, work time) and settings only locally in your browser's storage on your
+        device. There is no user account, no own server, no analytics or tracking services, no advertising and no
+        cookies. The developer has no access to your data.</p>
+      <p>Local backups and Excel exports are saved as files on your device. What you do with these files is up to
+        you.</p>
+
+      <h3>Hosting on GitHub Pages</h3>
+      <p>The app is served via GitHub Pages, a service of GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco,
+        CA 94107, USA. When you open the app or it loads updates, GitHub processes technically necessary data, in
+        particular your IP address, to deliver the page and keep the service secure. The legal basis is Art. 6(1)(f)
+        GDPR (legitimate interest in secure and reliable delivery). Details:
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+          target="_blank" rel="noopener">GitHub Privacy Statement</a>.</p>
+      <p>Once installed, the app also works offline; it only connects to GitHub to check for updates.</p>
+
+      <h3>Cloud backup with Google Drive (optional)</h3>
+      <p>If you turn on "Use Google Drive" in the settings and tap one of the cloud buttons, the app connects to Google.
+        The provider is Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland. Without such a tap,
+        the app does not connect to Google.</p>
+      <p>The following is transferred: your IP address, the sign-in with your Google account and the content of the
+        backup (tasks, work time and settings). Backups are stored in a dedicated app folder in your Google Drive that
+        only ChronoShift can access. The developer has no access to your Google account or your backups. The app keeps
+        the latest 10 backups and deletes older ones automatically.</p>
+      <p>The legal basis is your consent (Art. 6(1)(a) GDPR), which you give in Google's sign-in window. You can
+        withdraw it at any time by removing access in your Google account under
+        <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener">Third-party apps &amp; services</a>.
+        You can delete your backups in the app via "Delete backups in Google Drive".</p>
+      <p>Google may also process data in the USA. Google is certified under the EU-US Data Privacy Framework, which is
+        covered by an adequacy decision of the European Commission. Details:
+        <a href="https://policies.google.com/privacy?hl=en" target="_blank" rel="noopener">Google Privacy Policy</a>.</p>
+      <p>ChronoShift's use of information received from Google APIs will adhere to the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>,
+        including the Limited Use requirements.</p>
+
+      <h3>Your rights</h3>
+      <p>Since your data is stored only on your device and, if you choose, in your own Google Drive, you are in full
+        control: you can view, export and delete it in the app at any time ("Reset all data", "Delete backups in Google
+        Drive"). In addition, under the GDPR you have the right of access, rectification, erasure, restriction of
+        processing, data portability and objection, as well as the right to lodge a complaint with a data protection
+        supervisory authority. If you have any questions, you can reach me at the email address above.</p>
+    </section>
+  </main>
+</body>
+
+</html>

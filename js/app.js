@@ -1,6 +1,6 @@
 import { APP_VERSION, FIRST_YEAR, VIEWS } from "./config.js";
 import { renderCalendar, initCalendarState } from "./calendar.js";
-import { checkBackupReminder, showRestoreResult, updateBackupInfo } from "./data.js";
+import { checkBackupReminder, initCloudBackup, showRestoreResult, updateBackupInfo } from "./data.js";
 import { applyI18n, loadLocale, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
@@ -60,6 +60,7 @@ async function init() {
   resetWorktimeForm();
   initCalendarState();
   renderSettingsForm();
+  initCloudBackup();
   refreshAll();
   setInterval(updateRestUi, 60000);
   switchView("tasks");

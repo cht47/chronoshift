@@ -1,20 +1,25 @@
 import { refreshAll } from "./app.js";
 import { APP_VERSION, DAY_MS, WORKTIME_RETENTION_DAYS } from "./config.js";
-import { fmtDate, t } from "./i18n.js";
+import { deleteBackup, disconnect, downloadBackup, listBackups, uploadBackup } from "./gdrive.js";
+import { fmtDate, fmtDateTime, t } from "./i18n.js";
+import { icon } from "./icons.js";
 import { state } from "./state.js";
 import {
   clearAllData,
   loadLastBackup,
+  loadLastCloudBackup,
   loadNextReminder,
   restoreData,
   saveLastBackup,
+  saveLastCloudBackup,
   saveNextReminder,
+  saveSettings,
   saveTasks,
   saveWork,
 } from "./storage.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
-import { $, dateFromISO, isDate, isTime, isoOf, todayISO } from "./util.js";
+import { $, dateFromISO, esc, isDate, isTime, isoOf, todayISO } from "./util.js";
 import { compareWorkAsc, computeWorktimeStats } from "./worktime-calc.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
 
@@ -27,14 +32,27 @@ const BACKUP_STALE_DAYS = 30;
 const RESTORED_FLAG = "chronoshift.restored";
 
 const backupInfo = $("backupInfo");
+const gdriveInfo = $("gdriveInfo");
 const backupFileInput = $("backupFileInput");
 
+const dateOf = (iso) => fmtDate(isoOf(new Date(iso)));
+
+// Neuestes Backup, egal ob lokal oder in der Cloud (für Warnung und Erinnerung)
+function newestBackup() {
+  const dates = [loadLastBackup(), loadLastCloudBackup()].filter(Boolean);
+  return dates.length ? dates.reduce((a, b) => (Date.parse(a) > Date.parse(b) ? a : b)) : null;
+}
+
 export function updateBackupInfo() {
-  const last = loadLastBackup();
+  const local = loadLastBackup();
+  const cloud = loadLastCloudBackup();
+  const newest = newestBackup();
   const hasData = state.tasks.length > 0 || state.work.length > 0;
-  const stale = !last || Date.now() - Date.parse(last) > BACKUP_STALE_DAYS * DAY_MS;
-  backupInfo.textContent = last ? t("backup.last", { date: fmtDate(isoOf(new Date(last))) }) : t("backup.lastNever");
-  backupInfo.classList.toggle("warn", hasData && stale);
+  const stale = hasData && (!newest || Date.now() - Date.parse(newest) > BACKUP_STALE_DAYS * DAY_MS);
+  backupInfo.textContent = local ? t("backup.last", { date: dateOf(local) }) : t("backup.lastNever");
+  gdriveInfo.textContent = cloud ? t("backup.cloudLast", { date: dateOf(cloud) }) : t("backup.cloudLastNever");
+  backupInfo.classList.toggle("warn", stale);
+  gdriveInfo.classList.toggle("warn", stale);
 }
 
 // ----- Erinnerung beim Start -----
@@ -56,10 +74,8 @@ export function checkBackupReminder() {
   if (Date.now() < next) return;
 
   postponeBackupReminder();
-  const last = loadLastBackup();
-  $("backupReminderText").textContent = last
-    ? t("backup.reminderStale", { date: fmtDate(isoOf(new Date(last))) })
-    : t("backup.reminderNever");
+  const last = newestBackup();
+  $("backupReminderText").textContent = last ? t("backup.reminderStale", { date: dateOf(last) }) : t("backup.reminderNever");
   backupReminderModal.showModal();
 }
 
@@ -69,19 +85,29 @@ $("backupReminderSaveBtn").addEventListener("click", () => {
   createBackup();
 });
 
-function createBackup() {
-  const backup = {
+function buildBackup() {
+  return {
     app: BACKUP_APP,
     format: BACKUP_FORMAT,
     version: APP_VERSION,
     created: new Date().toISOString(),
     data: { tasks: state.tasks, worktime: state.work, settings: state.settings },
   };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-  downloadFile(blob, t("backup.file", { date: todayISO() }));
-  saveLastBackup(backup.created);
+}
+
+// Lokal und Cloud werden getrennt angezeigt, schieben aber beide die Erinnerung
+function backupDone(created, cloud = false) {
+  if (cloud) saveLastCloudBackup(created);
+  else saveLastBackup(created);
   postponeBackupReminder();
   updateBackupInfo();
+}
+
+function createBackup() {
+  const backup = buildBackup();
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  downloadFile(blob, t("backup.file", { date: todayISO() }));
+  backupDone(backup.created);
 }
 
 $("backupCreateBtn").addEventListener("click", createBackup);
@@ -128,7 +154,10 @@ backupFileInput.addEventListener("change", async () => {
     showInfo(t("backup.invalid"));
     return;
   }
+  confirmRestore(backup);
+});
 
+function confirmRestore(backup) {
   const { tasks, worktime, settings } = backup.data;
   const counts = { tasks: tasks.length, work: worktime.length };
   confirmAction(
@@ -142,7 +171,7 @@ backupFileInput.addEventListener("change", async () => {
       location.reload();
     }
   );
-});
+}
 
 export function showRestoreResult() {
   const restored = sessionStorage.getItem(RESTORED_FLAG);
@@ -150,6 +179,103 @@ export function showRestoreResult() {
   sessionStorage.removeItem(RESTORED_FLAG);
   showToast(t("backup.restored", JSON.parse(restored)));
 }
+
+// ----- Cloud-Backup (Google Drive) -----
+const CLOUD_KEEP = 10; // ältere Backups werden nach dem Hochladen gelöscht
+const setGdrive = $("setGdrive");
+const gdriveActions = $("gdriveActions");
+const cloudRestoreModal = $("cloudRestoreModal");
+const cloudRestoreList = $("cloudRestoreList");
+
+export function initCloudBackup() {
+  setGdrive.checked = state.settings.gdriveEnabled;
+  gdriveActions.hidden = !state.settings.gdriveEnabled;
+}
+
+setGdrive.addEventListener("change", () => {
+  state.settings.gdriveEnabled = setGdrive.checked;
+  saveSettings();
+  gdriveActions.hidden = !setGdrive.checked;
+  if (!setGdrive.checked) disconnect();
+});
+
+function showCloudError(err) {
+  const reason = err.message;
+  if (reason === "retry") showInfo(t("backup.cloudRetry"));
+  else if (reason === "popup_failed_to_open") showInfo(t("backup.cloudPopupBlocked"));
+  // Fenster geschlossen oder Zugriff verweigert: kein Fehler der App, nur ein Hinweis
+  else if (/popup_closed|access_denied|auth/.test(reason)) showInfo(t("backup.cloudCancelled"));
+  else showInfo(t("backup.cloudError"));
+}
+
+$("gdriveSaveBtn").addEventListener("click", async () => {
+  const backup = buildBackup();
+  try {
+    const upload = uploadBackup(t("backup.file", { date: backup.created.replace(/[:.]/g, "-") }), JSON.stringify(backup));
+    showToast(t("backup.cloudSaving"));
+    await upload;
+    backupDone(backup.created, true);
+    showToast(t("backup.cloudSaved"));
+    const old = (await listBackups()).slice(CLOUD_KEEP);
+    await Promise.all(old.map((f) => deleteBackup(f.id)));
+  } catch (err) {
+    showCloudError(err);
+  }
+});
+
+$("gdriveRestoreBtn").addEventListener("click", async () => {
+  let files;
+  try {
+    files = await listBackups();
+  } catch (err) {
+    showCloudError(err);
+    return;
+  }
+  if (!files.length) {
+    showInfo(t("backup.cloudEmpty"));
+    return;
+  }
+  cloudRestoreList.innerHTML = "";
+  files.forEach((f) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "action-row";
+    btn.innerHTML = `${icon("cloudDownload")}<span>${esc(fmtDateTime(Date.parse(f.createdTime)))}</span>`;
+    btn.addEventListener("click", async () => {
+      cloudRestoreModal.close();
+      let backup;
+      try {
+        backup = parseBackup(await downloadBackup(f.id));
+      } catch (err) {
+        if (err instanceof SyntaxError || err.message === "invalid backup") showInfo(t("backup.invalid"));
+        else showCloudError(err);
+        return;
+      }
+      confirmRestore(backup);
+    });
+    cloudRestoreList.appendChild(btn);
+  });
+  cloudRestoreModal.showModal();
+});
+
+$("cloudRestoreCancelBtn").addEventListener("click", () => cloudRestoreModal.close());
+
+$("gdriveDeleteBtn").addEventListener("click", () => {
+  confirmAction(
+    t("backup.cloudConfirmDelete"),
+    t("backup.cloudDeleteLabel"),
+    async () => {
+      try {
+        const files = await listBackups();
+        await Promise.all(files.map((f) => deleteBackup(f.id)));
+        showToast(t("backup.cloudDeleted", { count: files.length }));
+      } catch (err) {
+        showCloudError(err);
+      }
+    },
+    5
+  );
+});
 
 // ----- Export -----
 $("exportTasksBtn").addEventListener("click", () => {

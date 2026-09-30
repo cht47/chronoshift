@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.4-beta
+**Version:** 1.0.5-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 

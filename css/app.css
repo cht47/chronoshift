@@ -213,7 +213,8 @@ html:not(.i18n-ready) body {
   color: var(--pico-muted-color);
 }
 
-.hint.warn {
+.hint.warn,
+.list-row-meta.warn {
   color: var(--c-warn);
 }
 

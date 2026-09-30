@@ -5,7 +5,14 @@ import { state } from "./state.js";
 import { saveWork } from "./storage.js";
 import { confirmAction, renderList, showInfo } from "./ui.js";
 import { $, dateFromISO, esc, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
-import { compareWorkAsc, computeWorktimeStats, worktimePauseRange, worktimeRange } from "./worktime-calc.js";
+import {
+  compareWorkAsc,
+  computeWorktimeStats,
+  findOverlappingWork,
+  overlappingWorkIds,
+  worktimePauseRange,
+  worktimeRange,
+} from "./worktime-calc.js";
 
 const weekRange = $("weekRange");
 const weekIst = $("weekIst");
@@ -67,6 +74,11 @@ worktimeForm.addEventListener("submit", (e) => {
       return;
     }
   }
+  const overlap = findOverlappingWork(entry, state.work);
+  if (overlap) {
+    showInfo(t("worktime.errorOverlap", { date: fmtDate(overlap.datum), from: overlap.beginn, to: overlap.ende }));
+    return;
+  }
 
   const save = () => {
     const idx = state.work.findIndex((x) => x.id === entry.id);
@@ -112,8 +124,10 @@ function pauseTextFor(entry, stats) {
   return t("worktime.noBreak");
 }
 
-export function buildWorkRow(entry) {
+// overlaps: Ergebnis von overlappingWorkIds, einmal pro Liste berechnet
+export function buildWorkRow(entry, overlaps) {
   const stats = computeWorktimeStats(entry);
+  const overlapNote = overlaps.has(entry.id) ? `<div class="list-row-meta warn">${esc(t("worktime.overlapNote"))}</div>` : "";
   const title = fmtDateParts(dateFromISO(entry.datum), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   const row = document.createElement("div");
   row.className = "list-row";
@@ -122,6 +136,7 @@ export function buildWorkRow(entry) {
     <div class="list-row-main">
       <div class="list-row-title">${esc(title)}</div>
       <div class="list-row-meta">${esc(entry.beginn)}–${esc(entry.ende)} · ${esc(pauseTextFor(entry, stats))}</div>
+      ${overlapNote}
     </div>
     <span class="list-row-value">${fmtDur(stats.nettoMin)}</span>
     <button type="button" class="icon-btn" aria-label="${esc(t("worktime.editAria"))}">${icon("pencil")}</button>
@@ -144,11 +159,12 @@ export function buildWorkRow(entry) {
 
 export function renderWorkEntries() {
   const sorted = [...state.work].sort((a, b) => compareWorkAsc(b, a));
-  renderList(worktimeContainer, sorted, buildWorkRow, t("worktime.empty"));
-  renderWeekSummary();
+  const overlaps = overlappingWorkIds(state.work);
+  renderList(worktimeContainer, sorted, (e) => buildWorkRow(e, overlaps), t("worktime.empty"));
+  renderWeekSummary(overlaps);
 }
 
-function renderWeekSummary() {
+function renderWeekSummary(overlaps) {
   const now = new Date();
   const monday = new Date(now);
   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
@@ -158,7 +174,7 @@ function renderWeekSummary() {
   const sundayISO = isoOf(sunday);
 
   const nettoSum = state.work
-    .filter((e) => e.datum >= mondayISO && e.datum <= sundayISO)
+    .filter((e) => e.datum >= mondayISO && e.datum <= sundayISO && !overlaps.has(e.id))
     .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
   const sollMin = Math.round(state.settings.wochensollstunden * 60);
   const diff = nettoSum - sollMin;

@@ -1,5 +1,5 @@
 // Bei jedem Release zusammen mit VERSION in service-worker.js erhöhen
-export const APP_VERSION = "1.0.5-beta";
+export const APP_VERSION = "1.0.6-beta";
 export const FIRST_YEAR = 2025;
 
 // Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen

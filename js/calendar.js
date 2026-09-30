@@ -4,7 +4,7 @@ import { buildTaskRow, taskDateISO } from "./tasks.js";
 import { renderList } from "./ui.js";
 import { $, dateFromISO, esc, isoOf, todayISO } from "./util.js";
 import { buildWorkRow } from "./worktime.js";
-import { compareWorkAsc } from "./worktime-calc.js";
+import { compareWorkAsc, overlappingWorkIds } from "./worktime-calc.js";
 
 const calGrid = $("calGrid");
 const calWeekdays = $("calWeekdays");
@@ -75,7 +75,8 @@ function renderDayDetail() {
 
   calDayDetail.insertAdjacentHTML("beforeend", `<div class="section-label"><span>${esc(title)}</span></div>`);
   const container = document.createElement("div");
-  renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e) : buildTaskRow(e)), t("calendar.empty"));
+  const overlaps = overlappingWorkIds(state.work);
+  renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e, overlaps) : buildTaskRow(e)), t("calendar.empty"));
   calDayDetail.appendChild(container);
 }
 

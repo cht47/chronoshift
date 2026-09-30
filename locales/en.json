@@ -53,7 +53,9 @@
     "errorBreakIncomplete": "Please enter both break start and end, or leave both empty.",
     "errorBreakSame": "Break start and end must not be the same.",
     "errorBreakOutside": "The break must be between start and end.",
-    "confirmNightShift": "End ({end}) is before start ({start}). Save as a night shift ending the next day?"
+    "confirmNightShift": "End ({end}) is before start ({start}). Save as a night shift ending the next day?",
+    "errorOverlap": "Overlaps with the work time on {date} ({from}–{to}). Please edit or delete that entry instead.",
+    "overlapNote": "Overlap – not counted in the weekly total"
   },
   "rest": {
     "label": "{hours}h rest period",

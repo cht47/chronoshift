@@ -36,6 +36,28 @@ export function computeWorktimeStats(entry) {
   return { bruttoMin, pauseMin, pauseManual, nettoMin: Math.max(0, bruttoMin - pauseMin), startMs, endMs };
 }
 
+const rangesOverlap = (a, b) => a.startMs < b.endMs && b.startMs < a.endMs;
+
+// Erster anderer Eintrag, der sich zeitlich mit entry überschneidet (beim Bearbeiten zählt der Eintrag selbst nicht)
+export function findOverlappingWork(entry, entries) {
+  const range = worktimeRange(entry);
+  return entries.find((e) => e.id !== entry.id && rangesOverlap(range, worktimeRange(e)));
+}
+
+// IDs der Einträge, die sich mit einem früher beginnenden überschneiden (z. B. versehentlich doppelt erfasst).
+// Sie zählen nicht zur Wochensumme, damit keine Zeit doppelt gerechnet wird.
+export function overlappingWorkIds(entries) {
+  const ids = new Set();
+  let countedEnd = -Infinity;
+  const ranges = entries.map((e) => ({ id: e.id, ...worktimeRange(e) }));
+  ranges.sort((a, b) => a.startMs - b.startMs || a.id - b.id);
+  for (const r of ranges) {
+    if (r.startMs < countedEnd) ids.add(r.id);
+    else countedEnd = r.endMs;
+  }
+  return ids;
+}
+
 export function compareWorkAsc(a, b) {
   return (a.datum + a.beginn).localeCompare(b.datum + b.beginn);
 }

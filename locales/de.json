@@ -53,7 +53,9 @@
     "errorBreakIncomplete": "Bitte Pause von UND bis angeben, oder beide leer lassen.",
     "errorBreakSame": "Pause von und bis dürfen nicht gleich sein.",
     "errorBreakOutside": "Die Pause muss zwischen Beginn und Ende liegen.",
-    "confirmNightShift": "Ende ({end}) liegt vor Beginn ({start}). Als Nachtschicht bis zum Folgetag speichern?"
+    "confirmNightShift": "Ende ({end}) liegt vor Beginn ({start}). Als Nachtschicht bis zum Folgetag speichern?",
+    "errorOverlap": "Überschneidet sich mit der Arbeitszeit vom {date} ({from}–{to}). Bitte diesen Eintrag bearbeiten oder löschen.",
+    "overlapNote": "Überschneidung – zählt nicht zur Wochensumme"
   },
   "rest": {
     "label": "{hours}h Ruhezeit",

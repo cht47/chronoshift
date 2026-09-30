@@ -161,6 +161,74 @@ html:not(.i18n-ready) body {
   overflow-wrap: anywhere;
 }
 
+/* ---------- Dialoge ---------- */
+/* Pico setzt Kopf und Fuß als abgesetzte Balken mit kleinen Ecken; hier wie die Karten der App */
+dialog > article {
+  max-width: 24rem;
+  padding: 1.5rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--pico-card-background-color);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+dialog > article > header,
+dialog > article > footer {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+dialog > article > header h3 {
+  font-size: 1.15rem;
+}
+
+dialog > article > p {
+  margin: 0.6rem 0 1.5rem;
+  line-height: 1.5;
+}
+
+dialog > article > footer {
+  display: flex;
+  gap: 0.6rem;
+}
+
+dialog > article > footer button {
+  flex: 1;
+  padding-inline: 0.5rem;
+  white-space: nowrap;
+}
+
+dialog > article > footer button:not(:first-of-type) {
+  margin-left: 0;
+}
+
+/* Dialog mit großem Symbol oben (z. B. Backup-Erinnerung): zentriert */
+dialog > article:has(.dialog-icon) > :is(header, p) {
+  text-align: center;
+}
+
+.dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto 0.9rem;
+  border-radius: 50%;
+}
+
+.dialog-icon svg {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.dialog-icon.warn {
+  color: var(--c-warn);
+  background: color-mix(in srgb, var(--c-warn) 16%, transparent);
+}
+
 /* ---------- Bausteine ---------- */
 .card {
   background: var(--pico-card-background-color);

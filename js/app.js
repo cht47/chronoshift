@@ -1,6 +1,6 @@
 import { APP_VERSION, FIRST_YEAR, VIEWS } from "./config.js";
 import { renderCalendar, initCalendarState } from "./calendar.js";
-import { showRestoreResult, updateBackupInfo } from "./data.js";
+import { checkBackupReminder, showRestoreResult, updateBackupInfo } from "./data.js";
 import { applyI18n, loadLocale, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
@@ -64,6 +64,7 @@ async function init() {
   setInterval(updateRestUi, 60000);
   switchView("tasks");
   showRestoreResult();
+  checkBackupReminder();
 
   // Bittet den Browser, die Daten bei knappem Speicher nicht automatisch zu löschen (schützt nicht vor manuellem Löschen)
   navigator.storage?.persist?.().catch(() => {});

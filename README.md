@@ -45,7 +45,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Light, dark or system theme
 - German and English, following the device language by default
 - Weekly hours and work days (daily target is calculated)
-- Backup and restore of all tasks, work time and settings as a JSON file, with a reminder when the last backup is older than 30 days
+- Backup and restore of all tasks, work time and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice
 - Delete today's tasks, all tasks, work time older than 90 days, or reset everything (with a 5-second safety countdown)
 

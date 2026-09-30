@@ -1,4 +1,4 @@
-import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
 import { isTime } from "./util.js";
 
@@ -49,6 +49,14 @@ export function loadLastBackup() {
 
 export function saveLastBackup(isoTimestamp) {
   localStorage.setItem(LAST_BACKUP_KEY, isoTimestamp);
+}
+
+export function loadNextReminder() {
+  return localStorage.getItem(NEXT_REMINDER_KEY);
+}
+
+export function saveNextReminder(isoTimestamp) {
+  localStorage.setItem(NEXT_REMINDER_KEY, isoTimestamp);
 }
 
 // Zusätzliche Prüfungen für Einstellungen, bei denen der Typ allein nicht reicht

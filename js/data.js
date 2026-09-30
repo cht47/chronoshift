@@ -2,7 +2,16 @@ import { refreshAll } from "./app.js";
 import { APP_VERSION, DAY_MS, WORKTIME_RETENTION_DAYS } from "./config.js";
 import { fmtDate, t } from "./i18n.js";
 import { state } from "./state.js";
-import { clearAllData, loadLastBackup, restoreData, saveLastBackup, saveTasks, saveWork } from "./storage.js";
+import {
+  clearAllData,
+  loadLastBackup,
+  loadNextReminder,
+  restoreData,
+  saveLastBackup,
+  saveNextReminder,
+  saveTasks,
+  saveWork,
+} from "./storage.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
 import { $, dateFromISO, isDate, isTime, isoOf, todayISO } from "./util.js";
@@ -28,7 +37,39 @@ export function updateBackupInfo() {
   backupInfo.classList.toggle("warn", hasData && stale);
 }
 
-$("backupCreateBtn").addEventListener("click", () => {
+// ----- Erinnerung beim Start -----
+// Gespeichert wird nur, wann die nächste Erinnerung fällig ist. Backup, Wiederherstellen und die Erinnerung selbst
+// schieben sie um 30 Tage; solange es keine Daten gibt ebenso, damit neue Nutzer ab dem ersten Eintrag Ruhe haben.
+const backupReminderModal = $("backupReminderModal");
+
+function postponeBackupReminder() {
+  saveNextReminder(new Date(Date.now() + BACKUP_STALE_DAYS * DAY_MS).toISOString());
+}
+
+export function checkBackupReminder() {
+  const hasData = state.tasks.length > 0 || state.work.length > 0;
+  const next = Date.parse(loadNextReminder());
+  if (!hasData || Number.isNaN(next)) {
+    postponeBackupReminder();
+    return;
+  }
+  if (Date.now() < next) return;
+
+  postponeBackupReminder();
+  const last = loadLastBackup();
+  $("backupReminderText").textContent = last
+    ? t("backup.reminderStale", { date: fmtDate(isoOf(new Date(last))) })
+    : t("backup.reminderNever");
+  backupReminderModal.showModal();
+}
+
+$("backupReminderLaterBtn").addEventListener("click", () => backupReminderModal.close());
+$("backupReminderSaveBtn").addEventListener("click", () => {
+  backupReminderModal.close();
+  createBackup();
+});
+
+function createBackup() {
   const backup = {
     app: BACKUP_APP,
     format: BACKUP_FORMAT,
@@ -39,8 +80,11 @@ $("backupCreateBtn").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   downloadFile(blob, t("backup.file", { date: todayISO() }));
   saveLastBackup(backup.created);
+  postponeBackupReminder();
   updateBackupInfo();
-});
+}
+
+$("backupCreateBtn").addEventListener("click", createBackup);
 
 const isOptionalTime = (v) => v === null || v === undefined || isTime(v);
 
@@ -92,6 +136,7 @@ backupFileInput.addEventListener("change", async () => {
     t("backup.restoreLabel"),
     () => {
       restoreData(tasks, worktime, settings);
+      postponeBackupReminder();
       // Neu laden, damit Sprache, Design und alle Ansichten sauber aus den wiederhergestellten Daten starten
       sessionStorage.setItem(RESTORED_FLAG, JSON.stringify(counts));
       location.reload();

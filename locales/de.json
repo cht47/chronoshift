@@ -137,7 +137,12 @@
     "invalid": "Die Datei ist kein gültiges ChronoShift-Backup.",
     "confirmRestore": "Backup vom {date} wiederherstellen? {tasks} Tasks, {work} Arbeitszeiten und die Einstellungen ersetzen die aktuellen Daten.",
     "restoreLabel": "Wiederherstellen",
-    "restored": "Backup wiederhergestellt: {tasks} Tasks, {work} Arbeitszeiten."
+    "restored": "Backup wiederhergestellt: {tasks} Tasks, {work} Arbeitszeiten.",
+    "reminderTitle": "Zeit für ein Backup",
+    "reminderLater": "Später",
+    "reminderSave": "Jetzt sichern",
+    "reminderStale": "Deine letzte Sicherung ist vom {date}. Erstelle eine neue, damit keine Daten verloren gehen.",
+    "reminderNever": "Du hast noch kein Backup erstellt. Sichere deine Daten, damit sie bei einem Gerätewechsel oder gelöschten Browserdaten nicht verloren gehen."
   },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",

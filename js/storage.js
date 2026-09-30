@@ -1,14 +1,14 @@
-import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, STORAGE_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
 import { isTime } from "./util.js";
 
 export function loadTasks() {
-  const stored = localStorage.getItem(STORAGE_KEY);
+  const stored = localStorage.getItem(TASKS_KEY);
   state.tasks = stored ? JSON.parse(stored) : [];
 }
 
 export function saveTasks() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+  localStorage.setItem(TASKS_KEY, JSON.stringify(state.tasks));
 }
 
 export function loadWork() {
@@ -20,13 +20,10 @@ export function saveWork() {
   localStorage.setItem(WORKTIME_KEY, JSON.stringify(state.work));
 }
 
+// Gespeicherte Einstellungen durchlaufen dieselbe Prüfung wie ein Backup (siehe sanitizeSettings)
 export function loadSettings() {
   const stored = localStorage.getItem(SETTINGS_KEY);
-  state.settings = structuredClone(DEFAULT_SETTINGS);
-  if (stored) {
-    Object.assign(state.settings, JSON.parse(stored));
-    if (!Array.isArray(state.settings.pauseRules)) state.settings.pauseRules = structuredClone(DEFAULT_SETTINGS.pauseRules);
-  }
+  state.settings = sanitizeSettings(stored ? JSON.parse(stored) : {});
 }
 
 export function saveSettings() {
@@ -84,7 +81,7 @@ function isValidSetting(key, value) {
 }
 
 // Übernimmt nur bekannte Einstellungen mit gültigem Wert, alles andere bleibt beim Standard.
-// So passen auch Backups älterer oder neuerer Versionen mit mehr oder weniger Einstellungen.
+// So passen auch Daten und Backups älterer oder neuerer Versionen mit mehr oder weniger Einstellungen.
 function sanitizeSettings(settings) {
   const merged = structuredClone(DEFAULT_SETTINGS);
   for (const key of Object.keys(DEFAULT_SETTINGS)) {

@@ -5,7 +5,7 @@ import { updateRestUi } from "./rest.js";
 import { state } from "./state.js";
 import { loadTimer, saveTasks, saveTimer } from "./storage.js";
 import { confirmAction, renderList, showInfo } from "./ui.js";
-import { $, clockOf, esc, fmtDur, formatStamp, isoOf, pad2, todayISO } from "./util.js";
+import { $, clockOf, esc, fmtDur, isoOf, pad2, todayISO } from "./util.js";
 
 const taskInput = $("taskInput");
 const startStopBtn = $("startStopBtn");
@@ -88,8 +88,6 @@ startStopBtn.addEventListener("click", () => {
       id: Date.now(),
       task: state.currentTask,
       startMs: state.currentStartTime,
-      startStr: formatStamp(state.currentStartTime),
-      stopStr: formatStamp(stopTime),
       stopMs: stopTime,
       durationMin: diffMin,
     });
@@ -108,13 +106,7 @@ function deleteEntry(id) {
   refreshAll();
 }
 
-// Alte Einträge haben kein startMs, dort bleibt der gespeicherte Text
-function taskStartText(e) {
-  return e.startMs ? fmtDateTime(e.startMs) : e.startStr;
-}
-
 function taskTimeRange(e) {
-  if (!e.startMs) return `${e.startStr} – ${e.stopStr}`;
   if (isoOf(new Date(e.startMs)) !== isoOf(new Date(e.stopMs))) return `${fmtDateTime(e.startMs)} – ${fmtDateTime(e.stopMs)}`;
   const day = fmtDateParts(new Date(e.stopMs), { weekday: "short", day: "2-digit", month: "2-digit" });
   return `${day} · ${clockOf(e.startMs)}–${clockOf(e.stopMs)}`;
@@ -133,7 +125,7 @@ export function buildTaskRow(entry) {
     <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("tasks.deleteAria"))}">${icon("trash")}</button>
   `;
   row.querySelector(".icon-btn").addEventListener("click", () =>
-    confirmAction(t("tasks.confirmDelete", { name: entry.task, date: taskStartText(entry) }), t("common.delete"), () => deleteEntry(entry.id))
+    confirmAction(t("tasks.confirmDelete", { name: entry.task, date: fmtDateTime(entry.startMs) }), t("common.delete"), () => deleteEntry(entry.id))
   );
   return row;
 }

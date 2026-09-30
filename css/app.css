@@ -292,6 +292,29 @@ dialog > article:has(.dialog-icon) > :is(header, p) {
   color: var(--c-warn);
 }
 
+/* Abstände für einzelne Elemente, statt Inline-Styles im HTML */
+.section-label.first {
+  margin-top: 0.5rem;
+}
+
+.gap-top {
+  margin-top: 0.75rem;
+}
+
+.gap-bottom {
+  margin-bottom: 0.75rem;
+}
+
+/* Hinweis direkt unter einem Eingabefeld */
+.input-hint {
+  margin: -0.25rem 0 1rem;
+}
+
+/* Hinweis unter einer Liste von Aktionen */
+.list-note {
+  margin: 0.5rem 0.25rem 0;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;

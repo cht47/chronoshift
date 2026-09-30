@@ -30,12 +30,6 @@ export function combineDateTime(iso, hhmm) {
   return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
 }
 
-// Festes Format "dd.mm.yy hh:mm" für die gespeicherten Tasks, unabhängig von der Sprache
-export function formatStamp(ms) {
-  const d = new Date(ms);
-  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${clockOf(ms)}`;
-}
-
 // Uhrzeiten bewusst immer im 24-Stunden-Format, passend zu den gespeicherten "08:50"-Werten
 export function clockOf(ms) {
   const d = new Date(ms);

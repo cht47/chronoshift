@@ -115,7 +115,13 @@ $("backupCreateBtn").addEventListener("click", createBackup);
 const isOptionalTime = (v) => v === null || v === undefined || isTime(v);
 
 function isValidTask(e) {
-  return Number.isFinite(e?.id) && typeof e.task === "string" && Number.isFinite(e.stopMs) && Number.isFinite(e.durationMin);
+  return (
+    Number.isFinite(e?.id) &&
+    typeof e.task === "string" &&
+    Number.isFinite(e.startMs) &&
+    Number.isFinite(e.stopMs) &&
+    Number.isFinite(e.durationMin)
+  );
 }
 
 function isValidWork(e) {
@@ -293,8 +299,7 @@ $("exportTasksBtn").addEventListener("click", () => {
     .sort((a, b) => a.stopMs - b.stopMs)
     .map((e) => [
       e.task,
-      // Alte Einträge ohne startMs behalten ihren gespeicherten Starttext
-      e.startMs ? { v: excelDateTime(new Date(e.startMs)), s: XLSX_STYLE.dateTime } : e.startStr,
+      { v: excelDateTime(new Date(e.startMs)), s: XLSX_STYLE.dateTime },
       { v: excelDateTime(new Date(e.stopMs)), s: XLSX_STYLE.dateTime },
       e.durationMin,
     ]);

@@ -119,7 +119,7 @@
     <section id="view-settings" hidden>
       <!-- Nur sichtbar, solange die App nicht installiert ist und der Browser eine Installation anbietet -->
       <div id="installSection" hidden>
-        <div class="section-label" style="margin-top: 0.5rem;"><span data-i18n="settings.app"></span></div>
+        <div class="section-label first"><span data-i18n="settings.app"></span></div>
         <div class="list-group">
           <button type="button" class="action-row accent" id="installBtn"><span data-icon="smartphone"></span><span>
               <span data-i18n="settings.install"></span>
@@ -128,14 +128,14 @@
         </div>
       </div>
 
-      <div class="section-label" style="margin-top: 0.5rem;"><span data-i18n="settings.appearance"></span></div>
+      <div class="section-label first"><span data-i18n="settings.appearance"></span></div>
       <div class="card">
         <div class="segmented" role="group" data-i18n-aria="settings.theme" id="themeSwitch">
           <button type="button" data-theme-value="system" data-i18n="settings.themeSystem"></button>
           <button type="button" data-theme-value="light" data-i18n="settings.themeLight"></button>
           <button type="button" data-theme-value="dark" data-i18n="settings.themeDark"></button>
         </div>
-        <label style="margin-top: 1rem;"><span data-i18n="settings.language"></span>
+        <label class="gap-top"><span data-i18n="settings.language"></span>
           <select id="setLanguage"></select>
         </label>
       </div>
@@ -156,16 +156,16 @@
       <div class="section-label"><span data-i18n="settings.rest"></span></div>
       <div class="card">
         <label>
-          <input type="checkbox" id="setRuhezeitFeature" role="switch" />
+          <input type="checkbox" id="setRestEnabled" role="switch" />
           <span data-i18n="settings.restShow"></span>
         </label>
         <div id="ruhezeitOptionsWrap">
           <label><span data-i18n="settings.restHours"></span>
             <input type="number" id="setRestHours" min="1" max="24" step="0.5" inputmode="decimal" />
           </label>
-          <small class="hint" style="margin: -0.25rem 0 1rem;" data-i18n="settings.restHoursHint"></small>
+          <small class="hint input-hint" data-i18n="settings.restHoursHint"></small>
           <label>
-            <input type="checkbox" id="setRuhezeitEnabled" role="switch" />
+            <input type="checkbox" id="setRestBanner" role="switch" />
             <span data-i18n="settings.restBanner"></span>
           </label>
           <div id="bannerWindowWrap">
@@ -180,7 +180,7 @@
             <small class="hint" data-i18n="settings.bannerHint"></small>
           </div>
         </div>
-        <small class="hint" id="ruhezeitHint" style="margin-top: 0.75rem;" data-i18n="settings.restHint"></small>
+        <small class="hint gap-top" id="ruhezeitHint" data-i18n="settings.restHint"></small>
       </div>
 
       <div class="section-label"><span data-i18n="settings.breaks"></span></div>
@@ -190,7 +190,7 @@
           <span data-i18n="settings.breaksAuto"></span>
         </label>
         <div id="pauseRulesWrap">
-          <small class="hint" style="margin-bottom: 0.75rem;" data-i18n="settings.breaksHint"></small>
+          <small class="hint gap-bottom" data-i18n="settings.breaksHint"></small>
           <div id="pauseRulesContainer"></div>
           <button type="button" id="addPauseRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
         </div>
@@ -203,7 +203,7 @@
         <button type="button" class="action-row" id="backupRestoreBtn"><span data-icon="upload"></span><span
             data-i18n="backup.restore"></span></button>
       </div>
-      <p class="hint" id="backupInfo" style="margin: 0.5rem 0.25rem 0;"></p>
+      <p class="hint list-note" id="backupInfo"></p>
       <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
       <input type="file" id="backupFileInput" hidden />
 
@@ -214,7 +214,7 @@
           <span data-i18n="backup.gdriveEnable"></span>
         </label>
         <small class="hint" data-i18n="backup.gdriveHint"></small>
-        <small class="hint" style="margin-top: 0.5rem;"><span data-i18n="backup.gdrivePrivacy"></span>
+        <small class="hint gap-top"><span data-i18n="backup.gdrivePrivacy"></span>
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
             data-i18n="backup.gdrivePrivacyLink"></a></small>
       </div>
@@ -227,7 +227,7 @@
           <button type="button" class="action-row danger" id="gdriveDeleteBtn"><span data-icon="trash"></span><span
               data-i18n="backup.cloudDelete"></span></button>
         </div>
-        <p class="hint" id="gdriveInfo" style="margin: 0.5rem 0.25rem 0;"></p>
+        <p class="hint list-note" id="gdriveInfo"></p>
       </div>
 
       <div class="section-label"><span data-i18n="settings.export"></span></div>
@@ -249,7 +249,7 @@
         <button type="button" class="action-row danger" id="resetAllBtn"><span data-icon="alert"></span><span
             data-i18n="settings.resetAll"></span></button>
       </div>
-      <p class="hint" id="storageInfo" style="margin: 0.75rem 0.25rem 0;"></p>
+      <p class="hint list-note" id="storageInfo"></p>
 
       <div class="app-footer">
         <div>© <span id="copyrightYears"></span> Daniel Herbst · <a href="https://github.com/cht47/chronoshift/blob/main/LICENSE"

@@ -18,12 +18,9 @@ export function initCalendarState() {
   state.cal.selectedISO = todayISO();
 }
 
-// Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon"
+// Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon" (der 1.1.2024 war ein Montag)
 function weekdayLabels() {
-  const monday = new Date(2024, 0, 1);
-  return Array.from({ length: 7 }, (_, i) =>
-    fmtDateParts(new Date(2024, 0, monday.getDate() + i), { weekday: "short" }).replace(/\.$/, "")
-  );
+  return Array.from({ length: 7 }, (_, i) => fmtDateParts(new Date(2024, 0, 1 + i), { weekday: "short" }).replace(/\.$/, ""));
 }
 
 export function renderCalendar() {
@@ -64,10 +61,10 @@ export function renderCalendar() {
     });
   });
 
-  renderDayDetail();
+  renderDayDetail(overlaps);
 }
 
-function renderDayDetail() {
+function renderDayDetail(overlaps) {
   const selected = state.cal.selectedISO;
   calDayDetail.innerHTML = "";
   if (!selected) return;
@@ -78,7 +75,6 @@ function renderDayDetail() {
 
   calDayDetail.insertAdjacentHTML("beforeend", `<div class="section-label"><span>${esc(title)}</span></div>`);
   const container = document.createElement("div");
-  const overlaps = overlappingWorkIds(state.work);
   renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e, overlaps) : buildTaskRow(e)), t("calendar.empty"));
   calDayDetail.appendChild(container);
 }

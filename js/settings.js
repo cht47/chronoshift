@@ -14,11 +14,11 @@ const setLanguage = $("setLanguage");
 const setWochensoll = $("setWochensoll");
 const setArbeitstage = $("setArbeitstage");
 const tagessollInfo = $("tagessollInfo");
-const setRuhezeitFeature = $("setRuhezeitFeature");
+const setRestEnabled = $("setRestEnabled");
 const ruhezeitOptionsWrap = $("ruhezeitOptionsWrap");
 const ruhezeitHint = $("ruhezeitHint");
 const setRestHours = $("setRestHours");
-const setRuhezeitEnabled = $("setRuhezeitEnabled");
+const setRestBanner = $("setRestBanner");
 const bannerWindowWrap = $("bannerWindowWrap");
 const setBannerVon = $("setBannerVon");
 const setBannerBis = $("setBannerBis");
@@ -131,11 +131,11 @@ export function renderSettingsForm() {
   renderLanguageSelect();
   setWochensoll.value = s.wochensollstunden;
   setArbeitstage.value = s.arbeitstage;
-  setRuhezeitFeature.checked = s.ruhezeitEnabled;
+  setRestEnabled.checked = s.ruhezeitEnabled;
   ruhezeitOptionsWrap.hidden = !s.ruhezeitEnabled;
   ruhezeitHint.hidden = !s.ruhezeitEnabled;
   setRestHours.value = s.restHours;
-  setRuhezeitEnabled.checked = s.ruhezeitBannerEnabled;
+  setRestBanner.checked = s.ruhezeitBannerEnabled;
   bannerWindowWrap.hidden = !s.ruhezeitBannerEnabled;
   setBannerVon.value = s.bannerVon;
   setBannerBis.value = s.bannerBis;
@@ -201,8 +201,8 @@ setArbeitstage.addEventListener("input", () => {
   saveSettings();
   updateTagessollInfo();
 });
-setRuhezeitFeature.addEventListener("change", () => {
-  state.settings.ruhezeitEnabled = setRuhezeitFeature.checked;
+setRestEnabled.addEventListener("change", () => {
+  state.settings.ruhezeitEnabled = setRestEnabled.checked;
   ruhezeitOptionsWrap.hidden = !state.settings.ruhezeitEnabled;
   ruhezeitHint.hidden = !state.settings.ruhezeitEnabled;
   saveSettings();
@@ -216,8 +216,8 @@ setRestHours.addEventListener("input", () => {
   saveSettings();
   updateRestUi();
 });
-setRuhezeitEnabled.addEventListener("change", () => {
-  state.settings.ruhezeitBannerEnabled = setRuhezeitEnabled.checked;
+setRestBanner.addEventListener("change", () => {
+  state.settings.ruhezeitBannerEnabled = setRestBanner.checked;
   bannerWindowWrap.hidden = !state.settings.ruhezeitBannerEnabled;
   saveSettings();
   updateRestUi();

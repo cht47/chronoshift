@@ -3,7 +3,7 @@ export const APP_VERSION = "1.0.9-beta";
 export const FIRST_YEAR = 2025;
 
 // Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen
-export const STORAGE_KEY = "chronoshift.tasks";
+export const TASKS_KEY = "chronoshift.tasks";
 export const TIMER_STATE_KEY = "chronoshift.timer";
 export const WORKTIME_KEY = "chronoshift.worktime";
 export const SETTINGS_KEY = "chronoshift.settings";
@@ -11,7 +11,7 @@ export const LAST_BACKUP_KEY = "chronoshift.lastBackup";
 export const LAST_CLOUD_BACKUP_KEY = "chronoshift.lastCloudBackup";
 export const NEXT_REMINDER_KEY = "chronoshift.nextBackupReminder";
 export const ALL_KEYS = [
-  STORAGE_KEY,
+  TASKS_KEY,
   TIMER_STATE_KEY,
   WORKTIME_KEY,
   SETTINGS_KEY,

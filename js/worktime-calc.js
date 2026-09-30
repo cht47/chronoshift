@@ -33,7 +33,7 @@ export function computeWorktimeStats(entry) {
   const pauseMin = pauseManual
     ? Math.round((manualPause.pBis - manualPause.pVon) / 60000)
     : computeAutoPauseMinutes(bruttoMin);
-  return { bruttoMin, pauseMin, pauseManual, nettoMin: Math.max(0, bruttoMin - pauseMin), startMs, endMs };
+  return { pauseMin, pauseManual, nettoMin: Math.max(0, bruttoMin - pauseMin) };
 }
 
 // IDs der Einträge, die sich mit einem früher beginnenden überschneiden (z. B. versehentlich doppelt erfasst).

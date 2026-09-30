@@ -8,7 +8,6 @@ import { $, dateFromISO, esc, fmtDur, fmtMin, isoOf, todayISO } from "./util.js"
 import {
   compareWorkAsc,
   computeWorktimeStats,
-  findOverlappingWork,
   overlappingWorkIds,
   worktimePauseRange,
   worktimeRange,
@@ -74,11 +73,6 @@ worktimeForm.addEventListener("submit", (e) => {
       return;
     }
   }
-  const overlap = findOverlappingWork(entry, state.work);
-  if (overlap) {
-    showInfo(t("worktime.errorOverlap", { date: fmtDate(overlap.datum), from: overlap.beginn, to: overlap.ende }));
-    return;
-  }
 
   const save = () => {
     const idx = state.work.findIndex((x) => x.id === entry.id);
@@ -127,10 +121,11 @@ function pauseTextFor(entry, stats) {
 // overlaps: Ergebnis von overlappingWorkIds, einmal pro Liste berechnet
 export function buildWorkRow(entry, overlaps) {
   const stats = computeWorktimeStats(entry);
-  const overlapNote = overlaps.has(entry.id) ? `<div class="list-row-meta warn">${esc(t("worktime.overlapNote"))}</div>` : "";
+  const overlap = overlaps.has(entry.id);
+  const overlapNote = overlap ? `<div class="list-row-meta overlap-note">${esc(t("worktime.overlapNote"))}</div>` : "";
   const title = fmtDateParts(dateFromISO(entry.datum), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   const row = document.createElement("div");
-  row.className = "list-row";
+  row.className = overlap ? "list-row overlap" : "list-row";
   row.innerHTML = `
     <span class="row-accent work"></span>
     <div class="list-row-main">

@@ -213,8 +213,7 @@ html:not(.i18n-ready) body {
   color: var(--pico-muted-color);
 }
 
-.hint.warn,
-.list-row-meta.warn {
+.hint.warn {
   color: var(--c-warn);
 }
 
@@ -323,6 +322,15 @@ button.btn-danger {
 
 .list-row + .list-row {
   border-top: 1px solid var(--pico-muted-border-color);
+}
+
+/* Überschneidet sich mit einem anderen Arbeitszeit-Eintrag und zählt nicht zur Wochensumme */
+.list-row.overlap {
+  background: color-mix(in srgb, var(--c-danger) 12%, transparent);
+}
+
+.list-row-meta.overlap-note {
+  color: var(--c-danger);
 }
 
 .row-accent {

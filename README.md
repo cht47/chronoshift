@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.6-beta
+**Version:** 1.0.7-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -28,7 +28,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Breaks either entered manually (exact from–to times) or deducted automatically
 - Configurable automatic break rules that add up (default: 15 min after 4 h, 30 min after 6 h, 15 min after 9 h)
 - Night shifts across midnight are supported
-- Overlapping entries are rejected on input; existing overlaps (e.g. from a backup) are marked and not counted twice
+- Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
 
 ### 😴 Rest period

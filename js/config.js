@@ -1,5 +1,5 @@
 // Bei jedem Release zusammen mit VERSION in service-worker.js erhöhen
-export const APP_VERSION = "1.0.11-beta";
+export const APP_VERSION = "1.0.12-beta";
 export const FIRST_YEAR = 2025;
 
 // Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen
@@ -29,7 +29,8 @@ export const FALLBACK_LANG = "en";
 
 export const DEFAULT_SETTINGS = {
   wochensollstunden: 40,
-  arbeitstage: 5,
+  // Arbeitstage als Wochentage wie bei Date.getDay(): 0 = So, 1 = Mo … 6 = Sa
+  workDays: [1, 2, 3, 4, 5],
   ruhezeitEnabled: true,
   restHours: 11,
   ruhezeitBannerEnabled: true,
@@ -45,5 +46,8 @@ export const DEFAULT_SETTINGS = {
   language: "system",
   gdriveEnabled: false,
 };
+
+// Wochentage in Anzeigereihenfolge ab Montag, als Date.getDay()-Werte
+export const WEEK_FROM_MONDAY = [1, 2, 3, 4, 5, 6, 0];
 
 export const VIEWS = ["tasks", "worktime", "calendar", "settings"];

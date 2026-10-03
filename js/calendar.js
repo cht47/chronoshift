@@ -1,4 +1,4 @@
-import { fmtDateParts, t } from "./i18n.js";
+import { fmtDateParts, t, weekdayShortNames } from "./i18n.js";
 import { state } from "./state.js";
 import { buildTaskRow, taskDateISO } from "./tasks.js";
 import { renderList } from "./ui.js";
@@ -19,15 +19,10 @@ export function initCalendarState() {
   state.cal.selectedISO = todayISO();
 }
 
-// Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon" (der 1.1.2024 war ein Montag)
-function weekdayLabels() {
-  return Array.from({ length: 7 }, (_, i) => fmtDateParts(new Date(2024, 0, 1 + i), { weekday: "short" }).replace(/\.$/, ""));
-}
-
 export function renderCalendar() {
   const { year, month } = state.cal;
   calLabel.textContent = fmtDateParts(new Date(year, month, 1), { month: "long", year: "numeric" });
-  calWeekdays.innerHTML = weekdayLabels().map((l) => `<div class="cal-weekday">${esc(l)}</div>`).join("");
+  calWeekdays.innerHTML = weekdayShortNames().map((l) => `<div class="cal-weekday">${esc(l)}</div>`).join("");
 
   const startOffset = (new Date(year, month, 1).getDay() + 6) % 7; // Montag = 0
   const daysInMonth = new Date(year, month + 1, 0).getDate();

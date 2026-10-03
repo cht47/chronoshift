@@ -1,22 +1,18 @@
-import { DAY_MS } from "./config.js";
 import { state } from "./state.js";
-import { combineDateTime, dateFromISO } from "./util.js";
+import { combineDateTime, dateFromISO, nextDayISO } from "./util.js";
 
+// Zeiten über Mitternacht liegen am Folgetag. Bewusst als echtes Datum statt "+24 Stunden",
+// damit Nächte mit Zeitumstellung (23 oder 25 Stunden) richtig zählen.
 export function worktimeRange(entry) {
-  const startMs = combineDateTime(entry.datum, entry.beginn);
-  let endMs = combineDateTime(entry.datum, entry.ende);
-  if (endMs <= startMs) endMs += DAY_MS; // Nachtschicht über Mitternacht
-  return { startMs, endMs };
+  const endDay = entry.ende <= entry.beginn ? nextDayISO(entry.datum) : entry.datum;
+  return { startMs: combineDateTime(entry.datum, entry.beginn), endMs: combineDateTime(endDay, entry.ende) };
 }
 
 export function worktimePauseRange(entry) {
   if (!entry.pauseVon || !entry.pauseBis) return null;
-  const { startMs } = worktimeRange(entry);
-  let pVon = combineDateTime(entry.datum, entry.pauseVon);
-  let pBis = combineDateTime(entry.datum, entry.pauseBis);
-  if (pVon < startMs) pVon += DAY_MS;
-  if (pBis <= pVon) pBis += DAY_MS;
-  return { pVon, pBis };
+  const vonDay = entry.pauseVon < entry.beginn ? nextDayISO(entry.datum) : entry.datum;
+  const bisDay = entry.pauseBis <= entry.pauseVon ? nextDayISO(vonDay) : vonDay;
+  return { pVon: combineDateTime(vonDay, entry.pauseVon), pBis: combineDateTime(bisDay, entry.pauseBis) };
 }
 
 function computeAutoPauseMinutes(bruttoMin) {
@@ -50,12 +46,15 @@ function overlappingWorkIds(entries) {
   return ids;
 }
 
-// Tagessoll in Minuten. Freie Tage: bei bis zu 5 Arbeitstagen Sa und So, bei 6 nur So.
+// Tagessoll in Minuten: Wochenstunden verteilt auf die gewählten Arbeitstage
+export function dailyTargetMin() {
+  const { wochensollstunden, workDays } = state.settings;
+  return Math.round((wochensollstunden * 60) / workDays.length);
+}
+
+// Nicht gewählte Wochentage sind frei, Arbeit dort zählt komplett als Plus
 function dayTargetMin(iso) {
-  const { wochensollstunden, arbeitstage } = state.settings;
-  const weekday = dateFromISO(iso).getDay(); // 0 = So, 6 = Sa
-  const free = weekday === 0 ? arbeitstage < 7 : weekday === 6 && arbeitstage <= 5;
-  return free ? 0 : Math.round((wochensollstunden * 60) / Math.max(1, arbeitstage));
+  return state.settings.workDays.includes(dateFromISO(iso).getDay()) ? dailyTargetMin() : 0;
 }
 
 // Überschneidungen und Abweichung vom Tagessoll für eine Liste von Arbeitszeiten.

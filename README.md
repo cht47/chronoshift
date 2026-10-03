@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.11-beta
+**Version:** 1.0.12-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -30,7 +30,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Night shifts across midnight are supported
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
-- Difference to the daily target for each day (weekends count as days off with up to 5 work days)
+- Difference to the daily target for each day; work on days off counts entirely as overtime
 
 ### 😴 Rest period
 - Shows when your minimum rest period ends, based on the latest task or working day
@@ -46,7 +46,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ### ⚙️ Settings
 - Light, dark or system theme
 - German and English, following the device language by default
-- Weekly hours and work days (daily target is calculated)
+- Weekly hours and work days Mon–Sun (daily target is calculated)
 - Backup and restore of all tasks, work time and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept
 - Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice

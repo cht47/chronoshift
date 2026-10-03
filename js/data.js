@@ -208,6 +208,7 @@ setGdrive.addEventListener("change", () => {
 function showCloudError(err) {
   const reason = err.message;
   if (reason === "retry") showInfo(t("backup.cloudRetry"));
+  else if (reason === "expired") showInfo(t("backup.cloudExpired"));
   else if (reason === "popup_failed_to_open") showInfo(t("backup.cloudPopupBlocked"));
   // Fenster geschlossen oder Zugriff verweigert: kein Fehler der App, nur ein Hinweis
   else if (/popup_closed|access_denied|auth/.test(reason)) showInfo(t("backup.cloudCancelled"));

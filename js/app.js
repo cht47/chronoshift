@@ -6,8 +6,9 @@ import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
 import { applyTheme, renderSettingsForm, updateStorageInfo } from "./settings.js";
 import { state } from "./state.js";
-import { loadSettings, loadTasks, loadWork } from "./storage.js";
+import { damagedKeys, loadSettings, loadTasks, loadWork } from "./storage.js";
 import { renderEntries, restoreTimerState } from "./tasks.js";
+import { showInfo } from "./ui.js";
 import { $ } from "./util.js";
 import { renderWorkEntries, resetWorktimeForm } from "./worktime.js";
 
@@ -66,6 +67,7 @@ async function init() {
   switchView("tasks");
   showRestoreResult();
   checkBackupReminder();
+  if (damagedKeys.length) showInfo(t("data.damaged"));
 
   // Bittet den Browser, die Daten bei knappem Speicher nicht automatisch zu löschen (schützt nicht vor manuellem Löschen)
   navigator.storage?.persist?.().catch(() => {});

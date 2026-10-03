@@ -1,10 +1,31 @@
-import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WEEK_FROM_MONDAY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
 import { isTime } from "./util.js";
 
+// Schlüssel, deren gespeicherter Inhalt beim Laden beschädigt war (siehe readJson)
+export const damagedKeys = [];
+
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+// Liest einen gespeicherten JSON-Wert. Ist er beschädigt, bleibt er unter "<Schlüssel>.damaged" erhalten
+// und die App startet ohne ihn, statt gar nicht mehr zu laden.
+function readJson(key, isValid, fallback) {
+  const stored = localStorage.getItem(key);
+  if (stored === null) return fallback;
+  try {
+    const value = JSON.parse(stored);
+    if (isValid(value)) return value;
+  } catch {
+    // unten wie ein ungültiger Wert behandelt
+  }
+  localStorage.setItem(`${key}.damaged`, stored);
+  localStorage.removeItem(key);
+  damagedKeys.push(key);
+  return fallback;
+}
+
 export function loadTasks() {
-  const stored = localStorage.getItem(TASKS_KEY);
-  state.tasks = stored ? JSON.parse(stored) : [];
+  state.tasks = readJson(TASKS_KEY, Array.isArray, []);
 }
 
 export function saveTasks() {
@@ -12,8 +33,7 @@ export function saveTasks() {
 }
 
 export function loadWork() {
-  const stored = localStorage.getItem(WORKTIME_KEY);
-  state.work = stored ? JSON.parse(stored) : [];
+  state.work = readJson(WORKTIME_KEY, Array.isArray, []);
 }
 
 export function saveWork() {
@@ -22,8 +42,7 @@ export function saveWork() {
 
 // Gespeicherte Einstellungen durchlaufen dieselbe Prüfung wie ein Backup (siehe sanitizeSettings)
 export function loadSettings() {
-  const stored = localStorage.getItem(SETTINGS_KEY);
-  state.settings = sanitizeSettings(stored ? JSON.parse(stored) : {});
+  state.settings = sanitizeSettings(readJson(SETTINGS_KEY, isPlainObject, {}));
 }
 
 export function saveSettings() {
@@ -31,8 +50,7 @@ export function saveSettings() {
 }
 
 export function loadTimer() {
-  const stored = localStorage.getItem(TIMER_STATE_KEY);
-  return stored ? JSON.parse(stored) : null;
+  return readJson(TIMER_STATE_KEY, isPlainObject, null);
 }
 
 export function saveTimer(timer) {
@@ -70,7 +88,16 @@ const SETTING_CHECKS = {
   bannerBis: isTime,
   theme: (v) => ["system", "light", "dark"].includes(v),
   pauseRules: (v) => v.every((r) => Number.isFinite(r?.stunden) && Number.isFinite(r?.minuten)),
+  workDays: (v) => v.length > 0 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
 };
+
+// Bis 1.0.11 gab es nur die Anzahl "arbeitstage"; daraus werden die Wochentage ab Montag (5 = Mo–Fr)
+
+function migrateWorkDays(settings) {
+  const count = settings.arbeitstage;
+  if ("workDays" in settings || !Number.isInteger(count) || count < 1 || count > 7) return settings;
+  return { ...settings, workDays: WEEK_FROM_MONDAY.slice(0, count) };
+}
 
 function isValidSetting(key, value) {
   const def = DEFAULT_SETTINGS[key];
@@ -82,7 +109,8 @@ function isValidSetting(key, value) {
 
 // Übernimmt nur bekannte Einstellungen mit gültigem Wert, alles andere bleibt beim Standard.
 // So passen auch Daten und Backups älterer oder neuerer Versionen mit mehr oder weniger Einstellungen.
-function sanitizeSettings(settings) {
+function sanitizeSettings(stored) {
+  const settings = migrateWorkDays(stored);
   const merged = structuredClone(DEFAULT_SETTINGS);
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
     if (key in settings && isValidSetting(key, settings[key])) merged[key] = settings[key];
@@ -106,5 +134,8 @@ export function storageChars() {
 }
 
 export function clearAllData() {
-  ALL_KEYS.forEach((k) => localStorage.removeItem(k));
+  ALL_KEYS.forEach((k) => {
+    localStorage.removeItem(k);
+    localStorage.removeItem(`${k}.damaged`);
+  });
 }

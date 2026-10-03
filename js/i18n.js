@@ -62,6 +62,11 @@ export function fmtDateParts(date, options) {
   return new Intl.DateTimeFormat(intlLocale, options).format(date);
 }
 
+// Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon" (der 1.1.2024 war ein Montag)
+export function weekdayShortNames() {
+  return Array.from({ length: 7 }, (_, i) => fmtDateParts(new Date(2024, 0, 1 + i), { weekday: "short" }).replace(/\.$/, ""));
+}
+
 export function fmtDateRange(from, to, options) {
   return new Intl.DateTimeFormat(intlLocale, options).formatRange(from, to);
 }

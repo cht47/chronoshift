@@ -827,6 +827,23 @@ button.btn-danger {
   outline: 2px solid var(--pico-primary);
 }
 
+/* Auswahl der Arbeitstage Mo–So, mehrere gleichzeitig */
+.segmented.weekdays {
+  grid-template-columns: repeat(7, 1fr);
+  margin: 0.25rem 0 0.75rem;
+}
+
+.segmented.weekdays button {
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+/* Beschriftung wie bei den Eingabefeldern, für Elemente ohne label */
+.field-label {
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
 .pause-rule-row {
   display: flex;
   align-items: center;

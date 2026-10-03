@@ -143,14 +143,12 @@
 
       <div class="section-label"><span data-i18n="settings.worktime"></span></div>
       <div class="card">
-        <div class="two-col">
-          <label><span data-i18n="settings.weeklyHours"></span>
-            <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
-          </label>
-          <label><span data-i18n="settings.workDays"></span>
-            <input type="number" id="setArbeitstage" min="1" max="7" step="1" inputmode="numeric" />
-          </label>
-        </div>
+        <label><span data-i18n="settings.weeklyHours"></span>
+          <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
+        </label>
+        <!-- Kein label: ein Klick auf den Text würde sonst den ersten Button auslösen -->
+        <div class="field-label" id="workDaysLabel" data-i18n="settings.workDays"></div>
+        <div class="segmented weekdays" role="group" aria-labelledby="workDaysLabel" id="workDaysSwitch"></div>
         <small class="hint" id="tagessollInfo"></small>
       </div>
 

@@ -127,7 +127,8 @@
     "confirmDeleteOld": "Delete {count} work time entry/entries before {date}?",
     "confirmReset": "Really delete ALL data? Tasks, work time, the running timer and settings will be permanently removed.",
     "resetConfirmLabel": "Delete everything",
-    "exportDone": "Saved: {file} – you'll find it in your Downloads folder."
+    "exportDone": "Saved: {file} – you'll find it in your Downloads folder.",
+    "damaged": "Some of the saved data was damaged and could not be loaded. If entries are missing, please restore a backup."
   },
   "backup": {
     "create": "Create backup",
@@ -163,9 +164,10 @@
     "cloudPopupBlocked": "The Google sign-in window was blocked. Please allow pop-ups for this site and try again.",
     "gdrivePrivacy": "Privacy: The app only connects to Google (Google Ireland Ltd.) when you tap one of the buttons. Your IP address and the backup are transferred. Google may also process data in the USA (EU-US Data Privacy Framework).",
     "gdrivePrivacyLink": "Google Privacy Policy",
-    "cloudRetry": "Google sign-in is ready now. Please tap again.",
+    "cloudRetry": "Google sign-in is ready now. Please try again.",
     "cloudLast": "Last backup in Google Drive: {date}",
-    "cloudLastNever": "No backup in Google Drive yet."
+    "cloudLastNever": "No backup in Google Drive yet.",
+    "cloudExpired": "Your Google sign-in has expired. Please try again."
   },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",

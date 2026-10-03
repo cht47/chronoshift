@@ -1,6 +1,6 @@
 // service-worker.js
 // Bei jedem Release zusammen mit APP_VERSION in js/config.js erhöhen
-const VERSION = "1.0.11-beta";
+const VERSION = "1.0.12-beta";
 const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",

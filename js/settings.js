@@ -1,6 +1,6 @@
 import { refreshAll, updateViewTitle } from "./app.js";
-import { LANGUAGES } from "./config.js";
-import { applyI18n, fmtNumber, loadLocale, systemLanguage, t } from "./i18n.js";
+import { LANGUAGES, WEEK_FROM_MONDAY } from "./config.js";
+import { applyI18n, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
 import { state } from "./state.js";
@@ -9,10 +9,11 @@ import { setRunningUi } from "./tasks.js";
 import { showInfo } from "./ui.js";
 import { $, esc, fmtMin } from "./util.js";
 import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
+import { dailyTargetMin } from "./worktime-calc.js";
 
 const setLanguage = $("setLanguage");
 const setWochensoll = $("setWochensoll");
-const setArbeitstage = $("setArbeitstage");
+const workDaysSwitch = $("workDaysSwitch");
 const tagessollInfo = $("tagessollInfo");
 const setRestEnabled = $("setRestEnabled");
 const ruhezeitOptionsWrap = $("ruhezeitOptionsWrap");
@@ -28,10 +29,32 @@ const pauseRulesContainer = $("pauseRulesContainer");
 const storageInfo = $("storageInfo");
 
 function updateTagessollInfo() {
-  const { wochensollstunden, arbeitstage } = state.settings;
-  const tage = arbeitstage > 0 ? arbeitstage : 1;
-  tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(Math.round((wochensollstunden * 60) / tage)) });
+  tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
 }
+
+// ----- Arbeitstage -----
+
+function renderWorkDays() {
+  const names = weekdayShortNames();
+  workDaysSwitch.innerHTML = WEEK_FROM_MONDAY.map(
+    (day, i) =>
+      `<button type="button" data-day="${day}" aria-pressed="${state.settings.workDays.includes(day)}">${esc(names[i])}</button>`
+  ).join("");
+}
+
+workDaysSwitch.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-day]");
+  if (!btn) return;
+  const day = Number(btn.dataset.day);
+  const { workDays } = state.settings;
+  // Mindestens ein Arbeitstag bleibt gewählt, sonst gäbe es kein Tagessoll
+  if (workDays.includes(day) && workDays.length === 1) return;
+  state.settings.workDays = workDays.includes(day) ? workDays.filter((d) => d !== day) : [...workDays, day];
+  saveSettings();
+  btn.setAttribute("aria-pressed", String(state.settings.workDays.includes(day)));
+  updateTagessollInfo();
+  renderWorkEntries();
+});
 
 export function updateStorageInfo() {
   storageInfo.textContent = t("settings.storage", {
@@ -130,7 +153,7 @@ export function renderSettingsForm() {
   updateInstallUi();
   renderLanguageSelect();
   setWochensoll.value = s.wochensollstunden;
-  setArbeitstage.value = s.arbeitstage;
+  renderWorkDays();
   setRestEnabled.checked = s.ruhezeitEnabled;
   ruhezeitOptionsWrap.hidden = !s.ruhezeitEnabled;
   ruhezeitHint.hidden = !s.ruhezeitEnabled;
@@ -167,7 +190,9 @@ function renderPauseRules() {
       renderWorkEntries();
     });
     row.querySelector(".rule-minutes").addEventListener("input", (e) => {
-      rule.minuten = Math.min(99, Math.max(1, Number(e.target.value) || 1));
+      const min = Number(e.target.value);
+      if (!(min >= 1)) return; // leer oder 0 beim Tippen nicht übernehmen
+      rule.minuten = Math.min(99, Math.round(min));
       saveSettings();
       renderWorkEntries();
     });
@@ -191,15 +216,12 @@ $("addPauseRuleBtn").addEventListener("click", () => {
 
 // Eingabefelder nicht neu befüllen, sonst springt der Wert beim Tippen
 setWochensoll.addEventListener("input", () => {
-  state.settings.wochensollstunden = Number(setWochensoll.value) || 0;
+  const hours = Number(setWochensoll.value);
+  if (!(hours > 0)) return; // leer oder 0 beim Tippen nicht übernehmen
+  state.settings.wochensollstunden = hours;
   saveSettings();
   updateTagessollInfo();
   renderWorkEntries();
-});
-setArbeitstage.addEventListener("input", () => {
-  state.settings.arbeitstage = Number(setArbeitstage.value) || 0;
-  saveSettings();
-  updateTagessollInfo();
 });
 setRestEnabled.addEventListener("change", () => {
   state.settings.ruhezeitEnabled = setRestEnabled.checked;

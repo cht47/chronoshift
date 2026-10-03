@@ -24,6 +24,12 @@ export function dateFromISO(iso) {
   return new Date(y, m - 1, d);
 }
 
+export function nextDayISO(iso) {
+  const d = dateFromISO(iso);
+  d.setDate(d.getDate() + 1);
+  return isoOf(d);
+}
+
 export function combineDateTime(iso, hhmm) {
   const [y, m, d] = iso.split("-").map(Number);
   const [hh, mm] = hhmm.split(":").map(Number);

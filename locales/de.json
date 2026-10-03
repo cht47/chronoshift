@@ -127,7 +127,8 @@
     "confirmDeleteOld": "{count} Arbeitszeit-Eintrag/Einträge vor dem {date} löschen?",
     "confirmReset": "Wirklich ALLE Daten löschen? Tasks, Arbeitszeiten, laufender Timer und Einstellungen werden unwiderruflich entfernt.",
     "resetConfirmLabel": "Alles löschen",
-    "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner."
+    "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner.",
+    "damaged": "Ein Teil der gespeicherten Daten war beschädigt und konnte nicht geladen werden. Falls Einträge fehlen, stelle bitte ein Backup wieder her."
   },
   "backup": {
     "create": "Backup erstellen",
@@ -163,9 +164,10 @@
     "cloudPopupBlocked": "Das Fenster für die Google-Anmeldung wurde blockiert. Bitte erlaube Popups für diese Seite und versuche es erneut.",
     "gdrivePrivacy": "Datenschutz: Erst wenn du auf einen der Buttons tippst, verbindet sich die App mit Google (Google Ireland Ltd.). Dabei werden deine IP-Adresse und das Backup übertragen. Google kann Daten auch in den USA verarbeiten (EU-US Data Privacy Framework).",
     "gdrivePrivacyLink": "Datenschutzerklärung von Google",
-    "cloudRetry": "Die Google-Anmeldung ist jetzt bereit. Bitte tippe noch einmal.",
+    "cloudRetry": "Die Google-Anmeldung ist jetzt bereit. Bitte versuche es noch einmal.",
     "cloudLast": "Letzte Sicherung in Google Drive: {date}",
-    "cloudLastNever": "Noch keine Sicherung in Google Drive."
+    "cloudLastNever": "Noch keine Sicherung in Google Drive.",
+    "cloudExpired": "Die Anmeldung bei Google ist abgelaufen. Bitte versuche es noch einmal."
   },
   "export": {
     "tasksFile": "chronoshift-tasks-{date}.xlsx",

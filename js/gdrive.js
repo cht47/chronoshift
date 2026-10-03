@@ -71,7 +71,11 @@ function getToken() {
 async function api(url, options = {}) {
   const accessToken = await getToken();
   const res = await fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${accessToken}` } });
-  if (res.status === 401) token = null;
+  if (res.status === 401) {
+    // Token von Google nicht mehr akzeptiert; beim nächsten Versuch wird ein neues geholt
+    token = null;
+    throw new Error("expired");
+  }
   if (!res.ok) throw new Error(`drive ${res.status}`);
   return res;
 }

@@ -69,7 +69,8 @@
     "prev": "Vorheriger Monat",
     "next": "Nächster Monat",
     "empty": "Keine Einträge an diesem Tag.",
-    "overlap": "Überschneidung"
+    "overlap": "Überschneidung",
+    "tasks": "Tasks"
   },
   "settings": {
     "app": "App",

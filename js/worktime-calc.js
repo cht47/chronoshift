@@ -1,6 +1,6 @@
 import { DAY_MS } from "./config.js";
 import { state } from "./state.js";
-import { combineDateTime } from "./util.js";
+import { combineDateTime, dateFromISO } from "./util.js";
 
 export function worktimeRange(entry) {
   const startMs = combineDateTime(entry.datum, entry.beginn);
@@ -38,7 +38,7 @@ export function computeWorktimeStats(entry) {
 
 // IDs der Einträge, die sich mit einem früher beginnenden überschneiden (z. B. versehentlich doppelt erfasst).
 // Sie zählen nicht zur Wochensumme, damit keine Zeit doppelt gerechnet wird.
-export function overlappingWorkIds(entries) {
+function overlappingWorkIds(entries) {
   const ids = new Set();
   let countedEnd = -Infinity;
   const ranges = entries.map((e) => ({ id: e.id, ...worktimeRange(e) }));
@@ -48,6 +48,29 @@ export function overlappingWorkIds(entries) {
     else countedEnd = r.endMs;
   }
   return ids;
+}
+
+// Tagessoll in Minuten. Freie Tage: bei bis zu 5 Arbeitstagen Sa und So, bei 6 nur So.
+function dayTargetMin(iso) {
+  const { wochensollstunden, arbeitstage } = state.settings;
+  const weekday = dateFromISO(iso).getDay(); // 0 = So, 6 = Sa
+  const free = weekday === 0 ? arbeitstage < 7 : weekday === 6 && arbeitstage <= 5;
+  return free ? 0 : Math.round((wochensollstunden * 60) / Math.max(1, arbeitstage));
+}
+
+// Überschneidungen und Abweichung vom Tagessoll für eine Liste von Arbeitszeiten.
+// Die Abweichung gilt für den ganzen Tag und steht am zeitlich letzten gültigen Eintrag (Map: ID -> Minuten).
+export function workListContext(entries) {
+  const overlaps = overlappingWorkIds(entries);
+  const lastOfDay = new Map();
+  const netOfDay = new Map();
+  for (const e of entries.filter((x) => !overlaps.has(x.id)).sort(compareWorkAsc)) {
+    lastOfDay.set(e.datum, e.id);
+    netOfDay.set(e.datum, (netOfDay.get(e.datum) || 0) + computeWorktimeStats(e).nettoMin);
+  }
+  const dayDiffs = new Map();
+  for (const [datum, id] of lastOfDay) dayDiffs.set(id, netOfDay.get(datum) - dayTargetMin(datum));
+  return { overlaps, dayDiffs };
 }
 
 export function compareWorkAsc(a, b) {

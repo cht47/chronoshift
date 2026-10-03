@@ -1,5 +1,5 @@
 // Bei jedem Release zusammen mit VERSION in service-worker.js erhöhen
-export const APP_VERSION = "1.0.10-beta";
+export const APP_VERSION = "1.0.11-beta";
 export const FIRST_YEAR = 2025;
 
 // Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen
@@ -28,7 +28,7 @@ export const LANGUAGES = { de: "Deutsch", en: "English" };
 export const FALLBACK_LANG = "en";
 
 export const DEFAULT_SETTINGS = {
-  wochensollstunden: 38,
+  wochensollstunden: 40,
   arbeitstage: 5,
   ruhezeitEnabled: true,
   restHours: 11,
@@ -36,8 +36,8 @@ export const DEFAULT_SETTINGS = {
   bannerVon: "00:00",
   bannerBis: "00:00",
   pauseAutoEnabled: true,
+  // § 4 ArbZG: 30 min ab 6 h, 45 min ab 9 h (die Regeln addieren sich)
   pauseRules: [
-    { stunden: 4, minuten: 15 },
     { stunden: 6, minuten: 30 },
     { stunden: 9, minuten: 15 },
   ],

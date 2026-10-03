@@ -2,14 +2,15 @@ import { fmtDateParts, t } from "./i18n.js";
 import { state } from "./state.js";
 import { buildTaskRow, taskDateISO } from "./tasks.js";
 import { renderList } from "./ui.js";
-import { $, dateFromISO, esc, isoOf, todayISO } from "./util.js";
+import { $, dateFromISO, esc, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
 import { buildWorkRow } from "./worktime.js";
-import { compareWorkAsc, overlappingWorkIds } from "./worktime-calc.js";
+import { compareWorkAsc, computeWorktimeStats, workListContext } from "./worktime-calc.js";
 
 const calGrid = $("calGrid");
 const calWeekdays = $("calWeekdays");
 const calLabel = $("calLabel");
 const calDayDetail = $("calDayDetail");
+const calMonthSummary = $("calMonthSummary");
 
 export function initCalendarState() {
   const now = new Date();
@@ -32,8 +33,8 @@ export function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const taskDates = new Set(state.tasks.map(taskDateISO));
   const workDates = new Set(state.work.map((e) => e.datum));
-  const overlaps = overlappingWorkIds(state.work);
-  const overlapDates = new Set(state.work.filter((e) => overlaps.has(e.id)).map((e) => e.datum));
+  const ctx = workListContext(state.work);
+  const overlapDates = new Set(state.work.filter((e) => ctx.overlaps.has(e.id)).map((e) => e.datum));
   const todayIso = todayISO();
 
   let html = "<div></div>".repeat(startOffset);
@@ -61,10 +62,24 @@ export function renderCalendar() {
     });
   });
 
-  renderDayDetail(overlaps);
+  renderMonthSummary(ctx.overlaps);
+  renderDayDetail(ctx);
 }
 
-function renderDayDetail(overlaps) {
+// Summen des angezeigten Monats; Überschneidungen zählen wie in der Wochensumme nicht
+function renderMonthSummary(overlaps) {
+  const monthPrefix = isoOf(new Date(state.cal.year, state.cal.month, 1)).slice(0, 8);
+  const workMin = state.work
+    .filter((e) => e.datum.startsWith(monthPrefix) && !overlaps.has(e.id))
+    .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
+  const tasks = state.tasks.filter((e) => taskDateISO(e).startsWith(monthPrefix));
+  const taskMin = tasks.reduce((sum, e) => sum + e.durationMin, 0);
+  calMonthSummary.innerHTML = `
+    <span><span class="dot work"></span>${esc(t("common.worktime"))} <strong>${fmtMin(workMin)}</strong></span>
+    <span><span class="dot task"></span>${esc(t("calendar.tasks"))} <strong>${tasks.length} · ${fmtDur(taskMin)}</strong></span>`;
+}
+
+function renderDayDetail(ctx) {
   const selected = state.cal.selectedISO;
   calDayDetail.innerHTML = "";
   if (!selected) return;
@@ -75,7 +90,7 @@ function renderDayDetail(overlaps) {
 
   calDayDetail.insertAdjacentHTML("beforeend", `<div class="section-label"><span>${esc(title)}</span></div>`);
   const container = document.createElement("div");
-  renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e, overlaps) : buildTaskRow(e)), t("calendar.empty"));
+  renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildWorkRow(e, ctx) : buildTaskRow(e)), t("calendar.empty"));
   calDayDetail.appendChild(container);
 }
 

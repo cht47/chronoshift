@@ -54,16 +54,6 @@
 
     <!-- ===================== Arbeitszeit ===================== -->
     <section id="view-worktime" hidden>
-      <div class="card">
-        <div class="stat-label"><span data-i18n="worktime.thisWeek"></span> · <span id="weekRange"></span></div>
-        <div class="stat-row">
-          <div><span class="stat-value" id="weekIst"></span> <span class="stat-sub" id="weekSoll"></span></div>
-          <span class="chip" id="weekDelta"></span>
-        </div>
-        <progress id="weekProgress" value="0" max="1"></progress>
-        <div class="rest-line" id="restInfo" role="status" hidden></div>
-      </div>
-
       <form id="worktimeForm" class="card">
         <div class="form-title" id="wtFormTitle"></div>
         <label><span data-i18n="worktime.date"></span>
@@ -92,6 +82,16 @@
         </div>
       </form>
 
+      <div class="card">
+        <div class="stat-label"><span data-i18n="worktime.thisWeek"></span> · <span id="weekRange"></span></div>
+        <div class="stat-row">
+          <div><span class="stat-value" id="weekIst"></span> <span class="stat-sub" id="weekSoll"></span></div>
+          <span class="chip" id="weekDelta"></span>
+        </div>
+        <progress id="weekProgress" value="0" max="1"></progress>
+        <div class="rest-line" id="restInfo" role="status" hidden></div>
+      </div>
+
       <div class="section-label"><span data-i18n="worktime.entries"></span></div>
       <div id="worktimeContainer"></div>
     </section>
@@ -111,6 +111,7 @@
           <span><span class="dot work"></span> <span data-i18n="common.worktime"></span></span>
           <span><span class="dot overlap"></span> <span data-i18n="calendar.overlap"></span></span>
         </div>
+        <div class="month-summary" id="calMonthSummary"></div>
       </div>
       <div id="calDayDetail"></div>
     </section>

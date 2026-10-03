@@ -69,7 +69,8 @@
     "prev": "Previous month",
     "next": "Next month",
     "empty": "No entries on this day.",
-    "overlap": "Overlap"
+    "overlap": "Overlap",
+    "tasks": "Tasks"
   },
   "settings": {
     "app": "App",

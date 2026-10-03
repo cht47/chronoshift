@@ -42,6 +42,11 @@ export function fmtMin(min) {
   return `${sign}${Math.floor(abs / 60)}h ${pad2(abs % 60)}min`;
 }
 
+// Abweichung mit Vorzeichen, z. B. "+1h 05min", "-0h 30min", "±0"
+export function fmtDiff(min) {
+  return min === 0 ? "±0" : `${min > 0 ? "+" : ""}${fmtMin(min)}`;
+}
+
 export function fmtDur(min) {
   return min < 60 ? `${min} min` : fmtMin(min);
 }

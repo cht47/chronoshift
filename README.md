@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.10-beta
+**Version:** 1.0.11-beta
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -26,10 +26,11 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ### 💼 Work time
 - Log start and end of your working day, editable at any time
 - Breaks either entered manually (exact from–to times) or deducted automatically
-- Configurable automatic break rules that add up (default: 15 min after 4 h, 30 min after 6 h, 15 min after 9 h)
+- Configurable automatic break rules that add up (default as required by German law: 30 min after 6 h, another 15 min after 9 h)
 - Night shifts across midnight are supported
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
+- Difference to the daily target for each day (weekends count as days off with up to 5 work days)
 
 ### 😴 Rest period
 - Shows when your minimum rest period ends, based on the latest task or working day
@@ -39,6 +40,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 
 ### 📅 Calendar
 - Monthly overview with markers for tasks, work time and overlapping work time entries
+- Monthly totals of work time and tasks below the calendar
 - Tap a day to see its entries, delete them or edit work time
 
 ### ⚙️ Settings

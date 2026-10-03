@@ -16,8 +16,9 @@ const taskListHint = $("taskListHint");
 
 let tickTimer = null;
 
+// Ein Task gehört zum Tag seines Beginns, auch wenn er nach Mitternacht endet
 export function taskDateISO(entry) {
-  return isoOf(new Date(entry.stopMs));
+  return isoOf(new Date(entry.startMs));
 }
 
 function updateTimerDisplay() {

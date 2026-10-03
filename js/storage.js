@@ -100,7 +100,6 @@ const SETTING_CHECKS = {
 };
 
 // Bis 1.0.11 gab es nur die Anzahl "arbeitstage"; daraus werden die Wochentage ab Montag (5 = Mo–Fr)
-
 function migrateWorkDays(settings) {
   const count = settings.arbeitstage;
   if ("workDays" in settings || !Number.isInteger(count) || count < 1 || count > 7) return settings;

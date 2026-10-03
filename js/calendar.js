@@ -87,7 +87,7 @@ function renderDayDetail(ctx) {
   calDayDetail.innerHTML = "";
   if (!selected) return;
 
-  const dayTasks = state.tasks.filter((e) => taskDateISO(e) === selected).sort((a, b) => a.stopMs - b.stopMs);
+  const dayTasks = state.tasks.filter((e) => taskDateISO(e) === selected).sort((a, b) => a.startMs - b.startMs);
   const dayWork = [...state.work, ...state.absences]
     .filter((e) => e.datum === selected)
     .sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));

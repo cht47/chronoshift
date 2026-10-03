@@ -15,10 +15,11 @@ export function worktimePauseRange(entry) {
   return { pVon: combineDateTime(vonDay, entry.pauseVon), pBis: combineDateTime(bisDay, entry.pauseBis) };
 }
 
+// Wie § 4 ArbZG: Die Pause wird erst bei mehr als X Stunden fällig (ab 6:01, nicht bei genau 6:00), dann aber voll
 function computeAutoPauseMinutes(bruttoMin) {
   const { pauseAutoEnabled, pauseRules } = state.settings;
   if (!pauseAutoEnabled) return 0;
-  return pauseRules.reduce((sum, r) => (bruttoMin >= r.stunden * 60 ? sum + (Number(r.minuten) || 0) : sum), 0);
+  return pauseRules.reduce((sum, r) => (bruttoMin > r.stunden * 60 ? sum + (Number(r.minuten) || 0) : sum), 0);
 }
 
 export function computeWorktimeStats(entry) {
@@ -85,8 +86,4 @@ export function workListContext(work, absences) {
   const dayDiffs = new Map();
   for (const [datum, entry] of lastOfDay) dayDiffs.set(entry, sumOfDay.get(datum) - dayTargetMin(datum));
   return { overlaps, dayDiffs };
-}
-
-export function compareWorkAsc(a, b) {
-  return (a.datum + a.beginn).localeCompare(b.datum + b.beginn);
 }

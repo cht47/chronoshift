@@ -38,7 +38,7 @@ export const DEFAULT_SETTINGS = {
   bannerVon: "00:00",
   bannerBis: "00:00",
   pauseAutoEnabled: true,
-  // § 4 ArbZG: 30 min ab 6 h, 45 min ab 9 h (die Regeln addieren sich)
+  // § 4 ArbZG: 30 min bei mehr als 6 h, 45 min bei mehr als 9 h (die Regeln addieren sich)
   pauseRules: [
     { stunden: 6, minuten: 30 },
     { stunden: 9, minuten: 15 },

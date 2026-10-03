@@ -1,3 +1,4 @@
+import { resetAbsenceForm } from "./absence.js";
 import { refreshAll } from "./app.js";
 import { ABSENCE_TYPES, APP_VERSION, DAY_MS } from "./config.js";
 import { deleteBackup, disconnect, downloadBackup, listBackups, uploadBackup } from "./gdrive.js";
@@ -21,7 +22,8 @@ import {
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
 import { $, dateFromISO, esc, isDate, isTime, isoOf, todayISO } from "./util.js";
-import { compareWorkAsc, computeWorktimeStats } from "./worktime-calc.js";
+import { absenceCreditMin, computeWorktimeStats, entrySortKey } from "./worktime-calc.js";
+import { resetWorktimeForm } from "./worktime.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
 
 // ----- Backup -----
@@ -304,7 +306,7 @@ $("exportTasksBtn").addEventListener("click", () => {
     { header: t("export.minutes"), width: 10 },
   ];
   const rows = [...state.tasks]
-    .sort((a, b) => a.stopMs - b.stopMs)
+    .sort((a, b) => a.startMs - b.startMs)
     .map((e) => [
       e.task,
       { v: excelDateTime(new Date(e.startMs)), s: XLSX_STYLE.dateTime },
@@ -314,8 +316,10 @@ $("exportTasksBtn").addEventListener("click", () => {
   downloadFile(buildXlsx(t("export.tasksSheet"), columns, rows), t("export.tasksFile", { date: todayISO() }));
 });
 
+// Arbeitszeiten und Abwesenheiten in einer Tabelle, nach Tag sortiert. Netto ist reine Arbeitszeit,
+// Abwesenheiten stehen mit Art und Gutschrift in eigenen Spalten; Netto + Gutschrift ergibt die Summe der App.
 $("exportWorkBtn").addEventListener("click", () => {
-  if (!state.work.length) {
+  if (!state.work.length && !state.absences.length) {
     showInfo(t("data.noWorkToExport"));
     return;
   }
@@ -328,13 +332,18 @@ $("exportWorkBtn").addEventListener("click", () => {
     { header: t("export.breakMinutes"), width: 16 },
     { header: t("export.breakType"), width: 14 },
     { header: t("export.netMinutes"), width: 16 },
+    { header: t("export.absence"), width: 22 },
+    { header: t("export.creditMinutes"), width: 18 },
   ];
   const time = (hhmm) => (hhmm ? { v: excelTime(hhmm), s: XLSX_STYLE.time } : null);
-  const rows = [...state.work].sort(compareWorkAsc).map((e) => {
+  const date = (iso) => ({ v: excelDateTime(dateFromISO(iso)), s: XLSX_STYLE.date });
+  const entries = [...state.work, ...state.absences].sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
+  const rows = entries.map((e) => {
+    if ("typ" in e) return [date(e.datum), null, null, null, null, null, "", null, t(`absence.types.${e.typ}`), absenceCreditMin(e)];
     const s = computeWorktimeStats(e);
     const breakType = s.pauseManual ? t("export.breakManual") : s.pauseMin > 0 ? t("export.breakAuto") : "";
     return [
-      { v: excelDateTime(dateFromISO(e.datum)), s: XLSX_STYLE.date },
+      date(e.datum),
       time(e.beginn),
       time(e.ende),
       time(e.pauseVon),
@@ -349,7 +358,7 @@ $("exportWorkBtn").addEventListener("click", () => {
 
 // ----- Löschen -----
 // Einträge vor einem Datum löschen, wahlweise nur Tasks, Arbeitszeiten und/oder Abwesenheiten.
-// Tasks zählen zum Tag ihres Stopps, wie in Liste und Kalender.
+// Tasks zählen zum Tag ihres Beginns, wie im Kalender.
 const DELETE_SCOPES = {
   tasks: { list: "tasks", dateOf: taskDateISO, save: saveTasks },
   work: { list: "work", dateOf: (e) => e.datum, save: saveWork },
@@ -409,6 +418,9 @@ deleteBeforeConfirmBtn.addEventListener("click", () => {
     scope.save();
   });
   deleteBeforeModal.close();
+  // Ein gerade bearbeiteter Eintrag könnte gelöscht sein
+  resetWorktimeForm();
+  resetAbsenceForm();
   refreshAll();
   showToast(t("data.deletedBefore", { count: counts.tasks + counts.work + counts.absences }));
 });

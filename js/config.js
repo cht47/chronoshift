@@ -7,6 +7,7 @@ export const TASKS_KEY = "chronoshift.tasks";
 export const TIMER_STATE_KEY = "chronoshift.timer";
 export const WORKTIME_KEY = "chronoshift.worktime";
 export const SETTINGS_KEY = "chronoshift.settings";
+export const ABSENCES_KEY = "chronoshift.absences";
 export const LAST_BACKUP_KEY = "chronoshift.lastBackup";
 export const LAST_CLOUD_BACKUP_KEY = "chronoshift.lastCloudBackup";
 export const NEXT_REMINDER_KEY = "chronoshift.nextBackupReminder";
@@ -14,6 +15,7 @@ export const ALL_KEYS = [
   TASKS_KEY,
   TIMER_STATE_KEY,
   WORKTIME_KEY,
+  ABSENCES_KEY,
   SETTINGS_KEY,
   LAST_BACKUP_KEY,
   LAST_CLOUD_BACKUP_KEY,
@@ -21,7 +23,6 @@ export const ALL_KEYS = [
 ];
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
-export const WORKTIME_RETENTION_DAYS = 90;
 
 // Verfügbare Sprachen: Datei locales/<code>.json + Eintrag hier (Name in der jeweiligen Sprache)
 export const LANGUAGES = { de: "Deutsch", en: "English" };
@@ -46,6 +47,9 @@ export const DEFAULT_SETTINGS = {
   language: "system",
   gdriveEnabled: false,
 };
+
+// Arten von Abwesenheit; der halbe Urlaubstag schreibt das halbe Tagessoll gut
+export const ABSENCE_TYPES = ["vacation", "vacationHalf", "sick", "holiday"];
 
 // Wochentage in Anzeigereihenfolge ab Montag, als Date.getDay()-Werte
 export const WEEK_FROM_MONDAY = [1, 2, 3, 4, 5, 6, 0];

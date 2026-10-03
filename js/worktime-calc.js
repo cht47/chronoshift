@@ -57,18 +57,33 @@ function dayTargetMin(iso) {
   return state.settings.workDays.includes(dateFromISO(iso).getDay()) ? dailyTargetMin() : 0;
 }
 
-// Überschneidungen und Abweichung vom Tagessoll für eine Liste von Arbeitszeiten.
-// Die Abweichung gilt für den ganzen Tag und steht am zeitlich letzten gültigen Eintrag (Map: ID -> Minuten).
-export function workListContext(entries) {
-  const overlaps = overlappingWorkIds(entries);
+// Gutschrift einer Abwesenheit: das Tagessoll des Tages, beim halben Urlaubstag die Hälfte
+export function absenceCreditMin(absence) {
+  const target = dayTargetMin(absence.datum);
+  return absence.typ === "vacationHalf" ? Math.round(target / 2) : target;
+}
+
+// Sortierschlüssel für Arbeitszeiten und Abwesenheiten in einer Liste; Abwesenheiten stehen am Tagesbeginn
+export function entrySortKey(entry) {
+  return "typ" in entry ? entry.datum : entry.datum + entry.beginn;
+}
+
+// Überschneidungen und Abweichung vom Tagessoll für Arbeitszeiten und Abwesenheiten.
+// Die Abweichung gilt für den ganzen Tag und steht am zeitlich letzten gültigen Eintrag (Map: Eintrag -> Minuten).
+export function workListContext(work, absences) {
+  const overlaps = overlappingWorkIds(work);
+  const items = [
+    ...absences.map((a) => ({ entry: a, min: absenceCreditMin(a) })),
+    ...work.filter((e) => !overlaps.has(e.id)).map((e) => ({ entry: e, min: computeWorktimeStats(e).nettoMin })),
+  ].sort((a, b) => entrySortKey(a.entry).localeCompare(entrySortKey(b.entry)));
   const lastOfDay = new Map();
-  const netOfDay = new Map();
-  for (const e of entries.filter((x) => !overlaps.has(x.id)).sort(compareWorkAsc)) {
-    lastOfDay.set(e.datum, e.id);
-    netOfDay.set(e.datum, (netOfDay.get(e.datum) || 0) + computeWorktimeStats(e).nettoMin);
+  const sumOfDay = new Map();
+  for (const { entry, min } of items) {
+    lastOfDay.set(entry.datum, entry);
+    sumOfDay.set(entry.datum, (sumOfDay.get(entry.datum) || 0) + min);
   }
   const dayDiffs = new Map();
-  for (const [datum, id] of lastOfDay) dayDiffs.set(id, netOfDay.get(datum) - dayTargetMin(datum));
+  for (const [datum, entry] of lastOfDay) dayDiffs.set(entry, sumOfDay.get(datum) - dayTargetMin(datum));
   return { overlaps, dayDiffs };
 }
 

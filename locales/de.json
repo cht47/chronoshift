@@ -54,7 +54,10 @@
     "errorBreakSame": "Pause von und bis dürfen nicht gleich sein.",
     "errorBreakOutside": "Die Pause muss zwischen Beginn und Ende liegen.",
     "confirmNightShift": "Ende ({end}) liegt vor Beginn ({start}). Als Nachtschicht bis zum Folgetag speichern?",
-    "overlapNote": "Überschneidung"
+    "overlapNote": "Überschneidung",
+    "modeAria": "Art des Eintrags",
+    "modeWork": "Arbeitszeit",
+    "modeAbsence": "Abwesenheit"
   },
   "rest": {
     "label": "{hours}h Ruhezeit",
@@ -70,7 +73,10 @@
     "next": "Nächster Monat",
     "empty": "Keine Einträge an diesem Tag.",
     "overlap": "Überschneidung",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "absence": "Abwesenheit",
+    "absenceDay": "1 Tag",
+    "absenceDays": "{count} Tage"
   },
   "settings": {
     "app": "App",
@@ -109,26 +115,27 @@
     "exportTasks": "Tasks als Excel-Datei exportieren",
     "exportWork": "Arbeitszeit als Excel-Datei exportieren",
     "delete": "Löschen",
-    "deleteTodayTasks": "Heutige Tasks löschen",
-    "deleteAllTasks": "Alle Tasks löschen",
-    "deleteOldWork": "Arbeitszeiten älter als {days} Tage löschen",
     "resetAll": "Alle Daten zurücksetzen",
-    "storage": "Speicher: ca. {size} KB von ca. 5 MB · {tasks} Tasks · {work} Arbeitszeiten",
-    "privacy": "Datenschutz"
+    "storage": "Speicher: ca. {size} KB von ca. 5 MB · {tasks} Tasks · {work} Arbeitszeiten · {absences} Abwesenheiten",
+    "privacy": "Datenschutz",
+    "deleteBefore": "Einträge vor einem Datum löschen"
   },
   "data": {
     "noTasksToExport": "Es gibt keine Task-Einträge zum Exportieren!",
     "noWorkToExport": "Es gibt keine Arbeitszeit-Einträge zum Exportieren!",
-    "noTasksToday": "Heute gibt es keine Tasks.",
-    "confirmDeleteToday": "{count} Task(s) von heute löschen?",
-    "noTasks": "Es gibt keine Tasks.",
-    "confirmDeleteAll": "Alle {count} Task(s) löschen? Arbeitszeiten bleiben erhalten.",
-    "noOldWork": "Keine Arbeitszeiten älter als {days} Tage vorhanden.",
-    "confirmDeleteOld": "{count} Arbeitszeit-Eintrag/Einträge vor dem {date} löschen?",
     "confirmReset": "Wirklich ALLE Daten löschen? Tasks, Arbeitszeiten, laufender Timer und Einstellungen werden unwiderruflich entfernt.",
     "resetConfirmLabel": "Alles löschen",
     "exportDone": "Gespeichert: {file} – zu finden im Download-Ordner.",
-    "damaged": "Ein Teil der gespeicherten Daten war beschädigt und konnte nicht geladen werden. Falls Einträge fehlen, stelle bitte ein Backup wieder her."
+    "damaged": "Ein Teil der gespeicherten Daten war beschädigt und konnte nicht geladen werden. Falls Einträge fehlen, stelle bitte ein Backup wieder her.",
+    "chooseDate": "Bitte wähle ein Datum.",
+    "nothingBefore": "Vor dem {date} gibt es in den gewählten Bereichen keine Einträge.",
+    "deleteBeforeDate": "Alles löschen vor dem",
+    "scopeTasks": "Tasks",
+    "scopeWork": "Arbeitszeiten",
+    "scopeAbsences": "Abwesenheiten",
+    "deleteBeforeSummary": "Vor dem {date} werden gelöscht: {tasks} Tasks, {work} Arbeitszeiten, {absences} Abwesenheiten.",
+    "deletedBefore": "{count} Einträge gelöscht.",
+    "chooseScope": "Bitte wähle mindestens einen Bereich."
   },
   "backup": {
     "create": "Backup erstellen",
@@ -137,9 +144,9 @@
     "last": "Letzte Sicherung: {date}. Das Backup enthält Tasks, Arbeitszeiten und Einstellungen.",
     "lastNever": "Noch keine Sicherung erstellt. Das Backup enthält Tasks, Arbeitszeiten und Einstellungen.",
     "invalid": "Die Datei ist kein gültiges ChronoShift-Backup.",
-    "confirmRestore": "Backup vom {date} wiederherstellen? {tasks} Tasks, {work} Arbeitszeiten und die Einstellungen ersetzen die aktuellen Daten.",
+    "confirmRestore": "Backup vom {date} wiederherstellen? {tasks} Tasks, {work} Arbeitszeiten, {absences} Abwesenheiten und die Einstellungen ersetzen die aktuellen Daten.",
     "restoreLabel": "Wiederherstellen",
-    "restored": "Backup wiederhergestellt: {tasks} Tasks, {work} Arbeitszeiten.",
+    "restored": "Backup wiederhergestellt: {tasks} Tasks, {work} Arbeitszeiten, {absences} Abwesenheiten.",
     "reminderTitle": "Zeit für ein Backup",
     "reminderLater": "Später",
     "reminderSave": "Jetzt sichern",
@@ -188,5 +195,28 @@
     "netMinutes": "Netto (Minuten)",
     "breakManual": "manuell",
     "breakAuto": "automatisch"
+  },
+  "absence": {
+    "formTitle": "Abwesenheit eintragen",
+    "editTitle": "Abwesenheit vom {date} bearbeiten",
+    "type": "Art",
+    "from": "Von",
+    "to": "Bis",
+    "hint": "Zählt als Tagessoll erfüllt, ein halber Urlaubstag zur Hälfte. Freie Tage werden übersprungen.",
+    "types": {
+      "vacation": "Urlaub",
+      "vacationHalf": "Urlaub (halber Tag)",
+      "sick": "Krank",
+      "holiday": "Feiertag"
+    },
+    "fullDay": "ganztägig",
+    "savedDays": "{count} Abwesenheitstage gespeichert.",
+    "errorRange": "Das Ende darf nicht vor dem Beginn liegen.",
+    "errorTooLong": "Bitte höchstens ein Jahr auf einmal eintragen.",
+    "errorNoWorkDay": "Im gewählten Zeitraum liegt kein Arbeitstag ohne Abwesenheit.",
+    "errorExists": "Für diesen Tag ist bereits eine Abwesenheit eingetragen.",
+    "editAria": "Abwesenheit bearbeiten",
+    "deleteAria": "Abwesenheit löschen",
+    "confirmDelete": "{type} am {date} löschen?"
   }
 }

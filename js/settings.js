@@ -1,4 +1,5 @@
 import { refreshAll, updateViewTitle } from "./app.js";
+import { updateAbsenceFormText } from "./absence.js";
 import { LANGUAGES, WEEK_FROM_MONDAY } from "./config.js";
 import { applyI18n, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
@@ -61,6 +62,7 @@ export function updateStorageInfo() {
     size: fmtNumber(storageChars() / 1024, 1),
     tasks: state.tasks.length,
     work: state.work.length,
+    absences: state.absences.length,
   });
 }
 
@@ -79,6 +81,7 @@ setLanguage.addEventListener("change", async () => {
   applyI18n();
   setRunningUi(state.running);
   updateWorktimeFormText();
+  updateAbsenceFormText();
   renderSettingsForm();
   refreshAll();
   updateViewTitle();

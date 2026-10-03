@@ -54,6 +54,11 @@
 
     <!-- ===================== Arbeitszeit ===================== -->
     <section id="view-worktime" hidden>
+      <div class="segmented entry-mode" role="group" id="entryModeSwitch" data-i18n-aria="worktime.modeAria">
+        <button type="button" data-mode="work" aria-pressed="true" data-i18n="worktime.modeWork"></button>
+        <button type="button" data-mode="absence" aria-pressed="false" data-i18n="worktime.modeAbsence"></button>
+      </div>
+
       <form id="worktimeForm" class="card">
         <div class="form-title" id="wtFormTitle"></div>
         <label><span data-i18n="worktime.date"></span>
@@ -82,13 +87,34 @@
         </div>
       </form>
 
+      <form id="absenceForm" class="card" hidden>
+        <div class="form-title" id="abFormTitle"></div>
+        <label><span data-i18n="absence.type"></span>
+          <select id="abType"></select>
+        </label>
+        <label><span id="abFromLabel"></span>
+          <input type="date" id="abFrom" required />
+        </label>
+        <label id="abToWrap"><span data-i18n="absence.to"></span>
+          <input type="date" id="abTo" />
+        </label>
+        <small class="hint" data-i18n="absence.hint"></small>
+        <div class="form-actions">
+          <button type="button" id="abCancelBtn" class="secondary" data-i18n="common.cancel" hidden></button>
+          <button type="submit" id="abSaveBtn"></button>
+        </div>
+      </form>
+
       <div class="card">
         <div class="stat-label"><span data-i18n="worktime.thisWeek"></span> · <span id="weekRange"></span></div>
         <div class="stat-row">
           <div><span class="stat-value" id="weekIst"></span> <span class="stat-sub" id="weekSoll"></span></div>
           <span class="chip" id="weekDelta"></span>
         </div>
-        <progress id="weekProgress" value="0" max="1"></progress>
+        <!-- Wochenfortschritt: Arbeitszeit orange, Abwesenheit grün; die Zahlen stehen darüber -->
+        <div class="week-bar" aria-hidden="true">
+          <span class="week-bar-work" id="weekBarWork"></span><span class="week-bar-absence" id="weekBarAbsence"></span>
+        </div>
         <div class="rest-line" id="restInfo" role="status" hidden></div>
       </div>
 
@@ -110,6 +136,7 @@
           <span><span class="dot task"></span> <span data-i18n="common.task"></span></span>
           <span><span class="dot work"></span> <span data-i18n="common.worktime"></span></span>
           <span><span class="dot overlap"></span> <span data-i18n="calendar.overlap"></span></span>
+          <span><span class="dot absence"></span> <span data-i18n="calendar.absence"></span></span>
         </div>
         <div class="month-summary" id="calMonthSummary"></div>
       </div>
@@ -239,12 +266,8 @@
 
       <div class="section-label"><span data-i18n="settings.delete"></span></div>
       <div class="list-group">
-        <button type="button" class="action-row" id="deleteTodayTasksBtn"><span data-icon="trash"></span><span
-            data-i18n="settings.deleteTodayTasks"></span></button>
-        <button type="button" class="action-row" id="deleteAllTasksBtn"><span data-icon="trash"></span><span
-            data-i18n="settings.deleteAllTasks"></span></button>
-        <button type="button" class="action-row" id="deleteOldWorkBtn"><span data-icon="trash"></span><span
-            data-i18n="settings.deleteOldWork"></span></button>
+        <button type="button" class="action-row" id="deleteBeforeBtn"><span data-icon="trash"></span><span
+            data-i18n="settings.deleteBefore"></span></button>
         <button type="button" class="action-row danger" id="resetAllBtn"><span data-icon="alert"></span><span
             data-i18n="settings.resetAll"></span></button>
       </div>
@@ -319,6 +342,28 @@
       <div class="list-group dialog-list" id="cloudRestoreList"></div>
       <footer>
         <button class="secondary" id="cloudRestoreCancelBtn" data-i18n="common.cancel"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <!-- Modal: Einträge vor einem Datum löschen -->
+  <dialog id="deleteBeforeModal">
+    <article class="form-dialog">
+      <header>
+        <h3 data-i18n="settings.deleteBefore"></h3>
+      </header>
+      <label><span data-i18n="data.deleteBeforeDate"></span>
+        <input type="date" id="deleteBeforeDate" />
+      </label>
+      <fieldset class="delete-scope">
+        <label><input type="checkbox" role="switch" data-scope="tasks" /> <span data-i18n="data.scopeTasks"></span></label>
+        <label><input type="checkbox" role="switch" data-scope="work" /> <span data-i18n="data.scopeWork"></span></label>
+        <label><input type="checkbox" role="switch" data-scope="absences" /> <span data-i18n="data.scopeAbsences"></span></label>
+      </fieldset>
+      <p class="hint" id="deleteBeforeSummary"></p>
+      <footer>
+        <button class="secondary" id="deleteBeforeCancelBtn" data-i18n="common.cancel"></button>
+        <button class="btn-danger" id="deleteBeforeConfirmBtn" data-i18n="common.delete"></button>
       </footer>
     </article>
   </dialog>

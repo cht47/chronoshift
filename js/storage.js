@@ -1,4 +1,4 @@
-import { ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WEEK_FROM_MONDAY, WORKTIME_KEY } from "./config.js";
+import { ABSENCES_KEY, ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WEEK_FROM_MONDAY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
 import { isTime } from "./util.js";
 
@@ -38,6 +38,14 @@ export function loadWork() {
 
 export function saveWork() {
   localStorage.setItem(WORKTIME_KEY, JSON.stringify(state.work));
+}
+
+export function loadAbsences() {
+  state.absences = readJson(ABSENCES_KEY, Array.isArray, []);
+}
+
+export function saveAbsences() {
+  localStorage.setItem(ABSENCES_KEY, JSON.stringify(state.absences));
 }
 
 // Gespeicherte Einstellungen durchlaufen dieselbe Prüfung wie ein Backup (siehe sanitizeSettings)
@@ -118,14 +126,16 @@ function sanitizeSettings(stored) {
   return merged;
 }
 
-// Ersetzt Tasks, Arbeitszeiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
-export function restoreData(tasks, work, settings) {
+// Ersetzt Tasks, Arbeitszeiten, Abwesenheiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
+export function restoreData(tasks, work, absences, settings) {
   const merged = sanitizeSettings(settings);
   state.tasks = tasks;
   state.work = work;
+  state.absences = absences;
   state.settings = merged;
   saveTasks();
   saveWork();
+  saveAbsences();
   saveSettings();
 }
 

@@ -1,3 +1,4 @@
+import { resetAbsenceForm } from "./absence.js";
 import { APP_VERSION, FIRST_YEAR, VIEWS } from "./config.js";
 import { renderCalendar, initCalendarState } from "./calendar.js";
 import { checkBackupReminder, initCloudBackup, showRestoreResult, updateBackupInfo } from "./data.js";
@@ -6,7 +7,7 @@ import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
 import { applyTheme, renderSettingsForm, updateStorageInfo } from "./settings.js";
 import { state } from "./state.js";
-import { damagedKeys, loadSettings, loadTasks, loadWork } from "./storage.js";
+import { damagedKeys, loadAbsences, loadSettings, loadTasks, loadWork } from "./storage.js";
 import { renderEntries, restoreTimerState } from "./tasks.js";
 import { showInfo } from "./ui.js";
 import { $ } from "./util.js";
@@ -57,8 +58,10 @@ async function init() {
 
   loadTasks();
   loadWork();
+  loadAbsences();
   restoreTimerState();
   resetWorktimeForm();
+  resetAbsenceForm();
   initCalendarState();
   renderSettingsForm();
   initCloudBackup();

@@ -8,6 +8,7 @@ const FILES_TO_CACHE = [
   "./privacy.html",
   "./pico.min.css",
   "./css/app.css",
+  "./js/absence.js",
   "./js/app.js",
   "./js/calendar.js",
   "./js/config.js",

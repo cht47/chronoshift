@@ -28,6 +28,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Breaks either entered manually (exact from–to times) or deducted automatically
 - Configurable automatic break rules that add up (default as required by German law: 30 min after 6 h, another 15 min after 9 h)
 - Night shifts across midnight are supported
+- Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
 - Difference to the daily target for each day; work on days off counts entirely as overtime
@@ -50,7 +51,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Backup and restore of all tasks, work time and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept
 - Excel export (.xlsx) for tasks and work time (separately) – opens in Excel, Google Sheets, Numbers and LibreOffice
-- Delete today's tasks, all tasks, work time older than 90 days, or reset everything (with a 5-second safety countdown)
+- Delete entries before a chosen date (tasks, work time and/or absences), or reset everything (both with a 5-second safety countdown)
 
 ## 📱 Installation
 
@@ -94,7 +95,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/app.js` | Entry point: startup, navigation, service worker registration |
 | `js/config.js` | Version, storage keys, default settings, languages |
 | `js/state.js`, `js/storage.js` | Shared app state and loading/saving in `localStorage` |
-| `js/tasks.js`, `js/worktime.js`, `js/calendar.js`, `js/settings.js`, `js/data.js` | One module per area of the app |
+| `js/tasks.js`, `js/worktime.js`, `js/absence.js`, `js/calendar.js`, `js/settings.js`, `js/data.js` | One module per area of the app |
 | `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
 | `js/gdrive.js` | Google Drive cloud backup (sign-in and Drive API, loaded only when used) |
 | `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |

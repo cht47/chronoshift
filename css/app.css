@@ -1,5 +1,7 @@
 :root {
   --pico-font-size: 100%;
+  /* Abwesenheiten (Urlaub, Krank, Feiertag) in Grün, wie erledigte Ruhezeit */
+  --c-absence: var(--c-ok);
   --app-max: 40rem;
   --nav-h: 4.25rem;
   --radius: 0.9rem;
@@ -448,6 +450,16 @@ button.btn-danger {
   background: var(--c-work);
 }
 
+.row-accent.absence,
+.dot.absence {
+  background: var(--c-absence);
+}
+
+.absence-type {
+  color: var(--c-absence);
+  font-weight: 600;
+}
+
 .dot.overlap {
   background: var(--c-danger);
 }
@@ -752,8 +764,9 @@ button.btn-danger {
 
 .legend {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 1.25rem;
+  gap: 0.35rem 1.25rem;
   margin-top: 0.75rem;
   font-size: 0.78rem;
   color: var(--pico-muted-color);
@@ -825,6 +838,47 @@ button.btn-danger {
 
 .segmented button:focus-visible {
   outline: 2px solid var(--pico-primary);
+}
+
+/* Wochenfortschritt aus zwei Teilen: Arbeitszeit und Abwesenheit */
+.week-bar {
+  display: flex;
+  height: 0.5rem;
+  margin: 0.75rem 0 0.25rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--pico-progress-background-color);
+}
+
+.week-bar-work {
+  background: var(--c-work);
+}
+
+.week-bar-absence {
+  background: var(--c-absence);
+}
+
+/* Dialog mit Eingabefeldern: Abstand zwischen Überschrift und erstem Feld */
+.form-dialog > header {
+  margin-bottom: 1rem;
+}
+
+/* Bereichsauswahl im Dialog "Einträge vor einem Datum löschen" */
+.delete-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.delete-scope label {
+  margin: 0;
+}
+
+/* Umschalter Arbeitszeit / Abwesenheit über dem Formular */
+.segmented.entry-mode {
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1rem;
 }
 
 /* Auswahl der Arbeitstage Mo–So, mehrere gleichzeitig */

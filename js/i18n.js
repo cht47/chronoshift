@@ -1,4 +1,4 @@
-import { FALLBACK_LANG, LANGUAGES, WORKTIME_RETENTION_DAYS } from "./config.js";
+import { FALLBACK_LANG, LANGUAGES } from "./config.js";
 import { state } from "./state.js";
 import { clockOf, dateFromISO } from "./util.js";
 
@@ -51,8 +51,7 @@ export function t(key, params = {}) {
 }
 
 export function applyI18n() {
-  const params = { days: WORKTIME_RETENTION_DAYS };
-  document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n, params)));
+  document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => (el.placeholder = t(el.dataset.i18nPlaceholder)));
   document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
 }

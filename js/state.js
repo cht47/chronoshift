@@ -4,11 +4,13 @@ import { DEFAULT_SETTINGS } from "./config.js";
 export const state = {
   tasks: [],
   work: [],
+  absences: [],
   settings: structuredClone(DEFAULT_SETTINGS),
   running: false,
   currentStartTime: null,
   currentTask: "",
   editingWorkId: null,
+  editingAbsenceId: null,
   cal: { year: 0, month: 0, selectedISO: null },
   currentView: "tasks",
 };

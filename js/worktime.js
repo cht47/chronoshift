@@ -1,4 +1,5 @@
 import { refreshAll, switchView } from "./app.js";
+import { buildAbsenceRow, resetAbsenceForm } from "./absence.js";
 import { fmtDate, fmtDateParts, fmtDateRange, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { state } from "./state.js";
@@ -6,8 +7,9 @@ import { saveWork } from "./storage.js";
 import { confirmAction, renderList, showInfo } from "./ui.js";
 import { $, dateFromISO, esc, fmtDiff, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
 import {
-  compareWorkAsc,
+  absenceCreditMin,
   computeWorktimeStats,
+  entrySortKey,
   workListContext,
   worktimePauseRange,
   worktimeRange,
@@ -17,7 +19,8 @@ const weekRange = $("weekRange");
 const weekIst = $("weekIst");
 const weekSoll = $("weekSoll");
 const weekDelta = $("weekDelta");
-const weekProgress = $("weekProgress");
+const weekBarWork = $("weekBarWork");
+const weekBarAbsence = $("weekBarAbsence");
 const worktimeForm = $("worktimeForm");
 const wtFormTitle = $("wtFormTitle");
 const wtDatum = $("wtDatum");
@@ -28,6 +31,23 @@ const wtPauseBis = $("wtPauseBis");
 const wtSaveBtn = $("wtSaveBtn");
 const wtCancelBtn = $("wtCancelBtn");
 const worktimeContainer = $("worktimeContainer");
+const entryModeSwitch = $("entryModeSwitch");
+const absenceForm = $("absenceForm");
+
+// Umschalter über dem Formular: Arbeitszeit oder Abwesenheit
+export function setEntryMode(mode) {
+  entryModeSwitch.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+  worktimeForm.hidden = mode !== "work";
+  absenceForm.hidden = mode !== "absence";
+}
+
+entryModeSwitch.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-mode]");
+  if (!btn) return;
+  resetWorktimeForm();
+  resetAbsenceForm();
+  setEntryMode(btn.dataset.mode);
+});
 
 export function updateWorktimeFormText() {
   const editing = state.editingWorkId !== null ? state.work.find((x) => x.id === state.editingWorkId) : null;
@@ -95,6 +115,7 @@ wtCancelBtn.addEventListener("click", resetWorktimeForm);
 function editWorkEntry(id) {
   const entry = state.work.find((x) => x.id === id);
   if (!entry) return;
+  setEntryMode("work");
   wtDatum.value = entry.datum;
   wtBeginn.value = entry.beginn;
   wtEnde.value = entry.ende;
@@ -122,7 +143,7 @@ function pauseTextFor(entry, stats) {
 export function buildWorkRow(entry, ctx) {
   const stats = computeWorktimeStats(entry);
   const overlap = ctx.overlaps.has(entry.id);
-  const dayDiff = ctx.dayDiffs.get(entry.id);
+  const dayDiff = ctx.dayDiffs.get(entry);
   const diffNote =
     dayDiff === undefined ? "" : `<small class="value-diff ${dayDiff >= 0 ? "ok" : "warn"}">${fmtDiff(dayDiff)}</small>`;
   const overlapNote = overlap ? `<div class="list-row-meta overlap-note">${esc(t("worktime.overlapNote"))}</div>` : "";
@@ -155,10 +176,15 @@ export function buildWorkRow(entry, ctx) {
   return row;
 }
 
+// Baut die passende Zeile für eine Arbeitszeit oder eine Abwesenheit
+export function buildEntryRow(entry, ctx) {
+  return "typ" in entry ? buildAbsenceRow(entry, ctx) : buildWorkRow(entry, ctx);
+}
+
 export function renderWorkEntries() {
-  const sorted = [...state.work].sort((a, b) => compareWorkAsc(b, a));
-  const ctx = workListContext(state.work);
-  renderList(worktimeContainer, sorted, (e) => buildWorkRow(e, ctx), t("worktime.empty"));
+  const sorted = [...state.work, ...state.absences].sort((a, b) => entrySortKey(b).localeCompare(entrySortKey(a)));
+  const ctx = workListContext(state.work, state.absences);
+  renderList(worktimeContainer, sorted, (e) => buildEntryRow(e, ctx), t("worktime.empty"));
   renderWeekSummary(ctx.overlaps);
 }
 
@@ -171,9 +197,12 @@ function renderWeekSummary(overlaps) {
   const mondayISO = isoOf(monday);
   const sundayISO = isoOf(sunday);
 
-  const nettoSum = state.work
-    .filter((e) => e.datum >= mondayISO && e.datum <= sundayISO && !overlaps.has(e.id))
+  const inWeek = (e) => e.datum >= mondayISO && e.datum <= sundayISO;
+  const workMin = state.work
+    .filter((e) => inWeek(e) && !overlaps.has(e.id))
     .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
+  const absenceMin = state.absences.filter(inWeek).reduce((sum, a) => sum + absenceCreditMin(a), 0);
+  const nettoSum = workMin + absenceMin;
   const sollMin = Math.round(state.settings.wochensollstunden * 60);
   const diff = nettoSum - sollMin;
 
@@ -182,6 +211,9 @@ function renderWeekSummary(overlaps) {
   weekSoll.textContent = t("worktime.ofTarget", { target: fmtMin(sollMin) });
   weekDelta.textContent = fmtDiff(diff);
   weekDelta.className = "chip " + (diff >= 0 ? "chip-ok" : "chip-warn");
-  weekProgress.max = Math.max(1, sollMin);
-  weekProgress.value = Math.min(nettoSum, sollMin);
+  // Anteile am Wochensoll, zusammen höchstens 100 %
+  const percent = (min) => Math.min(100, (min / Math.max(1, sollMin)) * 100);
+  const workPercent = percent(workMin);
+  weekBarWork.style.width = `${workPercent}%`;
+  weekBarAbsence.style.width = `${Math.min(100 - workPercent, percent(absenceMin))}%`;
 }

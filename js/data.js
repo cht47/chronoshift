@@ -1,5 +1,5 @@
 import { refreshAll } from "./app.js";
-import { APP_VERSION, DAY_MS, WORKTIME_RETENTION_DAYS } from "./config.js";
+import { ABSENCE_TYPES, APP_VERSION, DAY_MS } from "./config.js";
 import { deleteBackup, disconnect, downloadBackup, listBackups, uploadBackup } from "./gdrive.js";
 import { fmtDate, fmtDateTime, t } from "./i18n.js";
 import { icon } from "./icons.js";
@@ -10,6 +10,7 @@ import {
   loadLastCloudBackup,
   loadNextReminder,
   restoreData,
+  saveAbsences,
   saveLastBackup,
   saveLastCloudBackup,
   saveNextReminder,
@@ -47,7 +48,7 @@ export function updateBackupInfo() {
   const local = loadLastBackup();
   const cloud = loadLastCloudBackup();
   const newest = newestBackup();
-  const hasData = state.tasks.length > 0 || state.work.length > 0;
+  const hasData = state.tasks.length > 0 || state.work.length > 0 || state.absences.length > 0;
   const stale = hasData && (!newest || Date.now() - Date.parse(newest) > BACKUP_STALE_DAYS * DAY_MS);
   backupInfo.textContent = local ? t("backup.last", { date: dateOf(local) }) : t("backup.lastNever");
   gdriveInfo.textContent = cloud ? t("backup.cloudLast", { date: dateOf(cloud) }) : t("backup.cloudLastNever");
@@ -65,7 +66,7 @@ function postponeBackupReminder() {
 }
 
 export function checkBackupReminder() {
-  const hasData = state.tasks.length > 0 || state.work.length > 0;
+  const hasData = state.tasks.length > 0 || state.work.length > 0 || state.absences.length > 0;
   const next = Date.parse(loadNextReminder());
   if (!hasData || Number.isNaN(next)) {
     postponeBackupReminder();
@@ -91,7 +92,7 @@ function buildBackup() {
     format: BACKUP_FORMAT,
     version: APP_VERSION,
     created: new Date().toISOString(),
-    data: { tasks: state.tasks, worktime: state.work, settings: state.settings },
+    data: { tasks: state.tasks, worktime: state.work, absences: state.absences, settings: state.settings },
   };
 }
 
@@ -128,6 +129,10 @@ function isValidWork(e) {
   return Number.isFinite(e?.id) && isDate(e.datum) && isTime(e.beginn) && isTime(e.ende) && isOptionalTime(e.pauseVon) && isOptionalTime(e.pauseBis);
 }
 
+function isValidAbsence(e) {
+  return Number.isFinite(e?.id) && isDate(e.datum) && ABSENCE_TYPES.includes(e.typ);
+}
+
 // Wirft bei allem, was nicht wie ein ChronoShift-Backup aussieht, damit nie halbe Daten übernommen werden
 function parseBackup(text) {
   const backup = JSON.parse(text);
@@ -141,7 +146,9 @@ function parseBackup(text) {
     data.settings !== null &&
     typeof data.settings === "object" &&
     data.tasks.every(isValidTask) &&
-    data.worktime.every(isValidWork);
+    data.worktime.every(isValidWork) &&
+    // Abwesenheiten gibt es erst seit 1.0.13; ältere Backups haben das Feld nicht
+    (data.absences === undefined || (Array.isArray(data.absences) && data.absences.every(isValidAbsence)));
   if (!valid) throw new Error("invalid backup");
   return backup;
 }
@@ -164,13 +171,13 @@ backupFileInput.addEventListener("change", async () => {
 });
 
 function confirmRestore(backup) {
-  const { tasks, worktime, settings } = backup.data;
-  const counts = { tasks: tasks.length, work: worktime.length };
+  const { tasks, worktime, absences = [], settings } = backup.data;
+  const counts = { tasks: tasks.length, work: worktime.length, absences: absences.length };
   confirmAction(
     t("backup.confirmRestore", { date: fmtDate(isoOf(new Date(backup.created))), ...counts }),
     t("backup.restoreLabel"),
     () => {
-      restoreData(tasks, worktime, settings);
+      restoreData(tasks, worktime, absences, settings);
       postponeBackupReminder();
       // Neu laden, damit Sprache, Design und alle Ansichten sauber aus den wiederhergestellten Daten starten
       sessionStorage.setItem(RESTORED_FLAG, JSON.stringify(counts));
@@ -341,46 +348,69 @@ $("exportWorkBtn").addEventListener("click", () => {
 });
 
 // ----- Löschen -----
-$("deleteTodayTasksBtn").addEventListener("click", () => {
-  const today = todayISO();
-  const count = state.tasks.filter((e) => taskDateISO(e) === today).length;
-  if (!count) {
-    showInfo(t("data.noTasksToday"));
-    return;
-  }
-  confirmAction(t("data.confirmDeleteToday", { count }), t("common.delete"), () => {
-    state.tasks = state.tasks.filter((e) => taskDateISO(e) !== today);
-    saveTasks();
-    refreshAll();
+// Einträge vor einem Datum löschen, wahlweise nur Tasks, Arbeitszeiten und/oder Abwesenheiten.
+// Tasks zählen zum Tag ihres Stopps, wie in Liste und Kalender.
+const DELETE_SCOPES = {
+  tasks: { list: "tasks", dateOf: taskDateISO, save: saveTasks },
+  work: { list: "work", dateOf: (e) => e.datum, save: saveWork },
+  absences: { list: "absences", dateOf: (e) => e.datum, save: saveAbsences },
+};
+const deleteBeforeModal = $("deleteBeforeModal");
+const deleteBeforeDate = $("deleteBeforeDate");
+const deleteBeforeSummary = $("deleteBeforeSummary");
+const deleteBeforeConfirmBtn = $("deleteBeforeConfirmBtn");
+const deleteScopeBoxes = deleteBeforeModal.querySelectorAll("input[data-scope]");
+
+// Was mit der aktuellen Auswahl gelöscht würde: { tasks, work, absences } als Anzahl
+function deleteBeforeCounts() {
+  const before = deleteBeforeDate.value;
+  const counts = { tasks: 0, work: 0, absences: 0 };
+  if (!before) return counts;
+  deleteScopeBoxes.forEach((box) => {
+    const scope = DELETE_SCOPES[box.dataset.scope];
+    if (box.checked) counts[box.dataset.scope] = state[scope.list].filter((e) => scope.dateOf(e) < before).length;
   });
+  return counts;
+}
+
+// Zeigt vor dem Löschen genau an, was betroffen ist; ohne Datum oder Treffer bleibt Löschen gesperrt
+function updateDeleteBeforeSummary() {
+  const before = deleteBeforeDate.value;
+  const counts = deleteBeforeCounts();
+  const total = counts.tasks + counts.work + counts.absences;
+  const anyScope = [...deleteScopeBoxes].some((box) => box.checked);
+  if (!before) deleteBeforeSummary.textContent = t("data.chooseDate");
+  else if (!anyScope) deleteBeforeSummary.textContent = t("data.chooseScope");
+  else if (!total) deleteBeforeSummary.textContent = t("data.nothingBefore", { date: fmtDate(before) });
+  else deleteBeforeSummary.textContent = t("data.deleteBeforeSummary", { date: fmtDate(before), ...counts });
+  deleteBeforeConfirmBtn.disabled = !total;
+}
+
+$("deleteBeforeBtn").addEventListener("click", () => {
+  deleteBeforeDate.value = "";
+  deleteScopeBoxes.forEach((box) => (box.checked = false));
+  updateDeleteBeforeSummary();
+  deleteBeforeModal.showModal();
 });
 
-$("deleteAllTasksBtn").addEventListener("click", () => {
-  if (!state.tasks.length) {
-    showInfo(t("data.noTasks"));
-    return;
-  }
-  confirmAction(t("data.confirmDeleteAll", { count: state.tasks.length }), t("common.delete"), () => {
-    state.tasks = [];
-    saveTasks();
-    refreshAll();
-  });
-});
+// "change" zusätzlich, weil manche mobilen Datumsauswahlen kein "input" melden
+deleteBeforeDate.addEventListener("input", updateDeleteBeforeSummary);
+deleteBeforeDate.addEventListener("change", updateDeleteBeforeSummary);
+deleteScopeBoxes.forEach((box) => box.addEventListener("change", updateDeleteBeforeSummary));
+$("deleteBeforeCancelBtn").addEventListener("click", () => deleteBeforeModal.close());
 
-$("deleteOldWorkBtn").addEventListener("click", () => {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - WORKTIME_RETENTION_DAYS);
-  const cutoffISO = isoOf(cutoff);
-  const count = state.work.filter((e) => e.datum < cutoffISO).length;
-  if (!count) {
-    showInfo(t("data.noOldWork", { days: WORKTIME_RETENTION_DAYS }));
-    return;
-  }
-  confirmAction(t("data.confirmDeleteOld", { count, date: fmtDate(cutoffISO) }), t("common.delete"), () => {
-    state.work = state.work.filter((e) => e.datum >= cutoffISO);
-    saveWork();
-    refreshAll();
+deleteBeforeConfirmBtn.addEventListener("click", () => {
+  const before = deleteBeforeDate.value;
+  const counts = deleteBeforeCounts();
+  deleteScopeBoxes.forEach((box) => {
+    if (!box.checked) return;
+    const scope = DELETE_SCOPES[box.dataset.scope];
+    state[scope.list] = state[scope.list].filter((e) => scope.dateOf(e) >= before);
+    scope.save();
   });
+  deleteBeforeModal.close();
+  refreshAll();
+  showToast(t("data.deletedBefore", { count: counts.tasks + counts.work + counts.absences }));
 });
 
 $("resetAllBtn").addEventListener("click", () => {

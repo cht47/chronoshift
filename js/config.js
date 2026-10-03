@@ -46,6 +46,10 @@ export const DEFAULT_SETTINGS = {
   theme: "system",
   language: "system",
   gdriveEnabled: false,
+  // Stundenkonto: Saldo in Minuten am Ende von overtimeDate ("" = noch nicht eingerichtet), z. B. ein Monatsübertrag
+  overtimeEnabled: false,
+  overtimeDate: "",
+  overtimeMin: 0,
 };
 
 // Arten von Abwesenheit; der halbe Urlaubstag schreibt das halbe Tagessoll gut

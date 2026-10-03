@@ -15,7 +15,8 @@
     "notice": "Notice",
     "confirm": "Confirm",
     "task": "Task",
-    "worktime": "Work time"
+    "worktime": "Work time",
+    "back": "Back"
   },
   "tasks": {
     "placeholder": "Task description",
@@ -57,7 +58,9 @@
     "overlapNote": "Overlap",
     "modeAria": "Type of entry",
     "modeWork": "Work time",
-    "modeAbsence": "Absence"
+    "modeAbsence": "Absence",
+    "balance": "Overtime",
+    "forecast": "Forecast"
   },
   "rest": {
     "label": "{hours}h rest period",
@@ -79,7 +82,6 @@
     "absenceDays": "{count} days"
   },
   "settings": {
-    "app": "App",
     "install": "Install app",
     "installHint": "On your home screen, works offline",
     "installIos": "In Safari, tap the Share button at the bottom (square with an arrow pointing up) and then “Add to Home Screen”.",
@@ -118,7 +120,29 @@
     "resetAll": "Reset all data",
     "storage": "Storage: approx. {size} KB of approx. 5 MB · {tasks} tasks · {work} work time entries · {absences} absences",
     "privacy": "Privacy",
-    "deleteBefore": "Delete entries before a date"
+    "deleteBefore": "Delete entries before a date",
+    "backupPage": "Backup",
+    "dataPage": "Export & delete",
+    "sumOff": "off",
+    "sumBanner": "banner",
+    "sumNoBackup": "No backup",
+    "target": "Target hours",
+    "groupTimes": "Times",
+    "groupData": "Data",
+    "balance": "Overtime account",
+    "balanceEnable": "Keep an overtime account",
+    "balanceSignAria": "Sign of the start balance",
+    "balanceHoursAria": "Hours",
+    "balanceMinutesAria": "Minutes",
+    "balanceHint": "From the following day on, the app adds up every day; work days without an entry count as minus.",
+    "balanceDate": "Balance on",
+    "balanceValue": "Balance",
+    "balanceState": "Balance on {date}: {value}",
+    "balanceNotSet": "Not set up yet",
+    "balanceEdit": "Change",
+    "balanceSetup": "Set up",
+    "balanceSaved": "Overtime account updated.",
+    "balanceModalHint": "Balance at the end of this day, e.g. the monthly carry-over from your employer's time tracking."
   },
   "data": {
     "noTasksToExport": "There are no tasks to export.",
@@ -135,7 +159,8 @@
     "scopeAbsences": "Absences",
     "deleteBeforeSummary": "Will be deleted before {date}: {tasks} tasks, {work} work time entries, {absences} absences.",
     "deletedBefore": "{count} entries deleted.",
-    "chooseScope": "Please select at least one area."
+    "chooseScope": "Please select at least one area.",
+    "deleteResetsBalance": "The overtime account then starts on {date} at 0."
   },
   "backup": {
     "create": "Create backup",

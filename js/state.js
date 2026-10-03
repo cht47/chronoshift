@@ -13,4 +13,5 @@ export const state = {
   editingAbsenceId: null,
   cal: { year: 0, month: 0, selectedISO: null },
   currentView: "tasks",
+  settingsPage: null,
 };

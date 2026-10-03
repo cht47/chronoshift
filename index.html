@@ -31,7 +31,11 @@
   <header class="app-header">
     <div class="app-header-inner">
       <p class="app-name">ChronoShift</p>
-      <h1 class="view-title" id="viewTitle"></h1>
+      <div class="view-title-row">
+        <button type="button" class="icon-btn header-back" id="headerBackBtn" data-icon="chevronLeft"
+          data-i18n-aria="common.back" hidden></button>
+        <h1 class="view-title" id="viewTitle"></h1>
+      </div>
       <!-- Ruhezeit-Banner: je nach Einstellung und Zeitfenster -->
       <div id="restBanner" role="status" hidden></div>
     </div>
@@ -115,6 +119,7 @@
         <div class="week-bar" aria-hidden="true">
           <span class="week-bar-work" id="weekBarWork"></span><span class="week-bar-absence" id="weekBarAbsence"></span>
         </div>
+        <div class="balance-line" id="balanceLine" hidden></div>
         <div class="rest-line" id="restInfo" role="status" hidden></div>
       </div>
 
@@ -145,140 +150,202 @@
 
     <!-- ===================== Einstellungen ===================== -->
     <section id="view-settings" hidden>
-      <!-- Nur sichtbar, solange die App nicht installiert ist und der Browser eine Installation anbietet -->
-      <div id="installSection" hidden>
-        <div class="section-label first"><span data-i18n="settings.app"></span></div>
-        <div class="list-group">
-          <button type="button" class="action-row accent" id="installBtn"><span data-icon="smartphone"></span><span>
-              <span data-i18n="settings.install"></span>
-              <small class="hint" data-i18n="settings.installHint"></small>
-            </span></button>
-        </div>
-      </div>
-
-      <div class="section-label first"><span data-i18n="settings.appearance"></span></div>
-      <div class="card">
-        <div class="segmented" role="group" data-i18n-aria="settings.theme" id="themeSwitch">
-          <button type="button" data-theme-value="system" data-i18n="settings.themeSystem"></button>
-          <button type="button" data-theme-value="light" data-i18n="settings.themeLight"></button>
-          <button type="button" data-theme-value="dark" data-i18n="settings.themeDark"></button>
-        </div>
-        <label class="gap-top"><span data-i18n="settings.language"></span>
-          <select id="setLanguage"></select>
-        </label>
-      </div>
-
-      <div class="section-label"><span data-i18n="settings.worktime"></span></div>
-      <div class="card">
-        <label><span data-i18n="settings.weeklyHours"></span>
-          <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
-        </label>
-        <!-- Kein label: ein Klick auf den Text würde sonst den ersten Button auslösen -->
-        <div class="field-label" id="workDaysLabel" data-i18n="settings.workDays"></div>
-        <div class="segmented weekdays" role="group" aria-labelledby="workDaysLabel" id="workDaysSwitch"></div>
-        <small class="hint" id="tagessollInfo"></small>
-      </div>
-
-      <div class="section-label"><span data-i18n="settings.rest"></span></div>
-      <div class="card">
-        <label>
-          <input type="checkbox" id="setRestEnabled" role="switch" />
-          <span data-i18n="settings.restShow"></span>
-        </label>
-        <div id="ruhezeitOptionsWrap">
-          <label><span data-i18n="settings.restHours"></span>
-            <input type="number" id="setRestHours" min="1" max="24" step="0.5" inputmode="decimal" />
-          </label>
-          <small class="hint input-hint" data-i18n="settings.restHoursHint"></small>
-          <label>
-            <input type="checkbox" id="setRestBanner" role="switch" />
-            <span data-i18n="settings.restBanner"></span>
-          </label>
-          <div id="bannerWindowWrap">
-            <div class="two-col">
-              <label><span data-i18n="settings.bannerFrom"></span>
-                <input type="time" id="setBannerVon" />
-              </label>
-              <label><span data-i18n="settings.bannerTo"></span>
-                <input type="time" id="setBannerBis" />
-              </label>
-            </div>
-            <small class="hint" data-i18n="settings.bannerHint"></small>
+      <!-- Übersicht: je Bereich eine Zeile mit aktuellem Wert, die Einstellungen selbst auf Unterseiten -->
+      <div class="settings-home" id="settingsHome">
+        <!-- Nur sichtbar, solange die App nicht installiert ist und der Browser eine Installation anbietet -->
+        <div id="installSection" hidden>
+          <div class="list-group">
+            <button type="button" class="action-row accent" id="installBtn"><span data-icon="smartphone"></span><span>
+                <span data-i18n="settings.install"></span>
+                <small class="hint" data-i18n="settings.installHint"></small>
+              </span></button>
           </div>
         </div>
-        <small class="hint gap-top" id="ruhezeitHint" data-i18n="settings.restHint"></small>
-      </div>
 
-      <div class="section-label"><span data-i18n="settings.breaks"></span></div>
-      <div class="card">
-        <label>
-          <input type="checkbox" id="setPauseAutoEnabled" role="switch" />
-          <span data-i18n="settings.breaksAuto"></span>
-        </label>
-        <div id="pauseRulesWrap">
-          <small class="hint gap-bottom" data-i18n="settings.breaksHint"></small>
-          <div id="pauseRulesContainer"></div>
-          <button type="button" id="addPauseRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
+        <div class="section-label first"><span data-i18n="settings.appearance"></span></div>
+        <div class="card">
+          <div class="segmented" role="group" data-i18n-aria="settings.theme" id="themeSwitch">
+            <button type="button" data-theme-value="system" data-i18n="settings.themeSystem"></button>
+            <button type="button" data-theme-value="light" data-i18n="settings.themeLight"></button>
+            <button type="button" data-theme-value="dark" data-i18n="settings.themeDark"></button>
+          </div>
+          <label class="gap-top"><span data-i18n="settings.language"></span>
+            <select id="setLanguage"></select>
+          </label>
         </div>
-      </div>
 
-      <div class="section-label"><span data-i18n="backup.localTitle"></span></div>
-      <div class="list-group">
-        <button type="button" class="action-row" id="backupCreateBtn"><span data-icon="save"></span><span
-            data-i18n="backup.create"></span></button>
-        <button type="button" class="action-row" id="backupRestoreBtn"><span data-icon="upload"></span><span
-            data-i18n="backup.restore"></span></button>
-      </div>
-      <p class="hint list-note" id="backupInfo"></p>
-      <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
-      <input type="file" id="backupFileInput" hidden />
-
-      <div class="section-label"><span data-i18n="backup.cloudTitle"></span></div>
-      <div class="card">
-        <label>
-          <input type="checkbox" id="setGdrive" role="switch" />
-          <span data-i18n="backup.gdriveEnable"></span>
-        </label>
-        <small class="hint" data-i18n="backup.gdriveHint"></small>
-        <small class="hint gap-top"><span data-i18n="backup.gdrivePrivacy"></span>
-          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
-            data-i18n="backup.gdrivePrivacyLink"></a></small>
-      </div>
-      <div id="gdriveActions" hidden>
+        <div class="section-label"><span data-i18n="settings.groupTimes"></span></div>
         <div class="list-group">
-          <button type="button" class="action-row" id="gdriveSaveBtn"><span data-icon="cloudUpload"></span><span
-              data-i18n="backup.cloudSave"></span></button>
-          <button type="button" class="action-row" id="gdriveRestoreBtn"><span data-icon="cloudDownload"></span><span
-              data-i18n="backup.cloudRestore"></span></button>
-          <button type="button" class="action-row danger" id="gdriveDeleteBtn"><span data-icon="trash"></span><span
-              data-i18n="backup.cloudDelete"></span></button>
+          <button type="button" class="action-row nav-row" data-page="worktime"><span data-icon="briefcase"></span><span
+              class="nav-row-label" data-i18n="settings.worktime"></span><span class="nav-row-value" id="sumWorktime"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
+          <button type="button" class="action-row nav-row" data-page="rest"><span data-icon="hourglass"></span><span
+              class="nav-row-label" data-i18n="settings.rest"></span><span class="nav-row-value" id="sumRest"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
         </div>
-        <p class="hint list-note" id="gdriveInfo"></p>
+
+        <div class="section-label"><span data-i18n="settings.groupData"></span></div>
+        <div class="list-group">
+          <button type="button" class="action-row nav-row" data-page="backup"><span data-icon="save"></span><span
+              class="nav-row-label" data-i18n="settings.backupPage"></span><span class="nav-row-value" id="sumBackup"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
+          <button type="button" class="action-row nav-row" data-page="data"><span data-icon="download"></span><span
+              class="nav-row-label" data-i18n="settings.dataPage"></span><span class="nav-row-value" id="sumData"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
+        </div>
+
+        <div class="app-footer">
+          <div>© <span id="copyrightYears"></span> Daniel Herbst · <a href="https://github.com/cht47/chronoshift/blob/main/LICENSE"
+              target="_blank" rel="noopener">MIT + Commons Clause</a></div>
+          <div><span id="appVersion"></span> · <a href="https://github.com/cht47/chronoshift" target="_blank"
+              rel="noopener">GitHub</a> · <a href="privacy.html" target="_blank" rel="noopener"
+              data-i18n="settings.privacy"></a></div>
+        </div>
       </div>
 
-      <div class="section-label"><span data-i18n="settings.export"></span></div>
-      <div class="list-group">
-        <button type="button" class="action-row" id="exportTasksBtn"><span data-icon="download"></span><span
-            data-i18n="settings.exportTasks"></span></button>
-        <button type="button" class="action-row" id="exportWorkBtn"><span data-icon="download"></span><span
-            data-i18n="settings.exportWork"></span></button>
+      <!-- Unterseite: Arbeitszeit -->
+      <div class="settings-page" id="settingsPage-worktime" hidden>
+        <div class="section-label first"><span data-i18n="settings.target"></span></div>
+        <div class="card">
+          <label><span data-i18n="settings.weeklyHours"></span>
+            <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
+          </label>
+          <!-- Kein label: ein Klick auf den Text würde sonst den ersten Button auslösen -->
+          <div class="field-label" id="workDaysLabel" data-i18n="settings.workDays"></div>
+          <div class="segmented weekdays" role="group" aria-labelledby="workDaysLabel" id="workDaysSwitch"></div>
+          <small class="hint" id="tagessollInfo"></small>
+        </div>
+
+        <div class="section-label"><span data-i18n="settings.breaks"></span></div>
+        <div class="card">
+          <label>
+            <input type="checkbox" id="setPauseAutoEnabled" role="switch" />
+            <span data-i18n="settings.breaksAuto"></span>
+          </label>
+          <div id="pauseRulesWrap">
+            <small class="hint gap-bottom" data-i18n="settings.breaksHint"></small>
+            <div id="pauseRulesContainer"></div>
+            <button type="button" id="addPauseRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
+          </div>
+        </div>
+
+        <div class="section-label"><span data-i18n="settings.balance"></span></div>
+        <div class="card">
+          <label>
+            <input type="checkbox" id="setOvertime" role="switch" />
+            <span data-i18n="settings.balanceEnable"></span>
+          </label>
+          <!-- Stand und Saldo ändert man selten; deshalb nur über das Modal mit ausdrücklichem Speichern -->
+          <div id="overtimeWrap">
+            <div class="overtime-state">
+              <span id="overtimeState"></span>
+              <button type="button" class="secondary outline" id="overtimeEditBtn"></button>
+            </div>
+            <small class="hint" data-i18n="settings.balanceHint"></small>
+          </div>
+        </div>
       </div>
 
-      <div class="section-label"><span data-i18n="settings.delete"></span></div>
-      <div class="list-group">
-        <button type="button" class="action-row" id="deleteBeforeBtn"><span data-icon="trash"></span><span
-            data-i18n="settings.deleteBefore"></span></button>
-        <button type="button" class="action-row danger" id="resetAllBtn"><span data-icon="alert"></span><span
-            data-i18n="settings.resetAll"></span></button>
+      <!-- Unterseite: Ruhezeit -->
+      <div class="settings-page" id="settingsPage-rest" hidden>
+        <div class="card">
+          <label>
+            <input type="checkbox" id="setRestEnabled" role="switch" />
+            <span data-i18n="settings.restShow"></span>
+          </label>
+          <div id="ruhezeitOptionsWrap">
+            <label><span data-i18n="settings.restHours"></span>
+              <input type="number" id="setRestHours" min="1" max="24" step="0.5" inputmode="decimal" />
+            </label>
+            <small class="hint input-hint" data-i18n="settings.restHoursHint"></small>
+            <label>
+              <input type="checkbox" id="setRestBanner" role="switch" />
+              <span data-i18n="settings.restBanner"></span>
+            </label>
+            <div id="bannerWindowWrap">
+              <div class="two-col">
+                <label><span data-i18n="settings.bannerFrom"></span>
+                  <input type="time" id="setBannerVon" />
+                </label>
+                <label><span data-i18n="settings.bannerTo"></span>
+                  <input type="time" id="setBannerBis" />
+                </label>
+              </div>
+              <small class="hint" data-i18n="settings.bannerHint"></small>
+            </div>
+          </div>
+          <small class="hint gap-top" id="ruhezeitHint" data-i18n="settings.restHint"></small>
+        </div>
       </div>
-      <p class="hint list-note" id="storageInfo"></p>
 
-      <div class="app-footer">
-        <div>© <span id="copyrightYears"></span> Daniel Herbst · <a href="https://github.com/cht47/chronoshift/blob/main/LICENSE"
-            target="_blank" rel="noopener">MIT + Commons Clause</a></div>
-        <div><span id="appVersion"></span> · <a href="https://github.com/cht47/chronoshift" target="_blank"
-            rel="noopener">GitHub</a> · <a href="privacy.html" target="_blank" rel="noopener"
-            data-i18n="settings.privacy"></a></div>
+      <!-- Unterseite: Backup -->
+      <div class="settings-page" id="settingsPage-backup" hidden>
+        <div class="section-label first"><span data-i18n="backup.localTitle"></span></div>
+        <div class="list-group">
+          <button type="button" class="action-row" id="backupCreateBtn"><span data-icon="save"></span><span
+              data-i18n="backup.create"></span></button>
+          <button type="button" class="action-row" id="backupRestoreBtn"><span data-icon="upload"></span><span
+              data-i18n="backup.restore"></span></button>
+        </div>
+        <p class="hint list-note" id="backupInfo"></p>
+        <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
+        <input type="file" id="backupFileInput" hidden />
+
+        <div class="section-label"><span data-i18n="backup.cloudTitle"></span></div>
+        <div class="card">
+          <label>
+            <input type="checkbox" id="setGdrive" role="switch" />
+            <span data-i18n="backup.gdriveEnable"></span>
+          </label>
+          <small class="hint" data-i18n="backup.gdriveHint"></small>
+          <small class="hint gap-top"><span data-i18n="backup.gdrivePrivacy"></span>
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener"
+              data-i18n="backup.gdrivePrivacyLink"></a></small>
+        </div>
+        <div id="gdriveActions" hidden>
+          <div class="list-group">
+            <button type="button" class="action-row" id="gdriveSaveBtn"><span data-icon="cloudUpload"></span><span
+                data-i18n="backup.cloudSave"></span></button>
+            <button type="button" class="action-row" id="gdriveRestoreBtn"><span data-icon="cloudDownload"></span><span
+                data-i18n="backup.cloudRestore"></span></button>
+            <button type="button" class="action-row danger" id="gdriveDeleteBtn"><span data-icon="trash"></span><span
+                data-i18n="backup.cloudDelete"></span></button>
+          </div>
+          <p class="hint list-note" id="gdriveInfo"></p>
+        </div>
+      </div>
+
+      <!-- Unterseite: Export & Löschen -->
+      <div class="settings-page" id="settingsPage-data" hidden>
+        <div class="section-label first"><span data-i18n="settings.export"></span></div>
+        <div class="list-group">
+          <button type="button" class="action-row" id="exportTasksBtn"><span data-icon="download"></span><span
+              data-i18n="settings.exportTasks"></span></button>
+          <button type="button" class="action-row" id="exportWorkBtn"><span data-icon="download"></span><span
+              data-i18n="settings.exportWork"></span></button>
+        </div>
+
+        <div class="section-label"><span data-i18n="settings.delete"></span></div>
+        <div class="card" id="deleteBeforeCard">
+          <div class="form-title" data-i18n="settings.deleteBefore"></div>
+          <label><span data-i18n="data.deleteBeforeDate"></span>
+            <input type="date" id="deleteBeforeDate" />
+          </label>
+          <fieldset class="delete-scope">
+            <label><input type="checkbox" role="switch" data-scope="tasks" /> <span data-i18n="data.scopeTasks"></span></label>
+            <label><input type="checkbox" role="switch" data-scope="work" /> <span data-i18n="data.scopeWork"></span></label>
+            <label><input type="checkbox" role="switch" data-scope="absences" /> <span data-i18n="data.scopeAbsences"></span></label>
+          </fieldset>
+          <p class="hint delete-summary" id="deleteBeforeSummary"></p>
+          <div class="form-actions">
+            <button type="button" class="btn-danger" id="deleteBeforeConfirmBtn" data-i18n="common.delete"></button>
+          </div>
+        </div>
+        <div class="list-group">
+          <button type="button" class="action-row danger" id="resetAllBtn"><span data-icon="alert"></span><span
+              data-i18n="settings.resetAll"></span></button>
+        </div>
+        <p class="hint list-note" id="storageInfo"></p>
       </div>
     </section>
   </main>
@@ -346,24 +413,32 @@
     </article>
   </dialog>
 
-  <!-- Modal: Einträge vor einem Datum löschen -->
-  <dialog id="deleteBeforeModal">
+  <!-- Modal: Stundenkonto einrichten oder ändern -->
+  <dialog id="overtimeModal">
     <article class="form-dialog">
       <header>
-        <h3 data-i18n="settings.deleteBefore"></h3>
+        <h3 data-i18n="settings.balance"></h3>
       </header>
-      <label><span data-i18n="data.deleteBeforeDate"></span>
-        <input type="date" id="deleteBeforeDate" />
+      <label><span data-i18n="settings.balanceDate"></span>
+        <input type="date" id="overtimeDateInput" />
       </label>
-      <fieldset class="delete-scope">
-        <label><input type="checkbox" role="switch" data-scope="tasks" /> <span data-i18n="data.scopeTasks"></span></label>
-        <label><input type="checkbox" role="switch" data-scope="work" /> <span data-i18n="data.scopeWork"></span></label>
-        <label><input type="checkbox" role="switch" data-scope="absences" /> <span data-i18n="data.scopeAbsences"></span></label>
-      </fieldset>
-      <p class="hint" id="deleteBeforeSummary"></p>
+      <div class="field-label" id="overtimeValueLabel" data-i18n="settings.balanceValue"></div>
+      <div class="balance-input" role="group" aria-labelledby="overtimeValueLabel">
+        <div class="segmented balance-sign" role="group" data-i18n-aria="settings.balanceSignAria" id="overtimeSign">
+          <button type="button" data-sign="1">+</button>
+          <button type="button" data-sign="-1">−</button>
+        </div>
+        <input type="number" id="overtimeHours" min="0" max="9999" step="1" inputmode="numeric"
+          data-i18n-aria="settings.balanceHoursAria" />
+        <span>h</span>
+        <input type="number" id="overtimeMinutes" min="0" max="59" step="1" inputmode="numeric"
+          data-i18n-aria="settings.balanceMinutesAria" />
+        <span>min</span>
+      </div>
+      <p class="hint" data-i18n="settings.balanceModalHint"></p>
       <footer>
-        <button class="secondary" id="deleteBeforeCancelBtn" data-i18n="common.cancel"></button>
-        <button class="btn-danger" id="deleteBeforeConfirmBtn" data-i18n="common.delete"></button>
+        <button class="secondary" id="overtimeCancelBtn" data-i18n="common.cancel"></button>
+        <button id="overtimeSaveBtn" data-i18n="common.save"></button>
       </footer>
     </article>
   </dialog>

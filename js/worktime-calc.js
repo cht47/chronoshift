@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { combineDateTime, dateFromISO, nextDayISO } from "./util.js";
+import { combineDateTime, dateFromISO, nextDayISO, todayISO } from "./util.js";
 
 // Zeiten über Mitternacht liegen am Folgetag. Bewusst als echtes Datum statt "+24 Stunden",
 // damit Nächte mit Zeitumstellung (23 oder 25 Stunden) richtig zählen.
@@ -86,4 +86,32 @@ export function workListContext(work, absences) {
   const dayDiffs = new Map();
   for (const [datum, entry] of lastOfDay) dayDiffs.set(entry, sumOfDay.get(datum) - dayTargetMin(datum));
   return { overlaps, dayDiffs };
+}
+
+// Stundenkonto: Saldo am Ende von overtimeDate plus jeder Folgetag (Arbeit + Abwesenheit − Tagessoll).
+// Arbeitstage ohne Eintrag zählen als Minus, heute erst, sobald für heute etwas eingetragen ist.
+// Die Prognose rechnet zusätzlich alle schon eingetragenen künftigen Tage ein; nicht eingetragene zählen dort nicht.
+export function overtimeBalance(work, absences, overlaps) {
+  const { overtimeEnabled, overtimeDate, overtimeMin } = state.settings;
+  if (!overtimeEnabled || !overtimeDate) return null;
+  const totals = new Map();
+  const add = (datum, min) => {
+    if (datum > overtimeDate) totals.set(datum, (totals.get(datum) || 0) + min);
+  };
+  work.forEach((e) => !overlaps.has(e.id) && add(e.datum, computeWorktimeStats(e).nettoMin));
+  absences.forEach((a) => add(a.datum, absenceCreditMin(a)));
+
+  const today = todayISO();
+  let current = overtimeMin;
+  for (let d = nextDayISO(overtimeDate); d < today; d = nextDayISO(d)) current += (totals.get(d) || 0) - dayTargetMin(d);
+  let forecast = current;
+  let planned = false;
+  for (const [datum, min] of totals) {
+    if (datum < today) continue;
+    const diff = min - dayTargetMin(datum);
+    forecast += diff;
+    if (datum === today) current += diff;
+    else planned = true;
+  }
+  return { current, forecast: planned ? forecast : null };
 }

@@ -19,9 +19,10 @@ import {
   saveTasks,
   saveWork,
 } from "./storage.js";
+import { renderSettingsForm } from "./settings.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
-import { $, dateFromISO, esc, isDate, isTime, isoOf, todayISO } from "./util.js";
+import { $, dateFromISO, esc, isDate, isTime, isoOf, nextDayISO, prevDayISO, todayISO } from "./util.js";
 import { absenceCreditMin, computeWorktimeStats, entrySortKey } from "./worktime-calc.js";
 import { resetWorktimeForm } from "./worktime.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
@@ -41,17 +42,22 @@ const backupFileInput = $("backupFileInput");
 const dateOf = (iso) => fmtDate(isoOf(new Date(iso)));
 
 // Neuestes Backup, egal ob lokal oder in der Cloud (für Warnung und Erinnerung)
-function newestBackup() {
+export function newestBackup() {
   const dates = [loadLastBackup(), loadLastCloudBackup()].filter(Boolean);
   return dates.length ? dates.reduce((a, b) => (Date.parse(a) > Date.parse(b) ? a : b)) : null;
+}
+
+// Warnen, wenn es Daten gibt, aber seit 30 Tagen kein Backup
+export function backupIsStale() {
+  const newest = newestBackup();
+  const hasData = state.tasks.length > 0 || state.work.length > 0 || state.absences.length > 0;
+  return hasData && (!newest || Date.now() - Date.parse(newest) > BACKUP_STALE_DAYS * DAY_MS);
 }
 
 export function updateBackupInfo() {
   const local = loadLastBackup();
   const cloud = loadLastCloudBackup();
-  const newest = newestBackup();
-  const hasData = state.tasks.length > 0 || state.work.length > 0 || state.absences.length > 0;
-  const stale = hasData && (!newest || Date.now() - Date.parse(newest) > BACKUP_STALE_DAYS * DAY_MS);
+  const stale = backupIsStale();
   backupInfo.textContent = local ? t("backup.last", { date: dateOf(local) }) : t("backup.lastNever");
   gdriveInfo.textContent = cloud ? t("backup.cloudLast", { date: dateOf(cloud) }) : t("backup.cloudLastNever");
   backupInfo.classList.toggle("warn", stale);
@@ -364,11 +370,11 @@ const DELETE_SCOPES = {
   work: { list: "work", dateOf: (e) => e.datum, save: saveWork },
   absences: { list: "absences", dateOf: (e) => e.datum, save: saveAbsences },
 };
-const deleteBeforeModal = $("deleteBeforeModal");
+const deleteBeforeCard = $("deleteBeforeCard");
 const deleteBeforeDate = $("deleteBeforeDate");
 const deleteBeforeSummary = $("deleteBeforeSummary");
 const deleteBeforeConfirmBtn = $("deleteBeforeConfirmBtn");
-const deleteScopeBoxes = deleteBeforeModal.querySelectorAll("input[data-scope]");
+const deleteScopeBoxes = deleteBeforeCard.querySelectorAll("input[data-scope]");
 
 // Was mit der aktuellen Auswahl gelöscht würde: { tasks, work, absences } als Anzahl
 function deleteBeforeCounts() {
@@ -392,32 +398,46 @@ function updateDeleteBeforeSummary() {
   else if (!anyScope) deleteBeforeSummary.textContent = t("data.chooseScope");
   else if (!total) deleteBeforeSummary.textContent = t("data.nothingBefore", { date: fmtDate(before) });
   else deleteBeforeSummary.textContent = t("data.deleteBeforeSummary", { date: fmtDate(before), ...counts });
+  if (total && resetsBalance(before)) deleteBeforeSummary.textContent += " " + t("data.deleteResetsBalance", { date: fmtDate(before) });
   deleteBeforeConfirmBtn.disabled = !total;
 }
 
-$("deleteBeforeBtn").addEventListener("click", () => {
+// Gelöschte Arbeitszeiten oder Abwesenheiten, die das Stundenkonto schon zählt, würden als fehlende Tage ins Minus gehen.
+// Deshalb beginnt das Konto dann am Stichtag bei 0; den aktuellen Stand trägt man danach selbst ein.
+function resetsBalance(before) {
+  const { overtimeEnabled, overtimeDate } = state.settings;
+  const scopes = [...deleteScopeBoxes].filter((box) => box.checked).map((box) => box.dataset.scope);
+  return overtimeEnabled && overtimeDate && nextDayISO(overtimeDate) < before && (scopes.includes("work") || scopes.includes("absences"));
+}
+
+// Beim Öffnen der Seite und nach dem Löschen: kein Datum, alle Bereiche aus
+export function resetDeleteBefore() {
   deleteBeforeDate.value = "";
   deleteScopeBoxes.forEach((box) => (box.checked = false));
   updateDeleteBeforeSummary();
-  deleteBeforeModal.showModal();
-});
+}
 
 // "change" zusätzlich, weil manche mobilen Datumsauswahlen kein "input" melden
 deleteBeforeDate.addEventListener("input", updateDeleteBeforeSummary);
 deleteBeforeDate.addEventListener("change", updateDeleteBeforeSummary);
 deleteScopeBoxes.forEach((box) => box.addEventListener("change", updateDeleteBeforeSummary));
-$("deleteBeforeCancelBtn").addEventListener("click", () => deleteBeforeModal.close());
 
 deleteBeforeConfirmBtn.addEventListener("click", () => {
   const before = deleteBeforeDate.value;
   const counts = deleteBeforeCounts();
+  if (resetsBalance(before)) {
+    state.settings.overtimeDate = prevDayISO(before);
+    state.settings.overtimeMin = 0;
+    saveSettings();
+    renderSettingsForm();
+  }
   deleteScopeBoxes.forEach((box) => {
     if (!box.checked) return;
     const scope = DELETE_SCOPES[box.dataset.scope];
     state[scope.list] = state[scope.list].filter((e) => scope.dateOf(e) >= before);
     scope.save();
   });
-  deleteBeforeModal.close();
+  resetDeleteBefore();
   // Ein gerade bearbeiteter Eintrag könnte gelöscht sein
   resetWorktimeForm();
   resetAbsenceForm();

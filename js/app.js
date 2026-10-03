@@ -6,6 +6,7 @@ import { applyI18n, loadLocale, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
 import { applyTheme, renderSettingsForm, updateStorageInfo } from "./settings.js";
+import { closeSettingsPage, renderSettingsHome, SETTINGS_PAGES } from "./settings-nav.js";
 import { state } from "./state.js";
 import { damagedKeys, loadAbsences, loadSettings, loadTasks, loadWork } from "./storage.js";
 import { renderEntries, restoreTimerState } from "./tasks.js";
@@ -22,11 +23,16 @@ export function refreshAll() {
   updateBackupInfo();
 }
 
+// Auf einer Einstellungs-Unterseite steht deren Name im Titel, davor der Zurück-Pfeil
 export function updateViewTitle() {
-  $("viewTitle").textContent = t("nav." + state.currentView);
+  const page = state.currentView === "settings" ? state.settingsPage : null;
+  $("viewTitle").textContent = t(page ? SETTINGS_PAGES[page] : "nav." + state.currentView);
+  $("headerBackBtn").hidden = !page;
 }
 
 export function switchView(view) {
+  // Ein Tab-Wechsel (auch auf "Einstellungen" selbst) führt immer zur Übersicht der Einstellungen
+  closeSettingsPage();
   state.currentView = view;
   VIEWS.forEach((v) => {
     $("view-" + v).hidden = v !== view;
@@ -34,11 +40,15 @@ export function switchView(view) {
     else $("tab-" + v).removeAttribute("aria-current");
   });
   updateViewTitle();
+  updateRestUi();
   window.scrollTo(0, 0);
   if (view === "tasks") renderEntries();
   if (view === "worktime") renderWorkEntries();
   if (view === "calendar") renderCalendar();
-  if (view === "settings") renderSettingsForm();
+  if (view === "settings") {
+    renderSettingsForm();
+    renderSettingsHome();
+  }
 }
 
 document.querySelectorAll(".nav-item").forEach((btn) => {

@@ -31,6 +31,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
+- Optional overtime account with start date and start balance, plus a forecast including days you already planned
 - Difference to the daily target for each day; work on days off counts entirely as overtime
 
 ### 😴 Rest period
@@ -95,7 +96,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/app.js` | Entry point: startup, navigation, service worker registration |
 | `js/config.js` | Version, storage keys, default settings, languages |
 | `js/state.js`, `js/storage.js` | Shared app state and loading/saving in `localStorage` |
-| `js/tasks.js`, `js/worktime.js`, `js/absence.js`, `js/calendar.js`, `js/settings.js`, `js/data.js` | One module per area of the app |
+| `js/tasks.js`, `js/worktime.js`, `js/absence.js`, `js/calendar.js`, `js/settings.js`, `js/settings-nav.js`, `js/data.js` | One module per area of the app |
 | `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
 | `js/gdrive.js` | Google Drive cloud backup (sign-in and Drive API, loaded only when used) |
 | `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |

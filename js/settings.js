@@ -1,14 +1,14 @@
 import { refreshAll, updateViewTitle } from "./app.js";
 import { updateAbsenceFormText } from "./absence.js";
 import { LANGUAGES, WEEK_FROM_MONDAY } from "./config.js";
-import { applyI18n, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
+import { applyI18n, fmtDate, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
 import { state } from "./state.js";
 import { saveSettings, storageChars } from "./storage.js";
 import { setRunningUi } from "./tasks.js";
-import { showInfo } from "./ui.js";
-import { $, esc, fmtMin } from "./util.js";
+import { showInfo, showToast } from "./ui.js";
+import { $, esc, fmtDiff, fmtMin, isoOf } from "./util.js";
 import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
 import { dailyTargetMin } from "./worktime-calc.js";
 
@@ -28,6 +28,15 @@ const setPauseAutoEnabled = $("setPauseAutoEnabled");
 const pauseRulesWrap = $("pauseRulesWrap");
 const pauseRulesContainer = $("pauseRulesContainer");
 const storageInfo = $("storageInfo");
+const setOvertime = $("setOvertime");
+const overtimeWrap = $("overtimeWrap");
+const overtimeState = $("overtimeState");
+const overtimeEditBtn = $("overtimeEditBtn");
+const overtimeModal = $("overtimeModal");
+const overtimeDateInput = $("overtimeDateInput");
+const overtimeSign = $("overtimeSign");
+const overtimeHours = $("overtimeHours");
+const overtimeMinutes = $("overtimeMinutes");
 
 function updateTagessollInfo() {
   tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
@@ -170,7 +179,66 @@ export function renderSettingsForm() {
   updateTagessollInfo();
   updateStorageInfo();
   renderPauseRules();
+  renderOvertime();
 }
+
+// ----- Stundenkonto -----
+// Auf der Seite steht nur der aktuelle Stand; Datum und Saldo ändert man bewusst über das Modal mit Speichern
+function renderOvertime() {
+  const { overtimeEnabled, overtimeDate, overtimeMin } = state.settings;
+  setOvertime.checked = overtimeEnabled;
+  overtimeWrap.hidden = !overtimeEnabled;
+  overtimeState.textContent = overtimeDate
+    ? t("settings.balanceState", { date: fmtDate(overtimeDate), value: fmtDiff(overtimeMin) })
+    : t("settings.balanceNotSet");
+  overtimeEditBtn.textContent = t(overtimeDate ? "settings.balanceEdit" : "settings.balanceSetup");
+}
+
+function setOvertimeSign(sign) {
+  overtimeSign.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sign) === sign)));
+}
+
+setOvertime.addEventListener("change", () => {
+  state.settings.overtimeEnabled = setOvertime.checked;
+  saveSettings();
+  renderOvertime();
+  renderWorkEntries();
+});
+
+// Neu eingerichtet: der letzte Tag des Vormonats, passend zu einem Monatsübertrag
+overtimeEditBtn.addEventListener("click", () => {
+  const { overtimeDate, overtimeMin } = state.settings;
+  const now = new Date();
+  overtimeDateInput.value = overtimeDate || isoOf(new Date(now.getFullYear(), now.getMonth(), 0));
+  setOvertimeSign(overtimeMin < 0 ? -1 : 1);
+  overtimeHours.value = Math.floor(Math.abs(overtimeMin) / 60);
+  overtimeMinutes.value = Math.abs(overtimeMin) % 60;
+  overtimeModal.showModal();
+});
+
+overtimeSign.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-sign]");
+  if (btn) setOvertimeSign(Number(btn.dataset.sign));
+});
+
+$("overtimeCancelBtn").addEventListener("click", () => overtimeModal.close());
+
+$("overtimeSaveBtn").addEventListener("click", () => {
+  if (!overtimeDateInput.value) {
+    showInfo(t("data.chooseDate"));
+    return;
+  }
+  const sign = Number(overtimeSign.querySelector('[aria-pressed="true"]').dataset.sign);
+  const hours = Math.max(0, Math.floor(Number(overtimeHours.value) || 0));
+  const minutes = Math.min(59, Math.max(0, Math.floor(Number(overtimeMinutes.value) || 0)));
+  state.settings.overtimeDate = overtimeDateInput.value;
+  state.settings.overtimeMin = sign * (hours * 60 + minutes);
+  saveSettings();
+  overtimeModal.close();
+  renderOvertime();
+  renderWorkEntries();
+  showToast(t("settings.balanceSaved"));
+});
 
 function renderPauseRules() {
   pauseRulesContainer.innerHTML = "";

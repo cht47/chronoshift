@@ -17,6 +17,7 @@ const FILES_TO_CACHE = [
   "./js/i18n.js",
   "./js/icons.js",
   "./js/rest.js",
+  "./js/settings-nav.js",
   "./js/settings.js",
   "./js/state.js",
   "./js/storage.js",

@@ -15,7 +15,8 @@
     "notice": "Hinweis",
     "confirm": "Bestätigung",
     "task": "Task",
-    "worktime": "Arbeitszeit"
+    "worktime": "Arbeitszeit",
+    "back": "Zurück"
   },
   "tasks": {
     "placeholder": "Task-Beschreibung",
@@ -57,7 +58,9 @@
     "overlapNote": "Überschneidung",
     "modeAria": "Art des Eintrags",
     "modeWork": "Arbeitszeit",
-    "modeAbsence": "Abwesenheit"
+    "modeAbsence": "Abwesenheit",
+    "balance": "Stundenkonto",
+    "forecast": "Prognose"
   },
   "rest": {
     "label": "{hours}h Ruhezeit",
@@ -79,7 +82,6 @@
     "absenceDays": "{count} Tage"
   },
   "settings": {
-    "app": "App",
     "install": "App installieren",
     "installHint": "Auf dem Startbildschirm, auch offline nutzbar",
     "installIos": "Tippe in Safari unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) und dann auf „Zum Home-Bildschirm“.",
@@ -118,7 +120,29 @@
     "resetAll": "Alle Daten zurücksetzen",
     "storage": "Speicher: ca. {size} KB von ca. 5 MB · {tasks} Tasks · {work} Arbeitszeiten · {absences} Abwesenheiten",
     "privacy": "Datenschutz",
-    "deleteBefore": "Einträge vor einem Datum löschen"
+    "deleteBefore": "Einträge vor einem Datum löschen",
+    "backupPage": "Backup",
+    "dataPage": "Export & Löschen",
+    "sumOff": "aus",
+    "sumBanner": "Banner",
+    "sumNoBackup": "Keine Sicherung",
+    "target": "Sollzeit",
+    "groupTimes": "Zeiten",
+    "groupData": "Daten",
+    "balance": "Stundenkonto",
+    "balanceEnable": "Stundenkonto führen",
+    "balanceSignAria": "Vorzeichen des Startsaldos",
+    "balanceHoursAria": "Stunden",
+    "balanceMinutesAria": "Minuten",
+    "balanceHint": "Ab dem Folgetag rechnet die App jeden Tag dazu; Arbeitstage ohne Eintrag zählen als Minus.",
+    "balanceDate": "Stand am",
+    "balanceValue": "Saldo",
+    "balanceState": "Stand am {date}: {value}",
+    "balanceNotSet": "Noch nicht eingerichtet",
+    "balanceEdit": "Ändern",
+    "balanceSetup": "Einrichten",
+    "balanceSaved": "Stundenkonto übernommen.",
+    "balanceModalHint": "Saldo am Ende dieses Tages, z. B. der Monatsübertrag aus der Zeiterfassung deines Arbeitgebers."
   },
   "data": {
     "noTasksToExport": "Es gibt keine Task-Einträge zum Exportieren!",
@@ -135,7 +159,8 @@
     "scopeAbsences": "Abwesenheiten",
     "deleteBeforeSummary": "Vor dem {date} werden gelöscht: {tasks} Tasks, {work} Arbeitszeiten, {absences} Abwesenheiten.",
     "deletedBefore": "{count} Einträge gelöscht.",
-    "chooseScope": "Bitte wähle mindestens einen Bereich."
+    "chooseScope": "Bitte wähle mindestens einen Bereich.",
+    "deleteResetsBalance": "Das Stundenkonto beginnt danach am {date} bei 0."
   },
   "backup": {
     "create": "Backup erstellen",

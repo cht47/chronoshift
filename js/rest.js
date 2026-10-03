@@ -56,11 +56,14 @@ function isInBannerWindow() {
   return von < bis ? now >= von && now < bis : now >= von || now < bis;
 }
 
+// Der Banner gehört zum Erfassen; im Kalender und in den Einstellungen bleibt er aus
+const BANNER_VIEWS = ["tasks", "worktime"];
+
 export function updateRestUi() {
   const { ruhezeitEnabled, ruhezeitBannerEnabled } = state.settings;
   const status = ruhezeitEnabled ? restStatus() : null;
 
-  const showBanner = status && ruhezeitBannerEnabled && isInBannerWindow();
+  const showBanner = status && ruhezeitBannerEnabled && isInBannerWindow() && BANNER_VIEWS.includes(state.currentView);
   restBanner.hidden = !showBanner;
   if (showBanner) {
     restBanner.className = "rest-chip " + status.cls;

@@ -1,6 +1,6 @@
 import { ABSENCES_KEY, ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WEEK_FROM_MONDAY, WORKTIME_KEY } from "./config.js";
 import { state } from "./state.js";
-import { isTime } from "./util.js";
+import { isDate, isTime } from "./util.js";
 
 // Schlüssel, deren gespeicherter Inhalt beim Laden beschädigt war (siehe readJson)
 export const damagedKeys = [];
@@ -96,6 +96,8 @@ const SETTING_CHECKS = {
   bannerBis: isTime,
   theme: (v) => ["system", "light", "dark"].includes(v),
   pauseRules: (v) => v.every((r) => Number.isFinite(r?.stunden) && Number.isFinite(r?.minuten)),
+  overtimeDate: (v) => v === "" || isDate(v),
+  overtimeMin: Number.isInteger,
   workDays: (v) => v.length > 0 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
 };
 

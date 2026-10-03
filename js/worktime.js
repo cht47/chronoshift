@@ -10,6 +10,7 @@ import {
   absenceCreditMin,
   computeWorktimeStats,
   entrySortKey,
+  overtimeBalance,
   workListContext,
   worktimePauseRange,
   worktimeRange,
@@ -21,6 +22,7 @@ const weekSoll = $("weekSoll");
 const weekDelta = $("weekDelta");
 const weekBarWork = $("weekBarWork");
 const weekBarAbsence = $("weekBarAbsence");
+const balanceLine = $("balanceLine");
 const worktimeForm = $("worktimeForm");
 const wtFormTitle = $("wtFormTitle");
 const wtDatum = $("wtDatum");
@@ -216,4 +218,16 @@ function renderWeekSummary(overlaps) {
   const workPercent = percent(workMin);
   weekBarWork.style.width = `${workPercent}%`;
   weekBarAbsence.style.width = `${Math.min(100 - workPercent, percent(absenceMin))}%`;
+  renderBalance(overlaps);
+}
+
+// Stundenkonto unter dem Wochenbalken; die Prognose nur, wenn künftige Tage eingetragen sind
+function renderBalance(overlaps) {
+  const balance = overtimeBalance(state.work, state.absences, overlaps);
+  balanceLine.hidden = !balance;
+  if (!balance) return;
+  const row = (label, min, cls) =>
+    `<div class="balance-row ${cls}"><span>${esc(t(label))}</span><span class="${min >= 0 ? "ok" : "warn"}">${fmtDiff(min)}</span></div>`;
+  const forecast = balance.forecast === null ? "" : row("worktime.forecast", balance.forecast, "forecast");
+  balanceLine.innerHTML = `${icon("scale")}<div class="balance-rows">${row("worktime.balance", balance.current, "current")}${forecast}</div>`;
 }

@@ -1,8 +1,14 @@
-// Bei jedem Release zusammen mit VERSION in service-worker.js erhöhen
-export const APP_VERSION = "1.0.14-beta";
+// App-wide constants: version, storage keys, default settings.
+
+// Increase together with VERSION in service-worker.js and the version in README.md on every release
+export const APP_VERSION = "1.1.0";
 export const FIRST_YEAR = 2025;
 
-// Präfix, weil sich alle Apps unter derselben Domain (z. B. GitHub Pages) den localStorage teilen
+// Version of the stored data format (localStorage and backup files).
+// Increase it when stored field names or structures change and add a conversion step in migrate.js.
+export const DATA_VERSION = 2;
+
+// All keys share one prefix because apps on the same origin (e.g. GitHub Pages) share one localStorage
 export const TASKS_KEY = "chronoshift.tasks";
 export const TIMER_STATE_KEY = "chronoshift.timer";
 export const WORKTIME_KEY = "chronoshift.worktime";
@@ -11,6 +17,7 @@ export const ABSENCES_KEY = "chronoshift.absences";
 export const LAST_BACKUP_KEY = "chronoshift.lastBackup";
 export const LAST_CLOUD_BACKUP_KEY = "chronoshift.lastCloudBackup";
 export const NEXT_REMINDER_KEY = "chronoshift.nextBackupReminder";
+export const DATA_VERSION_KEY = "chronoshift.dataVersion";
 export const ALL_KEYS = [
   TASKS_KEY,
   TIMER_STATE_KEY,
@@ -20,42 +27,45 @@ export const ALL_KEYS = [
   LAST_BACKUP_KEY,
   LAST_CLOUD_BACKUP_KEY,
   NEXT_REMINDER_KEY,
+  DATA_VERSION_KEY,
 ];
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Verfügbare Sprachen: Datei locales/<code>.json + Eintrag hier (Name in der jeweiligen Sprache)
+// Available languages: one file locales/<code>.json each, named here in their own language
 export const LANGUAGES = { de: "Deutsch", en: "English" };
 export const FALLBACK_LANG = "en";
 
 export const DEFAULT_SETTINGS = {
-  wochensollstunden: 40,
-  // Arbeitstage als Wochentage wie bei Date.getDay(): 0 = So, 1 = Mo … 6 = Sa
+  weeklyHours: 40,
+  // Work days as Date.getDay() values: 0 = Sunday, 1 = Monday … 6 = Saturday
   workDays: [1, 2, 3, 4, 5],
-  ruhezeitEnabled: true,
+  restEnabled: true,
   restHours: 11,
-  ruhezeitBannerEnabled: true,
-  bannerVon: "00:00",
-  bannerBis: "00:00",
-  pauseAutoEnabled: true,
-  // § 4 ArbZG: 30 min bei mehr als 6 h, 45 min bei mehr als 9 h (die Regeln addieren sich)
-  pauseRules: [
-    { stunden: 6, minuten: 30 },
-    { stunden: 9, minuten: 15 },
+  restBannerEnabled: true,
+  // Time window for the rest period banner; equal values mean all day
+  bannerFrom: "00:00",
+  bannerTo: "00:00",
+  autoBreakEnabled: true,
+  // German Working Hours Act (§ 4 ArbZG): 30 min for more than 6 h, 45 min for more than 9 h.
+  // Rules add up, so the second rule only adds the extra 15 minutes.
+  breakRules: [
+    { hours: 6, minutes: 30 },
+    { hours: 9, minutes: 15 },
   ],
   theme: "system",
   language: "system",
   gdriveEnabled: false,
-  // Stundenkonto: Saldo in Minuten am Ende von overtimeDate ("" = noch nicht eingerichtet), z. B. ein Monatsübertrag
+  // Overtime account: balance in minutes at the end of overtimeDate ("" = not set up yet)
   overtimeEnabled: false,
   overtimeDate: "",
   overtimeMin: 0,
 };
 
-// Arten von Abwesenheit; der halbe Urlaubstag schreibt das halbe Tagessoll gut
+// Kinds of absence; a half vacation day credits half the daily target, all others the full daily target
 export const ABSENCE_TYPES = ["vacation", "vacationHalf", "sick", "holiday"];
 
-// Wochentage in Anzeigereihenfolge ab Montag, als Date.getDay()-Werte
+// Weekdays in display order starting with Monday, as Date.getDay() values
 export const WEEK_FROM_MONDAY = [1, 2, 3, 4, 5, 6, 0];
 
 export const VIEWS = ["tasks", "worktime", "calendar", "settings"];

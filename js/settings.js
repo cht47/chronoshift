@@ -1,9 +1,13 @@
+// Settings: form fields of the settings pages, theme, language, app installation and overtime account.
+// Every change is saved immediately; there is no save button.
+
 import { refreshAll, updateViewTitle } from "./app.js";
 import { updateAbsenceFormText } from "./absence.js";
 import { LANGUAGES, WEEK_FROM_MONDAY } from "./config.js";
 import { applyI18n, fmtDate, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
+import { renderSettingsHome } from "./settings-nav.js";
 import { state } from "./state.js";
 import { saveSettings, storageChars } from "./storage.js";
 import { setRunningUi } from "./tasks.js";
@@ -13,20 +17,20 @@ import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
 import { dailyTargetMin } from "./worktime-calc.js";
 
 const setLanguage = $("setLanguage");
-const setWochensoll = $("setWochensoll");
+const setWeeklyHours = $("setWeeklyHours");
 const workDaysSwitch = $("workDaysSwitch");
-const tagessollInfo = $("tagessollInfo");
+const dailyTargetInfo = $("dailyTargetInfo");
 const setRestEnabled = $("setRestEnabled");
-const ruhezeitOptionsWrap = $("ruhezeitOptionsWrap");
-const ruhezeitHint = $("ruhezeitHint");
+const restOptionsWrap = $("restOptionsWrap");
+const restHint = $("restHint");
 const setRestHours = $("setRestHours");
 const setRestBanner = $("setRestBanner");
 const bannerWindowWrap = $("bannerWindowWrap");
-const setBannerVon = $("setBannerVon");
-const setBannerBis = $("setBannerBis");
-const setPauseAutoEnabled = $("setPauseAutoEnabled");
-const pauseRulesWrap = $("pauseRulesWrap");
-const pauseRulesContainer = $("pauseRulesContainer");
+const setBannerFrom = $("setBannerFrom");
+const setBannerTo = $("setBannerTo");
+const setAutoBreak = $("setAutoBreak");
+const breakRulesWrap = $("breakRulesWrap");
+const breakRulesContainer = $("breakRulesContainer");
 const storageInfo = $("storageInfo");
 const setOvertime = $("setOvertime");
 const overtimeWrap = $("overtimeWrap");
@@ -38,11 +42,11 @@ const overtimeSign = $("overtimeSign");
 const overtimeHours = $("overtimeHours");
 const overtimeMinutes = $("overtimeMinutes");
 
-function updateTagessollInfo() {
-  tagessollInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
+function updateDailyTargetInfo() {
+  dailyTargetInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
 }
 
-// ----- Arbeitstage -----
+// ----- Work days -----
 
 function renderWorkDays() {
   const names = weekdayShortNames();
@@ -57,12 +61,12 @@ workDaysSwitch.addEventListener("click", (e) => {
   if (!btn) return;
   const day = Number(btn.dataset.day);
   const { workDays } = state.settings;
-  // Mindestens ein Arbeitstag bleibt gewählt, sonst gäbe es kein Tagessoll
+  // At least one work day stays selected, otherwise there would be no daily target
   if (workDays.includes(day) && workDays.length === 1) return;
   state.settings.workDays = workDays.includes(day) ? workDays.filter((d) => d !== day) : [...workDays, day];
   saveSettings();
   btn.setAttribute("aria-pressed", String(state.settings.workDays.includes(day)));
-  updateTagessollInfo();
+  updateDailyTargetInfo();
   renderWorkEntries();
 });
 
@@ -75,7 +79,7 @@ export function updateStorageInfo() {
   });
 }
 
-// ----- Sprache -----
+// ----- Language -----
 function renderLanguageSelect() {
   const systemOption = `<option value="system">${esc(t("settings.languageSystem", { language: LANGUAGES[systemLanguage()] }))}</option>`;
   const options = Object.entries(LANGUAGES).map(([code, name]) => `<option value="${code}">${esc(name)}</option>`);
@@ -83,6 +87,7 @@ function renderLanguageSelect() {
   setLanguage.value = state.settings.language in LANGUAGES ? state.settings.language : "system";
 }
 
+// Texts set from code are not covered by applyI18n and are rendered again here
 setLanguage.addEventListener("change", async () => {
   state.settings.language = setLanguage.value;
   saveSettings();
@@ -92,12 +97,14 @@ setLanguage.addEventListener("change", async () => {
   updateWorktimeFormText();
   updateAbsenceFormText();
   renderSettingsForm();
+  renderSettingsHome();
   refreshAll();
   updateViewTitle();
 });
 
 // ----- Installation -----
-// Chrome, Edge und Samsung Internet bieten beforeinstallprompt; Safari auf iOS hat keine API, dort nur eine Anleitung
+// Chrome, Edge and Samsung Internet offer beforeinstallprompt; Safari on iOS has no such API, there the
+// button shows instructions instead
 let deferredInstallPrompt = null;
 const installSection = $("installSection");
 
@@ -135,7 +142,7 @@ $("installBtn").addEventListener("click", async () => {
   updateInstallUi();
 });
 
-// ----- Darstellung -----
+// ----- Appearance -----
 const themeButtons = document.querySelectorAll("#themeSwitch button");
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -159,31 +166,31 @@ darkQuery.addEventListener("change", () => {
   if (state.settings.theme === "system") applyTheme();
 });
 
-// ----- Formular -----
+// ----- Form -----
 export function renderSettingsForm() {
   const s = state.settings;
   updateInstallUi();
   renderLanguageSelect();
-  setWochensoll.value = s.wochensollstunden;
+  setWeeklyHours.value = s.weeklyHours;
   renderWorkDays();
-  setRestEnabled.checked = s.ruhezeitEnabled;
-  ruhezeitOptionsWrap.hidden = !s.ruhezeitEnabled;
-  ruhezeitHint.hidden = !s.ruhezeitEnabled;
+  setRestEnabled.checked = s.restEnabled;
+  restOptionsWrap.hidden = !s.restEnabled;
+  restHint.hidden = !s.restEnabled;
   setRestHours.value = s.restHours;
-  setRestBanner.checked = s.ruhezeitBannerEnabled;
-  bannerWindowWrap.hidden = !s.ruhezeitBannerEnabled;
-  setBannerVon.value = s.bannerVon;
-  setBannerBis.value = s.bannerBis;
-  setPauseAutoEnabled.checked = s.pauseAutoEnabled;
-  pauseRulesWrap.hidden = !s.pauseAutoEnabled;
-  updateTagessollInfo();
+  setRestBanner.checked = s.restBannerEnabled;
+  bannerWindowWrap.hidden = !s.restBannerEnabled;
+  setBannerFrom.value = s.bannerFrom;
+  setBannerTo.value = s.bannerTo;
+  setAutoBreak.checked = s.autoBreakEnabled;
+  breakRulesWrap.hidden = !s.autoBreakEnabled;
+  updateDailyTargetInfo();
   updateStorageInfo();
-  renderPauseRules();
+  renderBreakRules();
   renderOvertime();
 }
 
-// ----- Stundenkonto -----
-// Auf der Seite steht nur der aktuelle Stand; Datum und Saldo ändert man bewusst über das Modal mit Speichern
+// ----- Overtime account -----
+// The page only shows the current setup; date and balance are changed in a dialog with an explicit save
 function renderOvertime() {
   const { overtimeEnabled, overtimeDate, overtimeMin } = state.settings;
   setOvertime.checked = overtimeEnabled;
@@ -205,7 +212,7 @@ setOvertime.addEventListener("change", () => {
   renderWorkEntries();
 });
 
-// Neu eingerichtet: der letzte Tag des Vormonats, passend zu einem Monatsübertrag
+// A new account starts on the last day of the previous month, matching a monthly carry-over
 overtimeEditBtn.addEventListener("click", () => {
   const { overtimeDate, overtimeMin } = state.settings;
   const now = new Date();
@@ -240,68 +247,70 @@ $("overtimeSaveBtn").addEventListener("click", () => {
   showToast(t("settings.balanceSaved"));
 });
 
-function renderPauseRules() {
-  pauseRulesContainer.innerHTML = "";
-  state.settings.pauseRules.forEach((rule, idx) => {
+// ----- Automatic break rules -----
+function renderBreakRules() {
+  breakRulesContainer.innerHTML = "";
+  state.settings.breakRules.forEach((rule, idx) => {
     const row = document.createElement("div");
-    row.className = "pause-rule-row";
+    row.className = "break-rule-row";
     const hourOptions = Array.from({ length: 24 }, (_, i) => i + 1)
-      .map((h) => `<option value="${h}" ${h === rule.stunden ? "selected" : ""}>${h} h</option>`)
+      .map((h) => `<option value="${h}" ${h === rule.hours ? "selected" : ""}>${h} h</option>`)
       .join("");
     row.innerHTML = `
       <span>${esc(t("settings.ruleFrom"))}</span>
       <select class="rule-hours" aria-label="${esc(t("settings.ruleHoursAria"))}">${hourOptions}</select>
-      <input type="number" min="1" max="99" inputmode="numeric" class="rule-minutes" aria-label="${esc(t("settings.ruleMinutesAria"))}" value="${rule.minuten}" />
+      <input type="number" min="1" max="99" inputmode="numeric" class="rule-minutes" aria-label="${esc(t("settings.ruleMinutesAria"))}" value="${rule.minutes}" />
       <span>min</span>
       <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("settings.ruleRemove"))}">${icon("x")}</button>
     `;
     row.querySelector(".rule-hours").addEventListener("change", (e) => {
-      rule.stunden = Number(e.target.value);
+      rule.hours = Number(e.target.value);
       saveSettings();
       renderWorkEntries();
     });
     row.querySelector(".rule-minutes").addEventListener("input", (e) => {
       const min = Number(e.target.value);
-      if (!(min >= 1)) return; // leer oder 0 beim Tippen nicht übernehmen
-      rule.minuten = Math.min(99, Math.round(min));
+      if (!(min >= 1)) return; // ignore empty or 0 while typing
+      rule.minutes = Math.min(99, Math.round(min));
       saveSettings();
       renderWorkEntries();
     });
     row.querySelector(".icon-btn").addEventListener("click", () => {
-      state.settings.pauseRules.splice(idx, 1);
+      state.settings.breakRules.splice(idx, 1);
       saveSettings();
-      renderPauseRules();
+      renderBreakRules();
       renderWorkEntries();
     });
-    pauseRulesContainer.appendChild(row);
+    breakRulesContainer.appendChild(row);
   });
 }
 
-$("addPauseRuleBtn").addEventListener("click", () => {
-  const maxH = Math.max(0, ...state.settings.pauseRules.map((r) => r.stunden));
-  state.settings.pauseRules.push({ stunden: Math.min(24, maxH + 1), minuten: 15 });
+$("addBreakRuleBtn").addEventListener("click", () => {
+  const maxH = Math.max(0, ...state.settings.breakRules.map((r) => r.hours));
+  state.settings.breakRules.push({ hours: Math.min(24, maxH + 1), minutes: 15 });
   saveSettings();
-  renderPauseRules();
+  renderBreakRules();
   renderWorkEntries();
 });
 
-// Eingabefelder nicht neu befüllen, sonst springt der Wert beim Tippen
-setWochensoll.addEventListener("input", () => {
-  const hours = Number(setWochensoll.value);
-  if (!(hours > 0)) return; // leer oder 0 beim Tippen nicht übernehmen
-  state.settings.wochensollstunden = hours;
+// ----- Other fields -----
+// Number fields are not written back while typing, otherwise the value would jump.
+// Invalid intermediate values (empty, 0) are ignored.
+setWeeklyHours.addEventListener("input", () => {
+  const hours = Number(setWeeklyHours.value);
+  if (!(hours > 0)) return;
+  state.settings.weeklyHours = hours;
   saveSettings();
-  updateTagessollInfo();
+  updateDailyTargetInfo();
   renderWorkEntries();
 });
 setRestEnabled.addEventListener("change", () => {
-  state.settings.ruhezeitEnabled = setRestEnabled.checked;
-  ruhezeitOptionsWrap.hidden = !state.settings.ruhezeitEnabled;
-  ruhezeitHint.hidden = !state.settings.ruhezeitEnabled;
+  state.settings.restEnabled = setRestEnabled.checked;
+  restOptionsWrap.hidden = !state.settings.restEnabled;
+  restHint.hidden = !state.settings.restEnabled;
   saveSettings();
   updateRestUi();
 });
-// Ungültige Zwischenstände beim Tippen (leer, 0) nicht übernehmen
 setRestHours.addEventListener("input", () => {
   const h = Number(setRestHours.value);
   if (h < 1 || h > 24) return;
@@ -310,24 +319,24 @@ setRestHours.addEventListener("input", () => {
   updateRestUi();
 });
 setRestBanner.addEventListener("change", () => {
-  state.settings.ruhezeitBannerEnabled = setRestBanner.checked;
-  bannerWindowWrap.hidden = !state.settings.ruhezeitBannerEnabled;
+  state.settings.restBannerEnabled = setRestBanner.checked;
+  bannerWindowWrap.hidden = !state.settings.restBannerEnabled;
   saveSettings();
   updateRestUi();
 });
-setBannerVon.addEventListener("change", () => {
-  state.settings.bannerVon = setBannerVon.value || "00:00";
+setBannerFrom.addEventListener("change", () => {
+  state.settings.bannerFrom = setBannerFrom.value || "00:00";
   saveSettings();
   updateRestUi();
 });
-setBannerBis.addEventListener("change", () => {
-  state.settings.bannerBis = setBannerBis.value || "00:00";
+setBannerTo.addEventListener("change", () => {
+  state.settings.bannerTo = setBannerTo.value || "00:00";
   saveSettings();
   updateRestUi();
 });
-setPauseAutoEnabled.addEventListener("change", () => {
-  state.settings.pauseAutoEnabled = setPauseAutoEnabled.checked;
-  pauseRulesWrap.hidden = !state.settings.pauseAutoEnabled;
+setAutoBreak.addEventListener("change", () => {
+  state.settings.autoBreakEnabled = setAutoBreak.checked;
+  breakRulesWrap.hidden = !state.settings.autoBreakEnabled;
   saveSettings();
   renderWorkEntries();
 });

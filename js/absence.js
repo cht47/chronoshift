@@ -1,3 +1,6 @@
+// Absences (vacation, half vacation day, sick leave, public holiday): form and list rows.
+// An absence covers a whole day (or half a day) and credits the daily target, see absenceCreditMin.
+
 import { refreshAll, switchView } from "./app.js";
 import { ABSENCE_TYPES } from "./config.js";
 import { fmtDate, fmtDateParts, t } from "./i18n.js";
@@ -9,7 +12,7 @@ import { $, dateFromISO, esc, fmtDiff, fmtDur, nextDayISO, todayISO } from "./ut
 import { absenceCreditMin } from "./worktime-calc.js";
 import { setEntryMode } from "./worktime.js";
 
-// Abwesenheiten (Urlaub, Krank, Feiertag) gelten ganztägig bzw. als halber Tag und schreiben das Tagessoll gut
+// Longest date range that can be entered at once
 const MAX_DAYS = 366;
 
 const absenceForm = $("absenceForm");
@@ -22,16 +25,16 @@ const abTo = $("abTo");
 const abSaveBtn = $("abSaveBtn");
 const abCancelBtn = $("abCancelBtn");
 
-const typeName = (typ) => t(`absence.types.${typ}`);
+const typeName = (type) => t(`absence.types.${type}`);
 
-// Auch nach einem Sprachwechsel aufrufen: baut die Auswahl neu auf und behält die gewählte Art
+// Also called after a language change: rebuilds the type options and keeps the selected type
 export function updateAbsenceFormText() {
   const selected = abType.value || ABSENCE_TYPES[0];
-  abType.innerHTML = ABSENCE_TYPES.map((typ) => `<option value="${typ}">${esc(typeName(typ))}</option>`).join("");
+  abType.innerHTML = ABSENCE_TYPES.map((type) => `<option value="${type}">${esc(typeName(type))}</option>`).join("");
   abType.value = selected;
   const editing = state.editingAbsenceId !== null ? state.absences.find((a) => a.id === state.editingAbsenceId) : null;
-  abFormTitle.textContent = editing ? t("absence.editTitle", { date: fmtDate(editing.datum) }) : t("absence.formTitle");
-  // Beim Bearbeiten geht es um genau einen Tag, ein Zeitraum nur beim Eintragen
+  abFormTitle.textContent = editing ? t("absence.editTitle", { date: fmtDate(editing.date) }) : t("absence.formTitle");
+  // Editing changes exactly one day; a date range is only available for new entries
   abFromLabel.textContent = t(editing ? "worktime.date" : "absence.from");
   abToWrap.hidden = !!editing;
   abSaveBtn.textContent = t(editing ? "common.update" : "common.save");
@@ -46,25 +49,25 @@ export function resetAbsenceForm() {
   updateAbsenceFormText();
 }
 
-// Bis darf nicht vor Von liegen; beim Verschieben von Von wandert Bis mit
+// The end date follows the start date so the range never ends before it starts
 abFrom.addEventListener("change", () => {
   if (abFrom.value && (!abTo.value || abTo.value < abFrom.value)) abTo.value = abFrom.value;
 });
 
-function updateExisting(typ) {
-  const datum = abFrom.value;
-  if (state.absences.some((a) => a.datum === datum && a.id !== state.editingAbsenceId)) {
+function updateExisting(type) {
+  const date = abFrom.value;
+  if (state.absences.some((a) => a.date === date && a.id !== state.editingAbsenceId)) {
     showInfo(t("absence.errorExists"));
     return false;
   }
   const entry = state.absences.find((a) => a.id === state.editingAbsenceId);
-  entry.datum = datum;
-  entry.typ = typ;
+  entry.date = date;
+  entry.type = type;
   return true;
 }
 
-// Legt pro Arbeitstag im Zeitraum einen Eintrag an; freie Tage und Tage mit Abwesenheit werden übersprungen
-function addRange(typ) {
+// Adds one entry per work day in the range; days off and days that already have an absence are skipped
+function addRange(type) {
   const from = abFrom.value;
   const to = abTo.value || from;
   if (to < from) {
@@ -77,22 +80,22 @@ function addRange(typ) {
     showInfo(t("absence.errorTooLong"));
     return false;
   }
-  const taken = new Set(state.absences.map((a) => a.datum));
+  const taken = new Set(state.absences.map((a) => a.date));
   const newDays = days.filter((d) => state.settings.workDays.includes(dateFromISO(d).getDay()) && !taken.has(d));
   if (!newDays.length) {
     showInfo(t("absence.errorNoWorkDay"));
     return false;
   }
   const baseId = Date.now();
-  newDays.forEach((datum, i) => state.absences.push({ id: baseId + i, datum, typ }));
+  newDays.forEach((date, i) => state.absences.push({ id: baseId + i, date, type }));
   if (newDays.length > 1) showToast(t("absence.savedDays", { count: newDays.length }));
   return true;
 }
 
 absenceForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  const typ = abType.value;
-  const ok = state.editingAbsenceId !== null ? updateExisting(typ) : addRange(typ);
+  const type = abType.value;
+  const ok = state.editingAbsenceId !== null ? updateExisting(type) : addRange(type);
   if (!ok) return;
   saveAbsences();
   resetAbsenceForm();
@@ -106,9 +109,9 @@ function editAbsence(id) {
   if (!entry) return;
   setEntryMode("absence");
   state.editingAbsenceId = id;
-  abType.value = entry.typ;
-  abFrom.value = entry.datum;
-  abTo.value = entry.datum;
+  abType.value = entry.type;
+  abFrom.value = entry.date;
+  abTo.value = entry.date;
   updateAbsenceFormText();
   absenceForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -120,21 +123,21 @@ function deleteAbsence(id) {
   refreshAll();
 }
 
-// ctx: Ergebnis von workListContext, einmal pro Liste berechnet
+// ctx: result of workListContext, calculated once per list
 export function buildAbsenceRow(entry, ctx) {
   const dayDiff = ctx.dayDiffs.get(entry);
   const diffNote =
     dayDiff === undefined ? "" : `<small class="value-diff ${dayDiff >= 0 ? "ok" : "warn"}">${fmtDiff(dayDiff)}</small>`;
-  const title = fmtDateParts(dateFromISO(entry.datum), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
-  // Der halbe Urlaubstag trägt "halber Tag" schon im Namen
-  const meta = entry.typ === "vacationHalf" ? "" : ` · ${esc(t("absence.fullDay"))}`;
+  const title = fmtDateParts(dateFromISO(entry.date), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  // The half vacation day already says "half day" in its name
+  const meta = entry.type === "vacationHalf" ? "" : ` · ${esc(t("absence.fullDay"))}`;
   const row = document.createElement("div");
   row.className = "list-row";
   row.innerHTML = `
     <span class="row-accent absence"></span>
     <div class="list-row-main">
       <div class="list-row-title">${esc(title)}</div>
-      <div class="list-row-meta"><span class="absence-type">${esc(typeName(entry.typ))}</span>${meta}</div>
+      <div class="list-row-meta"><span class="absence-type">${esc(typeName(entry.type))}</span>${meta}</div>
     </div>
     <span class="list-row-value">${fmtDur(absenceCreditMin(entry))}${diffNote}</span>
     <button type="button" class="icon-btn" aria-label="${esc(t("absence.editAria"))}">${icon("pencil")}</button>
@@ -147,7 +150,7 @@ export function buildAbsenceRow(entry, ctx) {
   });
   deleteBtn.addEventListener("click", () =>
     confirmAction(
-      t("absence.confirmDelete", { type: typeName(entry.typ), date: fmtDate(entry.datum) }),
+      t("absence.confirmDelete", { type: typeName(entry.type), date: fmtDate(entry.date) }),
       t("common.delete"),
       () => deleteAbsence(entry.id)
     )

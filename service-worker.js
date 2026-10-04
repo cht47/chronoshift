@@ -1,6 +1,8 @@
-// service-worker.js
-// Bei jedem Release zusammen mit APP_VERSION in js/config.js erhöhen
-const VERSION = "1.0.14-beta";
+// Service worker: offline support. Network first, so the app is always up to date when online,
+// with the cache as fallback when offline.
+
+// Increase together with APP_VERSION in js/config.js on every release; a new version renews the cache
+const VERSION = "1.1.0";
 const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",
@@ -16,6 +18,7 @@ const FILES_TO_CACHE = [
   "./js/gdrive.js",
   "./js/i18n.js",
   "./js/icons.js",
+  "./js/migrate.js",
   "./js/rest.js",
   "./js/settings-nav.js",
   "./js/settings.js",
@@ -38,7 +41,7 @@ const FILES_TO_CACHE = [
 ];
 
 self.addEventListener("install", (evt) => {
-  // "reload" umgeht den HTTP-Cache des Browsers, sonst landen ggf. veraltete Dateien im Offline-Cache
+  // "reload" bypasses the browser's HTTP cache, otherwise outdated files could end up in the offline cache
   const requests = FILES_TO_CACHE.map((url) => new Request(url, { cache: "reload" }));
   evt.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(requests)));
   self.skipWaiting();
@@ -53,13 +56,12 @@ self.addEventListener("activate", (evt) => {
   );
 });
 
-// Network-first: online immer die aktuelle Version, offline aus dem Cache
 self.addEventListener("fetch", (evt) => {
   if (evt.request.method !== "GET") return;
-  // Fremde Adressen (Google-Anmeldung, Drive-API) gehen unverändert ans Netz und landen nie im Offline-Cache
+  // Other origins (Google sign-in, Drive API) go to the network unchanged and are never cached
   if (new URL(evt.request.url).origin !== self.location.origin) return;
-  // GitHub Pages erlaubt dem Browser 10 Minuten HTTP-Cache; "no-cache" fragt trotzdem beim Server nach (meist nur 304).
-  // Eigene Request über die URL, weil sich Navigations-Requests nicht mit neuen Optionen kopieren lassen.
+  // GitHub Pages allows 10 minutes of HTTP caching; "no-cache" still checks with the server (usually a 304).
+  // A new request from the URL, because navigation requests cannot be copied with new options.
   evt.respondWith(
     fetch(new Request(evt.request.url, { cache: "no-cache" }))
       .then((response) => {

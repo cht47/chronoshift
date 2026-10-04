@@ -1,3 +1,6 @@
+// Rest period: when the minimum rest between two working days ends, based on the latest task or work time.
+// Shown as a line in the week card and optionally as a banner below the title.
+
 import { fmtDateTime, fmtNumber, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { state } from "./state.js";
@@ -15,7 +18,7 @@ function getLastWorkEndMs() {
   });
   state.work.forEach((e) => {
     const { startMs, endMs } = worktimeRange(e);
-    // Vorgetragene Arbeitszeiten zählen erst ab ihrem Beginn
+    // Work time entered in advance only counts once it has started
     if (startMs > now) return;
     if (last === null || endMs > last) last = endMs;
   });
@@ -26,10 +29,11 @@ function restLabel() {
   return t("rest.label", { hours: fmtNumber(state.settings.restHours) });
 }
 
+// { cls, icon, text, short } for the current rest period, or null if there is nothing to show
 function restStatus() {
   const lastEnd = getLastWorkEndMs();
   const now = Date.now();
-  // Laufender Task verschiebt die Ruhezeit nur, wenn er nach dem letzten Arbeitsende noch läuft
+  // A running task only matters if it is still running after the latest end of work
   if (state.running && (lastEnd === null || now >= lastEnd)) {
     return { cls: "rest-active", icon: "hourglass", text: t("rest.taskRunning", { label: restLabel() }), short: t("rest.taskRunningShort") };
   }
@@ -47,23 +51,24 @@ function minutesOfDay(hhmm) {
   return h * 60 + m;
 }
 
+// Equal start and end mean all day; a window like 18:00–07:00 spans midnight
 function isInBannerWindow() {
-  const von = minutesOfDay(state.settings.bannerVon);
-  const bis = minutesOfDay(state.settings.bannerBis);
+  const from = minutesOfDay(state.settings.bannerFrom);
+  const to = minutesOfDay(state.settings.bannerTo);
   const d = new Date();
   const now = d.getHours() * 60 + d.getMinutes();
-  if (von === bis) return true;
-  return von < bis ? now >= von && now < bis : now >= von || now < bis;
+  if (from === to) return true;
+  return from < to ? now >= from && now < to : now >= from || now < to;
 }
 
-// Der Banner gehört zum Erfassen; im Kalender und in den Einstellungen bleibt er aus
+// The banner belongs to time tracking; it stays hidden in the calendar and the settings
 const BANNER_VIEWS = ["tasks", "worktime"];
 
 export function updateRestUi() {
-  const { ruhezeitEnabled, ruhezeitBannerEnabled } = state.settings;
-  const status = ruhezeitEnabled ? restStatus() : null;
+  const { restEnabled, restBannerEnabled } = state.settings;
+  const status = restEnabled ? restStatus() : null;
 
-  const showBanner = status && ruhezeitBannerEnabled && isInBannerWindow() && BANNER_VIEWS.includes(state.currentView);
+  const showBanner = status && restBannerEnabled && isInBannerWindow() && BANNER_VIEWS.includes(state.currentView);
   restBanner.hidden = !showBanner;
   if (showBanner) {
     restBanner.className = "rest-chip " + status.cls;

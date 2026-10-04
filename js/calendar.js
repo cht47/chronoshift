@@ -1,3 +1,5 @@
+// "Calendar" tab: month grid with markers, monthly totals and the entries of the selected day.
+
 import { fmtDateParts, fmtNumber, t, weekdayShortNames } from "./i18n.js";
 import { state } from "./state.js";
 import { buildTaskRow, taskDateISO } from "./tasks.js";
@@ -24,13 +26,13 @@ export function renderCalendar() {
   calLabel.textContent = fmtDateParts(new Date(year, month, 1), { month: "long", year: "numeric" });
   calWeekdays.innerHTML = weekdayShortNames().map((l) => `<div class="cal-weekday">${esc(l)}</div>`).join("");
 
-  const startOffset = (new Date(year, month, 1).getDay() + 6) % 7; // Montag = 0
+  const startOffset = (new Date(year, month, 1).getDay() + 6) % 7; // Monday = 0
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const taskDates = new Set(state.tasks.map(taskDateISO));
-  const workDates = new Set(state.work.map((e) => e.datum));
-  const absenceDates = new Set(state.absences.map((a) => a.datum));
+  const workDates = new Set(state.work.map((e) => e.date));
+  const absenceDates = new Set(state.absences.map((a) => a.date));
   const ctx = workListContext(state.work, state.absences);
-  const overlapDates = new Set(state.work.filter((e) => ctx.overlaps.has(e.id)).map((e) => e.datum));
+  const overlapDates = new Set(state.work.filter((e) => ctx.overlaps.has(e.id)).map((e) => e.date));
   const todayIso = todayISO();
 
   let html = "<div></div>".repeat(startOffset);
@@ -63,18 +65,18 @@ export function renderCalendar() {
   renderDayDetail(ctx);
 }
 
-// Summen des angezeigten Monats; Überschneidungen zählen wie in der Wochensumme nicht
+// Totals of the displayed month; overlapping work time is left out like in the weekly total
 function renderMonthSummary(overlaps) {
   const monthPrefix = isoOf(new Date(state.cal.year, state.cal.month, 1)).slice(0, 8);
   const workMin = state.work
-    .filter((e) => e.datum.startsWith(monthPrefix) && !overlaps.has(e.id))
-    .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
+    .filter((e) => e.date.startsWith(monthPrefix) && !overlaps.has(e.id))
+    .reduce((sum, e) => sum + computeWorktimeStats(e).netMin, 0);
   const tasks = state.tasks.filter((e) => taskDateISO(e).startsWith(monthPrefix));
   const taskMin = tasks.reduce((sum, e) => sum + e.durationMin, 0);
-  // Ein halber Urlaubstag zählt als halber Abwesenheitstag
+  // A half vacation day counts as half an absence day
   const absenceDays = state.absences
-    .filter((a) => a.datum.startsWith(monthPrefix))
-    .reduce((sum, a) => sum + (a.typ === "vacationHalf" ? 0.5 : 1), 0);
+    .filter((a) => a.date.startsWith(monthPrefix))
+    .reduce((sum, a) => sum + (a.type === "vacationHalf" ? 0.5 : 1), 0);
   const absenceText = t(absenceDays === 1 ? "calendar.absenceDay" : "calendar.absenceDays", { count: fmtNumber(absenceDays) });
   calMonthSummary.innerHTML = `
     <span><span class="dot work"></span>${esc(t("common.worktime"))} <strong>${fmtMin(workMin)}</strong></span>
@@ -82,6 +84,7 @@ function renderMonthSummary(overlaps) {
     ${absenceDays ? `<span><span class="dot absence"></span>${esc(t("calendar.absence"))} <strong>${esc(absenceText)}</strong></span>` : ""}`;
 }
 
+// Entries of the selected day: work time and absences first, then tasks
 function renderDayDetail(ctx) {
   const selected = state.cal.selectedISO;
   calDayDetail.innerHTML = "";
@@ -89,13 +92,15 @@ function renderDayDetail(ctx) {
 
   const dayTasks = state.tasks.filter((e) => taskDateISO(e) === selected).sort((a, b) => a.startMs - b.startMs);
   const dayWork = [...state.work, ...state.absences]
-    .filter((e) => e.datum === selected)
+    .filter((e) => e.date === selected)
     .sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
   const title = fmtDateParts(dateFromISO(selected), { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
 
   calDayDetail.insertAdjacentHTML("beforeend", `<div class="section-label"><span>${esc(title)}</span></div>`);
   const container = document.createElement("div");
-  renderList(container, [...dayWork, ...dayTasks], (e) => ("datum" in e ? buildEntryRow(e, ctx) : buildTaskRow(e)), t("calendar.empty"));
+  // Tasks have no "date" field, work time and absences do
+  const buildRow = (e) => ("date" in e ? buildEntryRow(e, ctx) : buildTaskRow(e));
+  renderList(container, [...dayWork, ...dayTasks], buildRow, t("calendar.empty"));
   calDayDetail.appendChild(container);
 }
 

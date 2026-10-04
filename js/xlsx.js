@@ -1,7 +1,7 @@
 import { DAY_MS } from "./config.js";
 
-// Excel-Export (XLSX ohne Bibliothek)
-// XLSX ist ein ZIP mit XML-Dateien. Im Gegensatz zu CSV gibt es keine Probleme mit Zeichenkodierung oder Trennzeichen.
+// Excel export without a library. An XLSX file is a ZIP archive of XML files; unlike CSV it has no issues
+// with character encoding or separators.
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 export const XLSX_STYLE = { none: 0, header: 1, date: 2, time: 3, dateTime: 4 };
 const OOXML_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
@@ -25,7 +25,7 @@ function crc32(bytes) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-// ZIP ohne Kompression ("stored") – für die kleinen XML-Dateien völlig ausreichend
+// ZIP without compression ("stored"), which is fine for these small XML files
 function zipStored(files) {
   const encoder = new TextEncoder();
   const parts = [];
@@ -39,8 +39,8 @@ function zipStored(files) {
     const local = new DataView(new ArrayBuffer(30));
     local.setUint32(0, 0x04034b50, true);
     local.setUint16(4, 20, true);
-    local.setUint16(6, 0x0800, true); // Dateinamen in UTF-8
-    local.setUint16(12, 0x0021, true); // Datum 01.01.1980
+    local.setUint16(6, 0x0800, true); // file names in UTF-8
+    local.setUint16(12, 0x0021, true); // date 1980-01-01
     local.setUint32(14, crc, true);
     local.setUint32(18, data.length, true);
     local.setUint32(22, data.length, true);
@@ -84,7 +84,7 @@ function colName(index) {
   return name;
 }
 
-// Excel zählt Tage ab dem 30.12.1899; lokale Uhrzeit, damit die Zeiten wie in der App erscheinen
+// Excel counts days from 1899-12-30; local time, so times appear as in the app
 export function excelDateTime(date) {
   const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
   return (utc - Date.UTC(1899, 11, 30)) / DAY_MS;
@@ -95,7 +95,7 @@ export function excelTime(hhmm) {
   return (h * 60 + m) / 1440;
 }
 
-// columns: [{ header, width }]; Zellen: Text, Zahl, { v: Zahl, s: XLSX_STYLE } oder leer (null/"")
+// columns: [{ header, width }]; cells: text, number, { v: number, s: XLSX_STYLE } or empty (null/"")
 export function buildXlsx(sheetName, columns, rows) {
   const strings = [];
   const stringIndex = new Map();
@@ -122,7 +122,7 @@ export function buildXlsx(sheetName, columns, rows) {
 
   const sheet = `${XML_HEAD}<worksheet xmlns="${OOXML_MAIN}"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${cols}</cols><sheetData>${sheetData}</sheetData></worksheet>`;
   const sst = `${XML_HEAD}<sst xmlns="${OOXML_MAIN}" count="${strings.length}" uniqueCount="${strings.length}">${strings.map((s) => `<si><t xml:space="preserve">${xmlEsc(s)}</t></si>`).join("")}</sst>`;
-  // Eingebaute Zahlenformate 14/20/22 stellen Excel und Google Sheets im Format des Geräts dar
+  // Built-in number formats 14/20/22 are shown by Excel and Google Sheets in the device's date format
   const styles = `${XML_HEAD}<styleSheet xmlns="${OOXML_MAIN}"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="20" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="22" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
   const workbook = `${XML_HEAD}<workbook xmlns="${OOXML_MAIN}" xmlns:r="${OOXML_REL}"><sheets><sheet name="${xmlEsc(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
   const workbookRels = `${XML_HEAD}<Relationships xmlns="${OOXML_PKG_REL}"><Relationship Id="rId1" Type="${OOXML_REL}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${OOXML_REL}/styles" Target="styles.xml"/><Relationship Id="rId3" Type="${OOXML_REL}/sharedStrings" Target="sharedStrings.xml"/></Relationships>`;

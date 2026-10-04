@@ -1,3 +1,5 @@
+// "Track time" tab: start and stop a task timer and show the latest tasks.
+
 import { refreshAll } from "./app.js";
 import { fmtDateParts, fmtDateTime, t } from "./i18n.js";
 import { icon } from "./icons.js";
@@ -11,12 +13,12 @@ const taskInput = $("taskInput");
 const startStopBtn = $("startStopBtn");
 const timerDisplay = $("timerDisplay");
 const timerSub = $("timerSub");
-const entriesContainer = $("entriesContainer");
+const tasksContainer = $("tasksContainer");
 const taskListHint = $("taskListHint");
 
 let tickTimer = null;
 
-// Ein Task gehört zum Tag seines Beginns, auch wenn er nach Mitternacht endet
+// A task belongs to the day it started, even if it ends after midnight
 export function taskDateISO(entry) {
   return isoOf(new Date(entry.startMs));
 }
@@ -33,7 +35,7 @@ function updateTimerDisplay() {
   timerSub.innerHTML = `<span class="live-dot"></span>${esc(t("tasks.runningSince", { time: since }))}`;
 }
 
-// Die Dauer wird beim Stoppen aus Start- und Stoppzeit berechnet; der Timer dient nur der Anzeige
+// The interval only updates the display; the duration is calculated from start and stop time
 export function setRunningUi(isRunning) {
   taskInput.disabled = isRunning;
   startStopBtn.classList.toggle("stop", isRunning);
@@ -43,6 +45,7 @@ export function setRunningUi(isRunning) {
   updateTimerDisplay();
 }
 
+// A running task is stored separately, so it keeps running when the app is closed
 export function restoreTimerState() {
   const timer = loadTimer();
   if (timer && timer.running) {
@@ -78,7 +81,7 @@ startStopBtn.addEventListener("click", () => {
     state.running = false;
     const stopTime = Date.now();
 
-    // Rundungsfehler vermeiden: Differenz anhand der vollen Minuten berechnen (ohne Sekunden)
+    // Duration from full clock minutes (seconds dropped), so it matches the displayed start and stop times
     const startDate = new Date(state.currentStartTime);
     startDate.setSeconds(0, 0);
     const stopDate = new Date(stopTime);
@@ -101,7 +104,7 @@ startStopBtn.addEventListener("click", () => {
   }
 });
 
-function deleteEntry(id) {
+function deleteTask(id) {
   state.tasks = state.tasks.filter((e) => e.id !== id);
   saveTasks();
   refreshAll();
@@ -126,22 +129,22 @@ export function buildTaskRow(entry) {
     <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("tasks.deleteAria"))}">${icon("trash")}</button>
   `;
   row.querySelector(".icon-btn").addEventListener("click", () =>
-    confirmAction(t("tasks.confirmDelete", { name: entry.task, date: fmtDateTime(entry.startMs) }), t("common.delete"), () => deleteEntry(entry.id))
+    confirmAction(t("tasks.confirmDelete", { name: entry.task, date: fmtDateTime(entry.startMs) }), t("common.delete"), () => deleteTask(entry.id))
   );
   return row;
 }
 
-// Heutige Tasks, mindestens aber die zwei letzten
-function visibleTaskEntries() {
+// Today's tasks, but at least the two most recent ones; everything else is in the calendar
+function visibleTasks() {
   const today = todayISO();
   const sorted = [...state.tasks].sort((a, b) => b.stopMs - a.stopMs);
   const todays = sorted.filter((e) => taskDateISO(e) === today);
   return todays.length >= 2 ? todays : sorted.slice(0, 2);
 }
 
-export function renderEntries() {
-  const visible = visibleTaskEntries();
+export function renderTasks() {
+  const visible = visibleTasks();
   const hidden = state.tasks.length - visible.length;
   taskListHint.textContent = hidden > 0 ? t("tasks.moreInCalendar", { count: hidden }) : "";
-  renderList(entriesContainer, visible, buildTaskRow, t("tasks.empty"));
+  renderList(tasksContainer, visible, buildTaskRow, t("tasks.empty"));
 }

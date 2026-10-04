@@ -1,14 +1,22 @@
-import { ABSENCES_KEY, ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WEEK_FROM_MONDAY, WORKTIME_KEY } from "./config.js";
-import { state } from "./state.js";
-import { isDate, isTime } from "./util.js";
+// Loading and saving app data in localStorage.
+//
+// Stored data (format version DATA_VERSION, see migrate.js for older formats):
+//   tasks      [{ id, task, startMs, stopMs, durationMin }]           timestamps in ms, duration in whole minutes
+//   worktime   [{ id, date, start, end, breakStart, breakEnd }]       "YYYY-MM-DD" and "HH:MM"; break times null for an automatic break
+//   absences   [{ id, date, type }]                                   type: one of ABSENCE_TYPES
+//   settings   see DEFAULT_SETTINGS in config.js
+//   timer      { running, startTime, task } while a task is running
+// IDs are Date.now() values at creation time.
 
-// Schlüssel, deren gespeicherter Inhalt beim Laden beschädigt war (siehe readJson)
+import { ABSENCES_KEY, ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import { state } from "./state.js";
+import { isDate, isPlainObject, isTime } from "./util.js";
+
+// Keys whose stored value was damaged at startup (see readJson)
 export const damagedKeys = [];
 
-const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-
-// Liest einen gespeicherten JSON-Wert. Ist er beschädigt, bleibt er unter "<Schlüssel>.damaged" erhalten
-// und die App startet ohne ihn, statt gar nicht mehr zu laden.
+// Reads a stored JSON value. A damaged value is kept under "<key>.damaged" and the app starts without it
+// instead of failing to load at all.
 function readJson(key, isValid, fallback) {
   const stored = localStorage.getItem(key);
   if (stored === null) return fallback;
@@ -16,7 +24,7 @@ function readJson(key, isValid, fallback) {
     const value = JSON.parse(stored);
     if (isValid(value)) return value;
   } catch {
-    // unten wie ein ungültiger Wert behandelt
+    // handled like an invalid value below
   }
   localStorage.setItem(`${key}.damaged`, stored);
   localStorage.removeItem(key);
@@ -48,7 +56,7 @@ export function saveAbsences() {
   localStorage.setItem(ABSENCES_KEY, JSON.stringify(state.absences));
 }
 
-// Gespeicherte Einstellungen durchlaufen dieselbe Prüfung wie ein Backup (siehe sanitizeSettings)
+// Stored settings get the same checks as settings from a backup (see sanitizeSettings)
 export function loadSettings() {
   state.settings = sanitizeSettings(readJson(SETTINGS_KEY, isPlainObject, {}));
 }
@@ -90,23 +98,16 @@ export function saveNextReminder(isoTimestamp) {
   localStorage.setItem(NEXT_REMINDER_KEY, isoTimestamp);
 }
 
-// Zusätzliche Prüfungen für Einstellungen, bei denen der Typ allein nicht reicht
+// Extra checks for settings where the type alone is not enough
 const SETTING_CHECKS = {
-  bannerVon: isTime,
-  bannerBis: isTime,
+  bannerFrom: isTime,
+  bannerTo: isTime,
   theme: (v) => ["system", "light", "dark"].includes(v),
-  pauseRules: (v) => v.every((r) => Number.isFinite(r?.stunden) && Number.isFinite(r?.minuten)),
+  breakRules: (v) => v.every((r) => Number.isFinite(r?.hours) && Number.isFinite(r?.minutes)),
   overtimeDate: (v) => v === "" || isDate(v),
   overtimeMin: Number.isInteger,
   workDays: (v) => v.length > 0 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
 };
-
-// Bis 1.0.11 gab es nur die Anzahl "arbeitstage"; daraus werden die Wochentage ab Montag (5 = Mo–Fr)
-function migrateWorkDays(settings) {
-  const count = settings.arbeitstage;
-  if ("workDays" in settings || !Number.isInteger(count) || count < 1 || count > 7) return settings;
-  return { ...settings, workDays: WEEK_FROM_MONDAY.slice(0, count) };
-}
 
 function isValidSetting(key, value) {
   const def = DEFAULT_SETTINGS[key];
@@ -116,30 +117,29 @@ function isValidSetting(key, value) {
   return sameType && (!SETTING_CHECKS[key] || SETTING_CHECKS[key](value));
 }
 
-// Übernimmt nur bekannte Einstellungen mit gültigem Wert, alles andere bleibt beim Standard.
-// So passen auch Daten und Backups älterer oder neuerer Versionen mit mehr oder weniger Einstellungen.
+// Keeps only known settings with a valid value and uses the default for everything else.
+// This way data from versions with more or fewer settings still loads.
 function sanitizeSettings(stored) {
-  const settings = migrateWorkDays(stored);
   const merged = structuredClone(DEFAULT_SETTINGS);
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
-    if (key in settings && isValidSetting(key, settings[key])) merged[key] = settings[key];
+    if (key in stored && isValidSetting(key, stored[key])) merged[key] = stored[key];
   }
   return merged;
 }
 
-// Ersetzt Tasks, Arbeitszeiten, Abwesenheiten und Einstellungen; der laufende Timer bleibt bewusst unberührt
+// Replaces tasks, work time, absences and settings. A running task is not part of a backup and keeps running.
 export function restoreData(tasks, work, absences, settings) {
-  const merged = sanitizeSettings(settings);
   state.tasks = tasks;
   state.work = work;
   state.absences = absences;
-  state.settings = merged;
+  state.settings = sanitizeSettings(settings);
   saveTasks();
   saveWork();
   saveAbsences();
   saveSettings();
 }
 
+// Approximate storage use; browsers limit localStorage to about 5 million characters
 export function storageChars() {
   return ALL_KEYS.reduce((sum, k) => sum + k.length + (localStorage.getItem(k) || "").length, 0);
 }

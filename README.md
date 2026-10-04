@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.0.14-beta
+**Version:** 1.1.0
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -31,7 +31,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
-- Optional overtime account with start date and start balance, plus a forecast including days you already planned
+- Optional overtime account: enter your balance on a given date (e.g. the monthly carry-over from your employer), the app keeps it up to date and shows a forecast including days you already planned
 - Difference to the daily target for each day; work on days off counts entirely as overtime
 
 ### 😴 Rest period
@@ -49,7 +49,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Light, dark or system theme
 - German and English, following the device language by default
 - Weekly hours and work days Mon–Sun (daily target is calculated)
-- Backup and restore of all tasks, work time and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
+- Backup and restore of all tasks, work time, absences and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept
 - Excel export (.xlsx) for tasks and for work time including absences – opens in Excel, Google Sheets, Numbers and LibreOffice
 - Delete entries before a chosen date (tasks, work time and/or absences), or reset everything (both with a 5-second safety countdown)
@@ -96,6 +96,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/app.js` | Entry point: startup, navigation, service worker registration |
 | `js/config.js` | Version, storage keys, default settings, languages |
 | `js/state.js`, `js/storage.js` | Shared app state and loading/saving in `localStorage` |
+| `js/migrate.js` | Converts data and backups from older data formats |
 | `js/tasks.js`, `js/worktime.js`, `js/absence.js`, `js/calendar.js`, `js/settings.js`, `js/settings-nav.js`, `js/data.js` | One module per area of the app |
 | `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
 | `js/gdrive.js` | Google Drive cloud backup (sign-in and Drive API, loaded only when used) |
@@ -108,10 +109,20 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `icon.svg` | App icon source, also used as favicon |
 | `icon-*.png`, `apple-touch-icon.png` | App icons rendered from `icon.svg` (regular, Android maskable, iOS) |
 
+### Data format
+All data is stored in `localStorage` under keys starting with `chronoshift.` (see `js/config.js`). The structure of each entry is described at the top of `js/storage.js`; backup files contain the same data (see `js/data.js`).
+
+The data format has its own version number, `DATA_VERSION` in `js/config.js`, which is stored next to the data and written into every backup. When you rename or restructure stored fields:
+1. Increase `DATA_VERSION`.
+2. Add a step to `STEPS` in `js/migrate.js` that converts data of the previous version.
+
+At startup the app converts stored data of older versions once; backups of older versions are converted when they are restored. Older backups therefore always stay usable.
+
 ### Releasing a new version
-- Increase the version with every release, e.g. `1.0.1-beta` → `1.0.2-beta`, in two places:
+- Increase the version with every release, e.g. `1.1.0` → `1.1.1`, in three places:
   - `APP_VERSION` in `js/config.js` (shown in the settings)
   - `VERSION` in `service-worker.js` (renews the offline cache so every device picks up the update)
+  - the version at the top of this README
 - If you add, rename or remove files that must work offline, also update `FILES_TO_CACHE` in `service-worker.js`.
 
 ## 🌍 Languages

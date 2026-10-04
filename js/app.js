@@ -1,21 +1,25 @@
+// Entry point: startup, tab navigation and service worker registration.
+
 import { resetAbsenceForm } from "./absence.js";
 import { APP_VERSION, FIRST_YEAR, VIEWS } from "./config.js";
 import { renderCalendar, initCalendarState } from "./calendar.js";
 import { checkBackupReminder, initCloudBackup, showRestoreResult, updateBackupInfo } from "./data.js";
 import { applyI18n, loadLocale, t } from "./i18n.js";
 import { icon } from "./icons.js";
+import { upgradeStoredData } from "./migrate.js";
 import { updateRestUi } from "./rest.js";
 import { applyTheme, renderSettingsForm, updateStorageInfo } from "./settings.js";
 import { closeSettingsPage, renderSettingsHome, SETTINGS_PAGES } from "./settings-nav.js";
 import { state } from "./state.js";
 import { damagedKeys, loadAbsences, loadSettings, loadTasks, loadWork } from "./storage.js";
-import { renderEntries, restoreTimerState } from "./tasks.js";
+import { renderTasks, restoreTimerState } from "./tasks.js";
 import { showInfo } from "./ui.js";
 import { $ } from "./util.js";
 import { renderWorkEntries, resetWorktimeForm } from "./worktime.js";
 
+// Redraws everything that depends on the data; called after every change
 export function refreshAll() {
-  renderEntries();
+  renderTasks();
   renderWorkEntries();
   renderCalendar();
   updateRestUi();
@@ -23,7 +27,7 @@ export function refreshAll() {
   updateBackupInfo();
 }
 
-// Auf einer Einstellungs-Unterseite steht deren Name im Titel, davor der Zurück-Pfeil
+// On a settings sub-page the title shows the page name with a back arrow in front
 export function updateViewTitle() {
   const page = state.currentView === "settings" ? state.settingsPage : null;
   $("viewTitle").textContent = t(page ? SETTINGS_PAGES[page] : "nav." + state.currentView);
@@ -31,7 +35,7 @@ export function updateViewTitle() {
 }
 
 export function switchView(view) {
-  // Ein Tab-Wechsel (auch auf "Einstellungen" selbst) führt immer zur Übersicht der Einstellungen
+  // Every tab change, including a tap on "Settings" itself, leads back to the settings overview
   closeSettingsPage();
   state.currentView = view;
   VIEWS.forEach((v) => {
@@ -42,7 +46,7 @@ export function switchView(view) {
   updateViewTitle();
   updateRestUi();
   window.scrollTo(0, 0);
-  if (view === "tasks") renderEntries();
+  if (view === "tasks") renderTasks();
   if (view === "worktime") renderWorkEntries();
   if (view === "calendar") renderCalendar();
   if (view === "settings") {
@@ -60,6 +64,7 @@ async function init() {
   $("appVersion").textContent = `v${APP_VERSION}`;
   const year = new Date().getFullYear();
   $("copyrightYears").textContent = year > FIRST_YEAR ? `${FIRST_YEAR}–${year}` : String(FIRST_YEAR);
+  upgradeStoredData();
   loadSettings();
   applyTheme();
   await loadLocale();
@@ -82,13 +87,13 @@ async function init() {
   checkBackupReminder();
   if (damagedKeys.length) showInfo(t("data.damaged"));
 
-  // Bittet den Browser, die Daten bei knappem Speicher nicht automatisch zu löschen (schützt nicht vor manuellem Löschen)
+  // Asks the browser not to evict the data when storage runs low (does not prevent manual deletion)
   navigator.storage?.persist?.().catch(() => {});
 }
 
-// Module laufen erst, wenn das HTML fertig eingelesen ist, daher direkt starten
+// Modules run after the HTML has been parsed, so the app can start right away
 init();
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js").catch((err) => console.warn("Service Worker Fehler:", err));
+  navigator.serviceWorker.register("service-worker.js").catch((err) => console.warn("Service worker registration failed:", err));
 }

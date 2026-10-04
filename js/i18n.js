@@ -1,7 +1,11 @@
+// Translations and locale-aware formatting. Texts live in locales/<code>.json; HTML elements get their text
+// via data-i18n, data-i18n-placeholder and data-i18n-aria, code uses t("section.key", { placeholder }).
+
 import { FALLBACK_LANG, LANGUAGES } from "./config.js";
 import { state } from "./state.js";
 import { clockOf, dateFromISO } from "./util.js";
 
+// Locale for Intl formatting, may include a region (e.g. "en-GB")
 let intlLocale = FALLBACK_LANG;
 let messages = {};
 let fallbackMessages = {};
@@ -26,7 +30,7 @@ async function fetchLocale(code) {
 
 export async function loadLocale() {
   const lang = state.settings.language in LANGUAGES ? state.settings.language : systemLanguage();
-  // Regionale Variante des Browsers nutzen (z. B. en-GB statt en-US für das Datumsformat)
+  // Use the browser's regional variant (e.g. en-GB instead of en-US for the date format)
   intlLocale = browserLanguages().find((tag) => tag.toLowerCase().split("-")[0] === lang) || lang;
   document.documentElement.lang = lang;
   try {
@@ -43,7 +47,7 @@ export async function loadLocale() {
   }
 }
 
-// Fehlt ein Text in der gewählten Sprache, wird Englisch verwendet, sonst der Schlüssel selbst
+// Falls back to English if a text is missing in the selected language, and to the key itself if it is missing there too
 export function t(key, params = {}) {
   const lookup = (obj) => key.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
   const text = lookup(messages) ?? lookup(fallbackMessages) ?? key;
@@ -56,12 +60,12 @@ export function applyI18n() {
   document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
 }
 
-// ----- Formatierung nach Sprache und Region -----
+// ----- Formatting by language and region -----
 export function fmtDateParts(date, options) {
   return new Intl.DateTimeFormat(intlLocale, options).format(date);
 }
 
-// Kurze Wochentagsnamen ab Montag, z. B. "Mo" / "Mon" (der 1.1.2024 war ein Montag)
+// Short weekday names starting with Monday, e.g. "Mo" / "Mon" (1 January 2024 was a Monday)
 export function weekdayShortNames() {
   return Array.from({ length: 7 }, (_, i) => fmtDateParts(new Date(2024, 0, 1 + i), { weekday: "short" }).replace(/\.$/, ""));
 }

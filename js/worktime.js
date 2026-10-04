@@ -1,3 +1,6 @@
+// "Work time" tab: form for work time entries, the list of work time and absences, and the week card
+// with weekly total and overtime account.
+
 import { refreshAll, switchView } from "./app.js";
 import { buildAbsenceRow, resetAbsenceForm } from "./absence.js";
 import { fmtDate, fmtDateParts, fmtDateRange, t } from "./i18n.js";
@@ -10,33 +13,34 @@ import {
   absenceCreditMin,
   computeWorktimeStats,
   entrySortKey,
+  isAbsence,
   overtimeBalance,
   workListContext,
-  worktimePauseRange,
+  worktimeBreakRange,
   worktimeRange,
 } from "./worktime-calc.js";
 
 const weekRange = $("weekRange");
-const weekIst = $("weekIst");
-const weekSoll = $("weekSoll");
+const weekActual = $("weekActual");
+const weekTarget = $("weekTarget");
 const weekDelta = $("weekDelta");
 const weekBarWork = $("weekBarWork");
 const weekBarAbsence = $("weekBarAbsence");
 const balanceLine = $("balanceLine");
 const worktimeForm = $("worktimeForm");
 const wtFormTitle = $("wtFormTitle");
-const wtDatum = $("wtDatum");
-const wtBeginn = $("wtBeginn");
-const wtEnde = $("wtEnde");
-const wtPauseVon = $("wtPauseVon");
-const wtPauseBis = $("wtPauseBis");
+const wtDate = $("wtDate");
+const wtStart = $("wtStart");
+const wtEnd = $("wtEnd");
+const wtBreakStart = $("wtBreakStart");
+const wtBreakEnd = $("wtBreakEnd");
 const wtSaveBtn = $("wtSaveBtn");
 const wtCancelBtn = $("wtCancelBtn");
 const worktimeContainer = $("worktimeContainer");
 const entryModeSwitch = $("entryModeSwitch");
 const absenceForm = $("absenceForm");
 
-// Umschalter über dem Formular: Arbeitszeit oder Abwesenheit
+// Switch above the form: "work" shows the work time form, "absence" the absence form
 export function setEntryMode(mode) {
   entryModeSwitch.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
   worktimeForm.hidden = mode !== "work";
@@ -53,44 +57,44 @@ entryModeSwitch.addEventListener("click", (e) => {
 
 export function updateWorktimeFormText() {
   const editing = state.editingWorkId !== null ? state.work.find((x) => x.id === state.editingWorkId) : null;
-  wtFormTitle.textContent = editing ? t("worktime.editTitle", { date: fmtDate(editing.datum) }) : t("worktime.formTitle");
+  wtFormTitle.textContent = editing ? t("worktime.editTitle", { date: fmtDate(editing.date) }) : t("worktime.formTitle");
   wtSaveBtn.textContent = t(editing ? "common.update" : "common.save");
   wtCancelBtn.hidden = !editing;
 }
 
 export function resetWorktimeForm() {
   worktimeForm.reset();
-  wtDatum.value = todayISO();
+  wtDate.value = todayISO();
   state.editingWorkId = null;
   updateWorktimeFormText();
 }
 
 worktimeForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (wtBeginn.value === wtEnde.value) {
+  if (wtStart.value === wtEnd.value) {
     showInfo(t("worktime.errorSameStartEnd"));
     return;
   }
-  if (!!wtPauseVon.value !== !!wtPauseBis.value) {
+  if (!!wtBreakStart.value !== !!wtBreakEnd.value) {
     showInfo(t("worktime.errorBreakIncomplete"));
     return;
   }
-  if (wtPauseVon.value && wtPauseVon.value === wtPauseBis.value) {
+  if (wtBreakStart.value && wtBreakStart.value === wtBreakEnd.value) {
     showInfo(t("worktime.errorBreakSame"));
     return;
   }
   const entry = {
     id: state.editingWorkId ?? Date.now(),
-    datum: wtDatum.value,
-    beginn: wtBeginn.value,
-    ende: wtEnde.value,
-    pauseVon: wtPauseVon.value || null,
-    pauseBis: wtPauseBis.value || null,
+    date: wtDate.value,
+    start: wtStart.value,
+    end: wtEnd.value,
+    breakStart: wtBreakStart.value || null,
+    breakEnd: wtBreakEnd.value || null,
   };
-  const pause = worktimePauseRange(entry);
-  if (pause) {
+  const manualBreak = worktimeBreakRange(entry);
+  if (manualBreak) {
     const { startMs, endMs } = worktimeRange(entry);
-    if (pause.pVon < startMs || pause.pBis > endMs) {
+    if (manualBreak.startMs < startMs || manualBreak.endMs > endMs) {
       showInfo(t("worktime.errorBreakOutside"));
       return;
     }
@@ -105,8 +109,9 @@ worktimeForm.addEventListener("submit", (e) => {
     refreshAll();
   };
 
-  if (entry.ende < entry.beginn) {
-    confirmAction(t("worktime.confirmNightShift", { end: entry.ende, start: entry.beginn }), t("common.save"), save);
+  // An end before the start is most likely a typo unless it really is a night shift
+  if (entry.end < entry.start) {
+    confirmAction(t("worktime.confirmNightShift", { end: entry.end, start: entry.start }), t("common.save"), save);
   } else {
     save();
   }
@@ -118,11 +123,11 @@ function editWorkEntry(id) {
   const entry = state.work.find((x) => x.id === id);
   if (!entry) return;
   setEntryMode("work");
-  wtDatum.value = entry.datum;
-  wtBeginn.value = entry.beginn;
-  wtEnde.value = entry.ende;
-  wtPauseVon.value = entry.pauseVon || "";
-  wtPauseBis.value = entry.pauseBis || "";
+  wtDate.value = entry.date;
+  wtStart.value = entry.start;
+  wtEnd.value = entry.end;
+  wtBreakStart.value = entry.breakStart || "";
+  wtBreakEnd.value = entry.breakEnd || "";
   state.editingWorkId = id;
   updateWorktimeFormText();
   worktimeForm.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -135,31 +140,31 @@ function deleteWorkEntry(id) {
   refreshAll();
 }
 
-function pauseTextFor(entry, stats) {
-  if (stats.pauseManual) return t("worktime.breakManual", { from: entry.pauseVon, to: entry.pauseBis });
-  if (stats.pauseMin > 0) return t("worktime.breakAuto", { duration: fmtDur(stats.pauseMin) });
+function breakText(entry, stats) {
+  if (stats.breakManual) return t("worktime.breakManual", { from: entry.breakStart, to: entry.breakEnd });
+  if (stats.breakMin > 0) return t("worktime.breakAuto", { duration: fmtDur(stats.breakMin) });
   return t("worktime.noBreak");
 }
 
-// ctx: Ergebnis von workListContext, einmal pro Liste berechnet
-export function buildWorkRow(entry, ctx) {
+// ctx: result of workListContext, calculated once per list
+function buildWorkRow(entry, ctx) {
   const stats = computeWorktimeStats(entry);
   const overlap = ctx.overlaps.has(entry.id);
   const dayDiff = ctx.dayDiffs.get(entry);
   const diffNote =
     dayDiff === undefined ? "" : `<small class="value-diff ${dayDiff >= 0 ? "ok" : "warn"}">${fmtDiff(dayDiff)}</small>`;
   const overlapNote = overlap ? `<div class="list-row-meta overlap-note">${esc(t("worktime.overlapNote"))}</div>` : "";
-  const title = fmtDateParts(dateFromISO(entry.datum), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  const title = fmtDateParts(dateFromISO(entry.date), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   const row = document.createElement("div");
   row.className = overlap ? "list-row overlap" : "list-row";
   row.innerHTML = `
     <span class="row-accent work"></span>
     <div class="list-row-main">
       <div class="list-row-title">${esc(title)}</div>
-      <div class="list-row-meta">${esc(entry.beginn)}–${esc(entry.ende)} · ${esc(pauseTextFor(entry, stats))}</div>
+      <div class="list-row-meta">${esc(entry.start)}–${esc(entry.end)} · ${esc(breakText(entry, stats))}</div>
       ${overlapNote}
     </div>
-    <span class="list-row-value">${fmtDur(stats.nettoMin)}${diffNote}</span>
+    <span class="list-row-value">${fmtDur(stats.netMin)}${diffNote}</span>
     <button type="button" class="icon-btn" aria-label="${esc(t("worktime.editAria"))}">${icon("pencil")}</button>
     <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("worktime.deleteAria"))}">${icon("trash")}</button>
   `;
@@ -170,7 +175,7 @@ export function buildWorkRow(entry, ctx) {
   });
   deleteBtn.addEventListener("click", () =>
     confirmAction(
-      t("worktime.confirmDelete", { date: fmtDate(entry.datum), from: entry.beginn, to: entry.ende }),
+      t("worktime.confirmDelete", { date: fmtDate(entry.date), from: entry.start, to: entry.end }),
       t("common.delete"),
       () => deleteWorkEntry(entry.id)
     )
@@ -178,9 +183,9 @@ export function buildWorkRow(entry, ctx) {
   return row;
 }
 
-// Baut die passende Zeile für eine Arbeitszeit oder eine Abwesenheit
+// Row for either a work time entry or an absence
 export function buildEntryRow(entry, ctx) {
-  return "typ" in entry ? buildAbsenceRow(entry, ctx) : buildWorkRow(entry, ctx);
+  return isAbsence(entry) ? buildAbsenceRow(entry, ctx) : buildWorkRow(entry, ctx);
 }
 
 export function renderWorkEntries() {
@@ -190,6 +195,7 @@ export function renderWorkEntries() {
   renderWeekSummary(ctx.overlaps);
 }
 
+// Current week from Monday to Sunday: work time plus absence credits compared to the weekly hours
 function renderWeekSummary(overlaps) {
   const now = new Date();
   const monday = new Date(now);
@@ -199,29 +205,29 @@ function renderWeekSummary(overlaps) {
   const mondayISO = isoOf(monday);
   const sundayISO = isoOf(sunday);
 
-  const inWeek = (e) => e.datum >= mondayISO && e.datum <= sundayISO;
+  const inWeek = (e) => e.date >= mondayISO && e.date <= sundayISO;
   const workMin = state.work
     .filter((e) => inWeek(e) && !overlaps.has(e.id))
-    .reduce((sum, e) => sum + computeWorktimeStats(e).nettoMin, 0);
+    .reduce((sum, e) => sum + computeWorktimeStats(e).netMin, 0);
   const absenceMin = state.absences.filter(inWeek).reduce((sum, a) => sum + absenceCreditMin(a), 0);
-  const nettoSum = workMin + absenceMin;
-  const sollMin = Math.round(state.settings.wochensollstunden * 60);
-  const diff = nettoSum - sollMin;
+  const totalMin = workMin + absenceMin;
+  const targetMin = Math.round(state.settings.weeklyHours * 60);
+  const diff = totalMin - targetMin;
 
   weekRange.textContent = fmtDateRange(monday, sunday, { day: "2-digit", month: "2-digit", year: "numeric" });
-  weekIst.textContent = fmtMin(nettoSum);
-  weekSoll.textContent = t("worktime.ofTarget", { target: fmtMin(sollMin) });
+  weekActual.textContent = fmtMin(totalMin);
+  weekTarget.textContent = t("worktime.ofTarget", { target: fmtMin(targetMin) });
   weekDelta.textContent = fmtDiff(diff);
   weekDelta.className = "chip " + (diff >= 0 ? "chip-ok" : "chip-warn");
-  // Anteile am Wochensoll, zusammen höchstens 100 %
-  const percent = (min) => Math.min(100, (min / Math.max(1, sollMin)) * 100);
+  // Shares of the weekly target, together at most 100 %
+  const percent = (min) => Math.min(100, (min / Math.max(1, targetMin)) * 100);
   const workPercent = percent(workMin);
   weekBarWork.style.width = `${workPercent}%`;
   weekBarAbsence.style.width = `${Math.min(100 - workPercent, percent(absenceMin))}%`;
   renderBalance(overlaps);
 }
 
-// Stundenkonto unter dem Wochenbalken; die Prognose nur, wenn künftige Tage eingetragen sind
+// Overtime account below the week bar; the forecast only if future days are entered
 function renderBalance(overlaps) {
   const balance = overtimeBalance(state.work, state.absences, overlaps);
   balanceLine.hidden = !balance;

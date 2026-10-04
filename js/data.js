@@ -1,9 +1,13 @@
+// Settings pages "Backup" and "Export & delete": local and cloud backup, backup reminder, Excel export,
+// deleting entries before a date and resetting the app.
+
 import { resetAbsenceForm } from "./absence.js";
 import { refreshAll } from "./app.js";
-import { ABSENCE_TYPES, APP_VERSION, DAY_MS } from "./config.js";
+import { ABSENCE_TYPES, APP_VERSION, DATA_VERSION, DAY_MS } from "./config.js";
 import { deleteBackup, disconnect, downloadBackup, listBackups, uploadBackup } from "./gdrive.js";
 import { fmtDate, fmtDateTime, t } from "./i18n.js";
 import { icon } from "./icons.js";
+import { migrateData } from "./migrate.js";
 import { state } from "./state.js";
 import {
   clearAllData,
@@ -22,16 +26,17 @@ import {
 import { renderSettingsForm } from "./settings.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
-import { $, dateFromISO, esc, isDate, isTime, isoOf, nextDayISO, prevDayISO, todayISO } from "./util.js";
-import { absenceCreditMin, computeWorktimeStats, entrySortKey } from "./worktime-calc.js";
+import { $, dateFromISO, esc, isDate, isPlainObject, isTime, isoOf, nextDayISO, prevDayISO, todayISO } from "./util.js";
+import { absenceCreditMin, computeWorktimeStats, entrySortKey, isAbsence } from "./worktime-calc.js";
 import { resetWorktimeForm } from "./worktime.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
 
 // ----- Backup -----
-// Enthält Tasks, Arbeitszeiten und Einstellungen, aber keinen laufenden Timer:
-// Beim Wiederherstellen Tage später würde er sonst einen Task liefern, der seitdem "läuft".
+// A backup is a JSON file:
+//   { app: "ChronoShift", format: DATA_VERSION, version: APP_VERSION, created: ISO timestamp,
+//     data: { tasks, worktime, absences, settings } }
+// It does not contain a running task: restored days later, that task would appear to have run all along.
 const BACKUP_APP = "ChronoShift";
-const BACKUP_FORMAT = 1;
 const BACKUP_STALE_DAYS = 30;
 const RESTORED_FLAG = "chronoshift.restored";
 
@@ -41,13 +46,13 @@ const backupFileInput = $("backupFileInput");
 
 const dateOf = (iso) => fmtDate(isoOf(new Date(iso)));
 
-// Neuestes Backup, egal ob lokal oder in der Cloud (für Warnung und Erinnerung)
+// Newest backup, local or cloud (used for the warning and the reminder)
 export function newestBackup() {
   const dates = [loadLastBackup(), loadLastCloudBackup()].filter(Boolean);
   return dates.length ? dates.reduce((a, b) => (Date.parse(a) > Date.parse(b) ? a : b)) : null;
 }
 
-// Warnen, wenn es Daten gibt, aber seit 30 Tagen kein Backup
+// True if there is data but no backup for 30 days
 export function backupIsStale() {
   const newest = newestBackup();
   const hasData = state.tasks.length > 0 || state.work.length > 0 || state.absences.length > 0;
@@ -64,9 +69,9 @@ export function updateBackupInfo() {
   gdriveInfo.classList.toggle("warn", stale);
 }
 
-// ----- Erinnerung beim Start -----
-// Gespeichert wird nur, wann die nächste Erinnerung fällig ist. Backup, Wiederherstellen und die Erinnerung selbst
-// schieben sie um 30 Tage; solange es keine Daten gibt ebenso, damit neue Nutzer ab dem ersten Eintrag Ruhe haben.
+// ----- Reminder at startup -----
+// Only the due date of the next reminder is stored. A backup, a restore and the reminder itself postpone it
+// by 30 days. So does an empty app, so new users get the first reminder 30 days after they start using it.
 const backupReminderModal = $("backupReminderModal");
 
 function postponeBackupReminder() {
@@ -97,14 +102,14 @@ $("backupReminderSaveBtn").addEventListener("click", () => {
 function buildBackup() {
   return {
     app: BACKUP_APP,
-    format: BACKUP_FORMAT,
+    format: DATA_VERSION,
     version: APP_VERSION,
     created: new Date().toISOString(),
     data: { tasks: state.tasks, worktime: state.work, absences: state.absences, settings: state.settings },
   };
 }
 
-// Lokal und Cloud werden getrennt angezeigt, schieben aber beide die Erinnerung
+// Local and cloud backups are shown separately, but both postpone the reminder
 function backupDone(created, cloud = false) {
   if (cloud) saveLastCloudBackup(created);
   else saveLastBackup(created);
@@ -134,31 +139,39 @@ function isValidTask(e) {
 }
 
 function isValidWork(e) {
-  return Number.isFinite(e?.id) && isDate(e.datum) && isTime(e.beginn) && isTime(e.ende) && isOptionalTime(e.pauseVon) && isOptionalTime(e.pauseBis);
+  return Number.isFinite(e?.id) && isDate(e.date) && isTime(e.start) && isTime(e.end) && isOptionalTime(e.breakStart) && isOptionalTime(e.breakEnd);
 }
 
 function isValidAbsence(e) {
-  return Number.isFinite(e?.id) && isDate(e.datum) && ABSENCE_TYPES.includes(e.typ);
+  return Number.isFinite(e?.id) && isDate(e.date) && ABSENCE_TYPES.includes(e.type);
 }
 
-// Wirft bei allem, was nicht wie ein ChronoShift-Backup aussieht, damit nie halbe Daten übernommen werden
+// Returns { created, data: { tasks, work, absences, settings } } in the current data format.
+// Throws on anything that does not look like a ChronoShift backup, so partial data is never restored.
 function parseBackup(text) {
   const backup = JSON.parse(text);
-  const data = backup?.data;
-  const valid =
+  const { format } = backup ?? {};
+  const header =
     backup?.app === BACKUP_APP &&
-    backup.format === BACKUP_FORMAT &&
+    Number.isInteger(format) &&
+    format >= 1 &&
+    format <= DATA_VERSION &&
     !Number.isNaN(Date.parse(backup.created)) &&
-    Array.isArray(data?.tasks) &&
-    Array.isArray(data.worktime) &&
-    data.settings !== null &&
-    typeof data.settings === "object" &&
+    isPlainObject(backup.data);
+  if (!header) throw new Error("invalid backup");
+  const { tasks, worktime, absences, settings } = backup.data;
+  // Backups made before absences existed (1.0.13) have no absences
+  const data = migrateData({ tasks, work: worktime, absences: absences ?? [], settings }, format);
+  const valid =
+    Array.isArray(data.tasks) &&
+    Array.isArray(data.work) &&
+    Array.isArray(data.absences) &&
+    isPlainObject(data.settings) &&
     data.tasks.every(isValidTask) &&
-    data.worktime.every(isValidWork) &&
-    // Abwesenheiten gibt es erst seit 1.0.13; ältere Backups haben das Feld nicht
-    (data.absences === undefined || (Array.isArray(data.absences) && data.absences.every(isValidAbsence)));
+    data.work.every(isValidWork) &&
+    data.absences.every(isValidAbsence);
   if (!valid) throw new Error("invalid backup");
-  return backup;
+  return { created: backup.created, data };
 }
 
 $("backupRestoreBtn").addEventListener("click", () => backupFileInput.click());
@@ -179,15 +192,15 @@ backupFileInput.addEventListener("change", async () => {
 });
 
 function confirmRestore(backup) {
-  const { tasks, worktime, absences = [], settings } = backup.data;
-  const counts = { tasks: tasks.length, work: worktime.length, absences: absences.length };
+  const { tasks, work, absences, settings } = backup.data;
+  const counts = { tasks: tasks.length, work: work.length, absences: absences.length };
   confirmAction(
     t("backup.confirmRestore", { date: fmtDate(isoOf(new Date(backup.created))), ...counts }),
     t("backup.restoreLabel"),
     () => {
-      restoreData(tasks, worktime, absences, settings);
+      restoreData(tasks, work, absences, settings);
       postponeBackupReminder();
-      // Neu laden, damit Sprache, Design und alle Ansichten sauber aus den wiederhergestellten Daten starten
+      // Reload so language, theme and all views start cleanly from the restored data
       sessionStorage.setItem(RESTORED_FLAG, JSON.stringify(counts));
       location.reload();
     }
@@ -201,8 +214,8 @@ export function showRestoreResult() {
   showToast(t("backup.restored", JSON.parse(restored)));
 }
 
-// ----- Cloud-Backup (Google Drive) -----
-const CLOUD_KEEP = 10; // ältere Backups werden nach dem Hochladen gelöscht
+// ----- Cloud backup (Google Drive) -----
+const CLOUD_KEEP = 10; // older backups are deleted after an upload
 const setGdrive = $("setGdrive");
 const gdriveActions = $("gdriveActions");
 const cloudRestoreModal = $("cloudRestoreModal");
@@ -225,7 +238,7 @@ function showCloudError(err) {
   if (reason === "retry") showInfo(t("backup.cloudRetry"));
   else if (reason === "expired") showInfo(t("backup.cloudExpired"));
   else if (reason === "popup_failed_to_open") showInfo(t("backup.cloudPopupBlocked"));
-  // Fenster geschlossen oder Zugriff verweigert: kein Fehler der App, nur ein Hinweis
+  // Window closed or access denied by the user: not an error, just a notice
   else if (/popup_closed|access_denied|auth/.test(reason)) showInfo(t("backup.cloudCancelled"));
   else showInfo(t("backup.cloudError"));
 }
@@ -322,8 +335,9 @@ $("exportTasksBtn").addEventListener("click", () => {
   downloadFile(buildXlsx(t("export.tasksSheet"), columns, rows), t("export.tasksFile", { date: todayISO() }));
 });
 
-// Arbeitszeiten und Abwesenheiten in einer Tabelle, nach Tag sortiert. Netto ist reine Arbeitszeit,
-// Abwesenheiten stehen mit Art und Gutschrift in eigenen Spalten; Netto + Gutschrift ergibt die Summe der App.
+// Work time and absences in one sheet, sorted by day. "Net" is pure work time; absences have their own
+// columns for type and credit, so net + credit adds up to the totals shown in the app.
+// Overlapping entries are exported as they are.
 $("exportWorkBtn").addEventListener("click", () => {
   if (!state.work.length && !state.absences.length) {
     showInfo(t("data.noWorkToExport"));
@@ -345,30 +359,21 @@ $("exportWorkBtn").addEventListener("click", () => {
   const date = (iso) => ({ v: excelDateTime(dateFromISO(iso)), s: XLSX_STYLE.date });
   const entries = [...state.work, ...state.absences].sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
   const rows = entries.map((e) => {
-    if ("typ" in e) return [date(e.datum), null, null, null, null, null, "", null, t(`absence.types.${e.typ}`), absenceCreditMin(e)];
+    if (isAbsence(e)) return [date(e.date), null, null, null, null, null, "", null, t(`absence.types.${e.type}`), absenceCreditMin(e)];
     const s = computeWorktimeStats(e);
-    const breakType = s.pauseManual ? t("export.breakManual") : s.pauseMin > 0 ? t("export.breakAuto") : "";
-    return [
-      date(e.datum),
-      time(e.beginn),
-      time(e.ende),
-      time(e.pauseVon),
-      time(e.pauseBis),
-      s.pauseMin,
-      breakType,
-      s.nettoMin,
-    ];
+    const breakType = s.breakManual ? t("export.breakManual") : s.breakMin > 0 ? t("export.breakAuto") : "";
+    return [date(e.date), time(e.start), time(e.end), time(e.breakStart), time(e.breakEnd), s.breakMin, breakType, s.netMin];
   });
   downloadFile(buildXlsx(t("export.workSheet"), columns, rows), t("export.workFile", { date: todayISO() }));
 });
 
-// ----- Löschen -----
-// Einträge vor einem Datum löschen, wahlweise nur Tasks, Arbeitszeiten und/oder Abwesenheiten.
-// Tasks zählen zum Tag ihres Beginns, wie im Kalender.
+// ----- Delete -----
+// Deletes entries before a date, for any combination of tasks, work time and absences.
+// Tasks belong to the day they started, like in the calendar.
 const DELETE_SCOPES = {
   tasks: { list: "tasks", dateOf: taskDateISO, save: saveTasks },
-  work: { list: "work", dateOf: (e) => e.datum, save: saveWork },
-  absences: { list: "absences", dateOf: (e) => e.datum, save: saveAbsences },
+  work: { list: "work", dateOf: (e) => e.date, save: saveWork },
+  absences: { list: "absences", dateOf: (e) => e.date, save: saveAbsences },
 };
 const deleteBeforeCard = $("deleteBeforeCard");
 const deleteBeforeDate = $("deleteBeforeDate");
@@ -376,7 +381,7 @@ const deleteBeforeSummary = $("deleteBeforeSummary");
 const deleteBeforeConfirmBtn = $("deleteBeforeConfirmBtn");
 const deleteScopeBoxes = deleteBeforeCard.querySelectorAll("input[data-scope]");
 
-// Was mit der aktuellen Auswahl gelöscht würde: { tasks, work, absences } als Anzahl
+// Number of entries the current selection would delete: { tasks, work, absences }
 function deleteBeforeCounts() {
   const before = deleteBeforeDate.value;
   const counts = { tasks: 0, work: 0, absences: 0 };
@@ -388,7 +393,7 @@ function deleteBeforeCounts() {
   return counts;
 }
 
-// Zeigt vor dem Löschen genau an, was betroffen ist; ohne Datum oder Treffer bleibt Löschen gesperrt
+// Shows exactly what would be deleted; the button stays disabled without a date or matching entries
 function updateDeleteBeforeSummary() {
   const before = deleteBeforeDate.value;
   const counts = deleteBeforeCounts();
@@ -402,22 +407,22 @@ function updateDeleteBeforeSummary() {
   deleteBeforeConfirmBtn.disabled = !total;
 }
 
-// Gelöschte Arbeitszeiten oder Abwesenheiten, die das Stundenkonto schon zählt, würden als fehlende Tage ins Minus gehen.
-// Deshalb beginnt das Konto dann am Stichtag bei 0; den aktuellen Stand trägt man danach selbst ein.
+// Deleting work time or absences that the overtime account already counts would turn those days into
+// missing days. In that case the account restarts at 0 on the day before the cut-off date.
 function resetsBalance(before) {
   const { overtimeEnabled, overtimeDate } = state.settings;
   const scopes = [...deleteScopeBoxes].filter((box) => box.checked).map((box) => box.dataset.scope);
   return overtimeEnabled && overtimeDate && nextDayISO(overtimeDate) < before && (scopes.includes("work") || scopes.includes("absences"));
 }
 
-// Beim Öffnen der Seite und nach dem Löschen: kein Datum, alle Bereiche aus
+// When the page opens and after deleting: no date, all switches off
 export function resetDeleteBefore() {
   deleteBeforeDate.value = "";
   deleteScopeBoxes.forEach((box) => (box.checked = false));
   updateDeleteBeforeSummary();
 }
 
-// "change" zusätzlich, weil manche mobilen Datumsauswahlen kein "input" melden
+// "change" as well, because some mobile date pickers do not fire "input"
 deleteBeforeDate.addEventListener("input", updateDeleteBeforeSummary);
 deleteBeforeDate.addEventListener("change", updateDeleteBeforeSummary);
 deleteScopeBoxes.forEach((box) => box.addEventListener("change", updateDeleteBeforeSummary));
@@ -438,7 +443,7 @@ deleteBeforeConfirmBtn.addEventListener("click", () => {
     scope.save();
   });
   resetDeleteBefore();
-  // Ein gerade bearbeiteter Eintrag könnte gelöscht sein
+  // An entry that is being edited may have been deleted
   resetWorktimeForm();
   resetAbsenceForm();
   refreshAll();

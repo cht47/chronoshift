@@ -1,6 +1,7 @@
-// Cloud-Backup in Google Drive, direkt aus dem Browser ohne eigenen Server.
-// Nur der versteckte App-Ordner (drive.appdata): Die App sieht keine anderen Dateien, andere Apps nicht ihre Backups.
-// Die Client-ID ist öffentlich; Google akzeptiert sie nur von den in der Cloud Console eingetragenen Adressen.
+// Cloud backup in Google Drive, straight from the browser without a server of its own.
+// Uses only the hidden app folder (scope drive.appdata): the app cannot see any other files, and other apps
+// cannot see its backups. The client ID is public; Google only accepts it from the origins registered in the
+// Google Cloud Console.
 const CLIENT_ID = "190909841905-t8lqokh52027krgsuqmos683stfc71bt.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 const FILES_API = "https://www.googleapis.com/drive/v3/files";
@@ -9,9 +10,9 @@ const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files?uploadType=
 let scriptPromise = null;
 let tokenClient = null;
 let token = null; // { value, expires }
-let pending = null; // { resolve, reject } der laufenden Anmeldung
+let pending = null; // { resolve, reject } of the sign-in in progress
 
-// Das Google-Skript wird erst beim ersten Tippen auf einen Cloud-Button geladen
+// The Google script is only loaded on the first tap on a cloud button
 function loadGoogleScript() {
   scriptPromise ??= new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -32,7 +33,7 @@ function settleToken(resp) {
   pending = null;
   if (!p) return;
   if (resp.access_token) {
-    // Tokens gelten etwa eine Stunde; eine Minute Puffer, damit keine Anfrage mit abgelaufenem Token startet
+    // Tokens are valid for about an hour; one minute of margin so no request starts with an expired token
     token = { value: resp.access_token, expires: Date.now() + (resp.expires_in - 60) * 1000 };
     p.resolve(token.value);
   } else {
@@ -40,7 +41,8 @@ function settleToken(resp) {
   }
 }
 
-// Öffnet bei Bedarf das Google-Fenster. Browser erlauben es nur kurz nach einem Klick, daher ohne await davor.
+// Opens the Google sign-in window if needed. Browsers only allow popups right after a click, so there must be
+// no await before this call.
 function requestToken() {
   tokenClient ??= google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
@@ -51,7 +53,7 @@ function requestToken() {
   return new Promise((resolve, reject) => {
     pending?.reject(new Error("auth"));
     pending = { resolve, reject };
-    // Leerer prompt: Zustimmung nur beim ersten Mal, danach schließt sich das Fenster von selbst
+    // Empty prompt: consent is only asked the first time, after that the window closes by itself
     tokenClient.requestAccessToken({ prompt: "" });
   });
 }
@@ -59,8 +61,8 @@ function requestToken() {
 function getToken() {
   if (token && Date.now() < token.expires) return Promise.resolve(token.value);
   if (window.google?.accounts?.oauth2) return requestToken();
-  // Erstes Tippen: Skript laden, dann das Fenster öffnen. Das dauert einen Moment, manche Browser (v. a. Safari)
-  // blockieren das Fenster dann. Beim zweiten Tippen ist das Skript schon da und das Fenster öffnet sofort.
+  // First tap: load the script, then open the window. Loading takes a moment, so some browsers (mainly Safari)
+  // block the popup. On the second tap the script is already there and the window opens right away.
   return loadGoogleScript().then(() =>
     requestToken().catch((err) => {
       throw err.message === "popup_failed_to_open" ? new Error("retry") : err;
@@ -72,7 +74,7 @@ async function api(url, options = {}) {
   const accessToken = await getToken();
   const res = await fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${accessToken}` } });
   if (res.status === 401) {
-    // Token von Google nicht mehr akzeptiert; beim nächsten Versuch wird ein neues geholt
+    // Google no longer accepts the token; the next attempt requests a new one
     token = null;
     throw new Error("expired");
   }
@@ -89,7 +91,7 @@ export async function uploadBackup(name, json) {
   await api(UPLOAD_API, { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body });
 }
 
-// Neueste zuerst
+// Newest first
 export async function listBackups() {
   const params = new URLSearchParams({
     spaces: "appDataFolder",
@@ -109,7 +111,7 @@ export async function deleteBackup(id) {
   await api(`${FILES_API}/${id}`, { method: "DELETE" });
 }
 
-// Beim Ausschalten die Freigabe bei Google zurückziehen; die Backups selbst bleiben in Drive
+// Revokes the access when cloud backup is turned off; the backups themselves stay in Drive
 export function disconnect() {
   if (token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token.value);
   token = null;

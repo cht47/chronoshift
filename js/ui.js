@@ -1,3 +1,5 @@
+// Shared UI building blocks: lists, dialogs, toast and file download.
+
 import { t } from "./i18n.js";
 import { $, esc } from "./util.js";
 
@@ -7,6 +9,7 @@ const confirmModal = $("confirmModal");
 const confirmText = $("confirmText");
 const confirmYesBtn = $("confirmYesBtn");
 
+// Renders entries as rows built by builder(entry), or emptyText if there are none
 export function renderList(container, entries, builder, emptyText) {
   container.innerHTML = "";
   const group = document.createElement("div");
@@ -19,7 +22,7 @@ export function renderList(container, entries, builder, emptyText) {
   container.appendChild(group);
 }
 
-// ----- Dialoge -----
+// ----- Dialogs -----
 export function showInfo(msg) {
   infoModalText.textContent = msg;
   infoModal.showModal();
@@ -40,6 +43,7 @@ export function showToast(msg) {
 let confirmCallback = null;
 let confirmTimer = null;
 
+// Asks for confirmation; with countdownSec the confirm button stays disabled for that many seconds
 export function confirmAction(msg, label, onConfirm, countdownSec = 0) {
   clearInterval(confirmTimer);
   confirmText.textContent = msg;
@@ -80,6 +84,6 @@ export function downloadFile(blob, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  // Mobile Browser zeigen beim Download kaum Rückmeldung, besonders in der installierten App
+  // Mobile browsers give little feedback on downloads, especially in the installed app
   showToast(t("data.exportDone", { file: filename }));
 }

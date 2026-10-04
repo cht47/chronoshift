@@ -1,3 +1,6 @@
+// Settings overview with sub-pages. Every sub-page adds an entry to the browser history, so the
+// Android back gesture returns to the overview instead of closing the app.
+
 import { updateViewTitle } from "./app.js";
 import { WEEK_FROM_MONDAY } from "./config.js";
 import { backupIsStale, newestBackup, resetDeleteBefore } from "./data.js";
@@ -6,8 +9,7 @@ import { state } from "./state.js";
 import { storageChars } from "./storage.js";
 import { $, isoOf } from "./util.js";
 
-// Einstellungen als Übersicht mit Unterseiten. Jede Unterseite bekommt einen Eintrag im Browser-Verlauf,
-// damit die Zurück-Geste von Android zur Übersicht führt, statt die App zu schließen.
+// Sub-page name -> translation key of its title. Each page is an element with id "settingsPage-<name>".
 export const SETTINGS_PAGES = {
   worktime: "settings.worktime",
   rest: "settings.rest",
@@ -17,6 +19,7 @@ export const SETTINGS_PAGES = {
 
 const settingsHome = $("settingsHome");
 
+// page: name of a sub-page, or null for the overview
 function showPage(page) {
   state.settingsPage = page;
   settingsHome.hidden = !!page;
@@ -26,13 +29,13 @@ function showPage(page) {
   window.scrollTo(0, 0);
 }
 
-export function openSettingsPage(page) {
+function openSettingsPage(page) {
   if (page === "data") resetDeleteBefore();
   showPage(page);
   history.pushState({ settingsPage: page }, "");
 }
 
-// Zurück zur Übersicht, z. B. beim Tab-Wechsel; der Verlaufseintrag der Unterseite wird mit entfernt
+// Back to the overview, e.g. on a tab change; also removes the history entry of the sub-page
 export function closeSettingsPage() {
   if (!state.settingsPage) return;
   showPage(null);
@@ -45,7 +48,7 @@ window.addEventListener("popstate", () => {
   if (state.settingsPage) showPage(null);
 });
 
-// Kurzform der Arbeitstage: zusammenhängend als "Mo–Fr", sonst einzeln "Mo, Mi, Fr"
+// Short form of the work days: consecutive days as "Mon–Fri", otherwise listed as "Mon, Wed, Fri"
 function workDaysText() {
   const names = weekdayShortNames();
   const indexes = WEEK_FROM_MONDAY.map((day, i) => (state.settings.workDays.includes(day) ? i : -1)).filter((i) => i >= 0);
@@ -54,11 +57,12 @@ function workDaysText() {
   return indexes.map((i) => names[i]).join(", ");
 }
 
+// Current values shown next to each sub-page in the overview
 export function renderSettingsHome() {
   const s = state.settings;
-  $("sumWorktime").textContent = `${fmtNumber(s.wochensollstunden)} h · ${workDaysText()}`;
-  $("sumRest").textContent = s.ruhezeitEnabled
-    ? `${fmtNumber(s.restHours)} h${s.ruhezeitBannerEnabled ? ` · ${t("settings.sumBanner")}` : ""}`
+  $("sumWorktime").textContent = `${fmtNumber(s.weeklyHours)} h · ${workDaysText()}`;
+  $("sumRest").textContent = s.restEnabled
+    ? `${fmtNumber(s.restHours)} h${s.restBannerEnabled ? ` · ${t("settings.sumBanner")}` : ""}`
     : t("settings.sumOff");
   const newest = newestBackup();
   const sumBackup = $("sumBackup");

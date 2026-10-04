@@ -1,4 +1,4 @@
-// Icons nach Lucide (ISC-Lizenz), siehe THIRD_PARTY_LICENSES.md
+// Icons from Lucide (ISC license), see THIRD_PARTY_LICENSES.md. In HTML, data-icon="name" inserts an icon.
 const ICONS = {
   timer: '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>',
   briefcase: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',

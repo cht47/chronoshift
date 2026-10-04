@@ -6,7 +6,7 @@
   <title>ChronoShift</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- Pico CSS v2.0.6, lokal statt CDN: offline nutzbar und keine Daten an Dritte -->
+  <!-- Pico CSS v2.0.6, bundled instead of a CDN: works offline and sends no data to third parties -->
   <link rel="stylesheet" href="pico.min.css" />
 
   <!-- PWA Manifest -->
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <meta name="theme-color" content="#13171f" />
 
-  <!-- Theme vor dem ersten Rendern setzen, sonst blitzt kurz das falsche Design auf -->
+  <!-- Set the theme before the first render, otherwise the wrong theme flashes briefly -->
   <script>
     try {
       const theme = JSON.parse(localStorage.getItem("chronoshift.settings") || "{}").theme || "system";
@@ -36,13 +36,13 @@
           data-i18n-aria="common.back" hidden></button>
         <h1 class="view-title" id="viewTitle"></h1>
       </div>
-      <!-- Ruhezeit-Banner: je nach Einstellung und Zeitfenster -->
+      <!-- Rest period banner, depending on the settings and the time window -->
       <div id="restBanner" role="status" hidden></div>
     </div>
   </header>
 
   <main class="app-main">
-    <!-- ===================== Zeit erfassen (Tasks) ===================== -->
+    <!-- ===================== Track time (tasks) ===================== -->
     <section id="view-tasks">
       <div class="card timer-card">
         <div class="timer-display" id="timerDisplay">00:00:00</div>
@@ -53,10 +53,10 @@
       </div>
 
       <div class="section-label"><span data-i18n="tasks.listTitle"></span><span id="taskListHint"></span></div>
-      <div id="entriesContainer"></div>
+      <div id="tasksContainer"></div>
     </section>
 
-    <!-- ===================== Arbeitszeit ===================== -->
+    <!-- ===================== Work time ===================== -->
     <section id="view-worktime" hidden>
       <div class="segmented entry-mode" role="group" id="entryModeSwitch" data-i18n-aria="worktime.modeAria">
         <button type="button" data-mode="work" aria-pressed="true" data-i18n="worktime.modeWork"></button>
@@ -66,22 +66,22 @@
       <form id="worktimeForm" class="card">
         <div class="form-title" id="wtFormTitle"></div>
         <label><span data-i18n="worktime.date"></span>
-          <input type="date" id="wtDatum" required />
+          <input type="date" id="wtDate" required />
         </label>
         <div class="two-col">
           <label><span data-i18n="worktime.start"></span>
-            <input type="time" id="wtBeginn" required />
+            <input type="time" id="wtStart" required />
           </label>
           <label><span data-i18n="worktime.end"></span>
-            <input type="time" id="wtEnde" required />
+            <input type="time" id="wtEnd" required />
           </label>
         </div>
         <div class="two-col">
           <label><span data-i18n="worktime.breakFrom"></span>
-            <input type="time" id="wtPauseVon" />
+            <input type="time" id="wtBreakStart" />
           </label>
           <label><span data-i18n="worktime.breakTo"></span>
-            <input type="time" id="wtPauseBis" />
+            <input type="time" id="wtBreakEnd" />
           </label>
         </div>
         <small class="hint" data-i18n="worktime.breakHint"></small>
@@ -112,10 +112,10 @@
       <div class="card">
         <div class="stat-label"><span data-i18n="worktime.thisWeek"></span> · <span id="weekRange"></span></div>
         <div class="stat-row">
-          <div><span class="stat-value" id="weekIst"></span> <span class="stat-sub" id="weekSoll"></span></div>
+          <div><span class="stat-value" id="weekActual"></span> <span class="stat-sub" id="weekTarget"></span></div>
           <span class="chip" id="weekDelta"></span>
         </div>
-        <!-- Wochenfortschritt: Arbeitszeit orange, Abwesenheit grün; die Zahlen stehen darüber -->
+        <!-- Week progress: work time and absences as two segments; the numbers are shown above -->
         <div class="week-bar" aria-hidden="true">
           <span class="week-bar-work" id="weekBarWork"></span><span class="week-bar-absence" id="weekBarAbsence"></span>
         </div>
@@ -127,7 +127,7 @@
       <div id="worktimeContainer"></div>
     </section>
 
-    <!-- ===================== Kalender ===================== -->
+    <!-- ===================== Calendar ===================== -->
     <section id="view-calendar" hidden>
       <div class="card">
         <div class="cal-head">
@@ -148,11 +148,11 @@
       <div id="calDayDetail"></div>
     </section>
 
-    <!-- ===================== Einstellungen ===================== -->
+    <!-- ===================== Settings ===================== -->
     <section id="view-settings" hidden>
-      <!-- Übersicht: je Bereich eine Zeile mit aktuellem Wert, die Einstellungen selbst auf Unterseiten -->
+      <!-- Overview: one row per area with its current value; the settings themselves are on sub-pages -->
       <div class="settings-home" id="settingsHome">
-        <!-- Nur sichtbar, solange die App nicht installiert ist und der Browser eine Installation anbietet -->
+        <!-- Only visible while the app is not installed and the browser offers an installation -->
         <div id="installSection" hidden>
           <div class="list-group">
             <button type="button" class="action-row accent" id="installBtn"><span data-icon="smartphone"></span><span>
@@ -203,29 +203,29 @@
         </div>
       </div>
 
-      <!-- Unterseite: Arbeitszeit -->
+      <!-- Sub-page: work time -->
       <div class="settings-page" id="settingsPage-worktime" hidden>
         <div class="section-label first"><span data-i18n="settings.target"></span></div>
         <div class="card">
           <label><span data-i18n="settings.weeklyHours"></span>
-            <input type="number" id="setWochensoll" min="1" max="80" step="0.5" inputmode="decimal" />
+            <input type="number" id="setWeeklyHours" min="1" max="80" step="0.5" inputmode="decimal" />
           </label>
-          <!-- Kein label: ein Klick auf den Text würde sonst den ersten Button auslösen -->
+          <!-- No label element: a click on the text would trigger the first button -->
           <div class="field-label" id="workDaysLabel" data-i18n="settings.workDays"></div>
           <div class="segmented weekdays" role="group" aria-labelledby="workDaysLabel" id="workDaysSwitch"></div>
-          <small class="hint" id="tagessollInfo"></small>
+          <small class="hint" id="dailyTargetInfo"></small>
         </div>
 
         <div class="section-label"><span data-i18n="settings.breaks"></span></div>
         <div class="card">
           <label>
-            <input type="checkbox" id="setPauseAutoEnabled" role="switch" />
+            <input type="checkbox" id="setAutoBreak" role="switch" />
             <span data-i18n="settings.breaksAuto"></span>
           </label>
-          <div id="pauseRulesWrap">
+          <div id="breakRulesWrap">
             <small class="hint gap-bottom" data-i18n="settings.breaksHint"></small>
-            <div id="pauseRulesContainer"></div>
-            <button type="button" id="addPauseRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
+            <div id="breakRulesContainer"></div>
+            <button type="button" id="addBreakRuleBtn" class="secondary outline" data-i18n="settings.ruleAdd"></button>
           </div>
         </div>
 
@@ -235,7 +235,7 @@
             <input type="checkbox" id="setOvertime" role="switch" />
             <span data-i18n="settings.balanceEnable"></span>
           </label>
-          <!-- Stand und Saldo ändert man selten; deshalb nur über das Modal mit ausdrücklichem Speichern -->
+          <!-- Date and balance are changed rarely, so only in a dialog with an explicit save -->
           <div id="overtimeWrap">
             <div class="overtime-state">
               <span id="overtimeState"></span>
@@ -246,14 +246,14 @@
         </div>
       </div>
 
-      <!-- Unterseite: Ruhezeit -->
+      <!-- Sub-page: rest period -->
       <div class="settings-page" id="settingsPage-rest" hidden>
         <div class="card">
           <label>
             <input type="checkbox" id="setRestEnabled" role="switch" />
             <span data-i18n="settings.restShow"></span>
           </label>
-          <div id="ruhezeitOptionsWrap">
+          <div id="restOptionsWrap">
             <label><span data-i18n="settings.restHours"></span>
               <input type="number" id="setRestHours" min="1" max="24" step="0.5" inputmode="decimal" />
             </label>
@@ -265,20 +265,20 @@
             <div id="bannerWindowWrap">
               <div class="two-col">
                 <label><span data-i18n="settings.bannerFrom"></span>
-                  <input type="time" id="setBannerVon" />
+                  <input type="time" id="setBannerFrom" />
                 </label>
                 <label><span data-i18n="settings.bannerTo"></span>
-                  <input type="time" id="setBannerBis" />
+                  <input type="time" id="setBannerTo" />
                 </label>
               </div>
               <small class="hint" data-i18n="settings.bannerHint"></small>
             </div>
           </div>
-          <small class="hint gap-top" id="ruhezeitHint" data-i18n="settings.restHint"></small>
+          <small class="hint gap-top" id="restHint" data-i18n="settings.restHint"></small>
         </div>
       </div>
 
-      <!-- Unterseite: Backup -->
+      <!-- Sub-page: backup -->
       <div class="settings-page" id="settingsPage-backup" hidden>
         <div class="section-label first"><span data-i18n="backup.localTitle"></span></div>
         <div class="list-group">
@@ -288,7 +288,7 @@
               data-i18n="backup.restore"></span></button>
         </div>
         <p class="hint list-note" id="backupInfo"></p>
-        <!-- Ohne accept-Filter: manche Android-Dateiauswahlen erkennen .json nicht und grauen die Datei sonst aus -->
+        <!-- No accept filter: some Android file pickers do not recognize .json and would grey out the file -->
         <input type="file" id="backupFileInput" hidden />
 
         <div class="section-label"><span data-i18n="backup.cloudTitle"></span></div>
@@ -315,7 +315,7 @@
         </div>
       </div>
 
-      <!-- Unterseite: Export & Löschen -->
+      <!-- Sub-page: export & delete -->
       <div class="settings-page" id="settingsPage-data" hidden>
         <div class="section-label first"><span data-i18n="settings.export"></span></div>
         <div class="list-group">
@@ -350,7 +350,7 @@
     </section>
   </main>
 
-  <!-- Bottom-Navigation -->
+  <!-- Bottom navigation -->
   <nav class="bottom-nav" data-i18n-aria="nav.label">
     <div class="bottom-nav-inner">
       <button type="button" class="nav-item" id="tab-tasks" data-view="tasks">
@@ -368,10 +368,10 @@
     </div>
   </nav>
 
-  <!-- Kurze Rückmeldung, blendet sich selbst aus -->
+  <!-- Short feedback message that hides itself -->
   <div id="toast" role="status" aria-live="polite" hidden></div>
 
-  <!-- Modal: allgemeiner Hinweis -->
+  <!-- Dialog: general notice -->
   <dialog id="infoModal">
     <article>
       <header>
@@ -384,7 +384,7 @@
     </article>
   </dialog>
 
-  <!-- Modal: Backup-Erinnerung beim Start -->
+  <!-- Dialog: backup reminder at startup -->
   <dialog id="backupReminderModal">
     <article>
       <header>
@@ -399,7 +399,7 @@
     </article>
   </dialog>
 
-  <!-- Modal: Auswahl eines Cloud-Backups -->
+  <!-- Dialog: choose a cloud backup -->
   <dialog id="cloudRestoreModal">
     <article>
       <header>
@@ -413,7 +413,7 @@
     </article>
   </dialog>
 
-  <!-- Modal: Stundenkonto einrichten oder ändern -->
+  <!-- Dialog: set up or change the overtime account -->
   <dialog id="overtimeModal">
     <article class="form-dialog">
       <header>
@@ -443,7 +443,7 @@
     </article>
   </dialog>
 
-  <!-- Modal: Bestätigung (optional mit Countdown) -->
+  <!-- Dialog: confirmation (optionally with countdown) -->
   <dialog id="confirmModal">
     <article>
       <header>

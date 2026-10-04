@@ -1,16 +1,16 @@
 :root {
   --pico-font-size: 100%;
-  /* Abwesenheiten (Urlaub, Krank, Feiertag) in Grün, wie erledigte Ruhezeit */
+  /* Absences (vacation, sick leave, holiday) in green, like a completed rest period */
   --c-absence: var(--c-ok);
   --app-max: 40rem;
   --nav-h: 4.25rem;
   --radius: 0.9rem;
   --hover: color-mix(in srgb, var(--pico-color) 8%, transparent);
-  /* Pico überschreibt --pico-color lokal bei Buttons mit aria-current; hier der Wert der Seite */
+  /* Pico overrides --pico-color locally on buttons with aria-current; this keeps the page value */
   --app-text: var(--pico-color);
 }
 
-/* Hell: leicht grauer Grund, damit sich die weißen Karten abheben; kräftigere Farben für Kontrast */
+/* Light: slightly grey background so the white cards stand out; stronger colors for contrast */
 :root[data-theme="light"],
 :root:not([data-theme]) {
   --pico-background-color: #f2f3f5;
@@ -46,12 +46,12 @@ body {
   background: var(--pico-background-color);
 }
 
-/* Erst anzeigen, wenn die Sprachdatei geladen ist */
+/* Hidden until the language file is loaded */
 html:not(.i18n-ready) body {
   visibility: hidden;
 }
 
-/* ---------- App-Gerüst ---------- */
+/* ---------- App layout ---------- */
 .app-header {
   padding: env(safe-area-inset-top) 0 0;
 }
@@ -83,7 +83,7 @@ html:not(.i18n-ready) body {
   padding: 0.75rem 1rem calc(var(--nav-h) + env(safe-area-inset-bottom) + 1.5rem);
 }
 
-/* ---------- Bottom-Navigation ---------- */
+/* ---------- Bottom navigation ---------- */
 .bottom-nav {
   position: fixed;
   inset: auto 0 0 0;
@@ -163,8 +163,8 @@ html:not(.i18n-ready) body {
   overflow-wrap: anywhere;
 }
 
-/* ---------- Dialoge ---------- */
-/* Pico setzt Kopf und Fuß als abgesetzte Balken mit kleinen Ecken; hier wie die Karten der App */
+/* ---------- Dialogs ---------- */
+/* Pico styles header and footer as separate bars with small corners; here they look like the app's cards */
 dialog > article {
   max-width: 24rem;
   padding: 1.5rem;
@@ -206,14 +206,14 @@ dialog > article > footer button:not(:first-of-type) {
   margin-left: 0;
 }
 
-/* Auswahlliste im Dialog, scrollt bei vielen Einträgen */
+/* List inside a dialog, scrolls when it gets long */
 .dialog-list {
   max-height: 50vh;
   overflow-y: auto;
   margin-bottom: 1.25rem;
 }
 
-/* Dialog mit großem Symbol oben (z. B. Backup-Erinnerung): zentriert */
+/* Dialog with a large icon at the top (e.g. backup reminder): centered */
 dialog > article:has(.dialog-icon) > :is(header, p) {
   text-align: center;
 }
@@ -238,7 +238,7 @@ dialog > article:has(.dialog-icon) > :is(header, p) {
   background: color-mix(in srgb, var(--c-warn) 16%, transparent);
 }
 
-/* ---------- Bausteine ---------- */
+/* ---------- Building blocks ---------- */
 .card {
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-muted-border-color);
@@ -294,7 +294,7 @@ dialog > article:has(.dialog-icon) > :is(header, p) {
   color: var(--c-warn);
 }
 
-/* Abstände für einzelne Elemente, statt Inline-Styles im HTML */
+/* Spacing helpers instead of inline styles in the HTML */
 .section-label.first {
   margin-top: 0.5rem;
 }
@@ -307,12 +307,12 @@ dialog > article:has(.dialog-icon) > :is(header, p) {
   margin-bottom: 0.75rem;
 }
 
-/* Hinweis direkt unter einem Eingabefeld */
+/* Hint directly below an input */
 .input-hint {
   margin: -0.25rem 0 1rem;
 }
 
-/* Hinweis unter einer Liste von Aktionen */
+/* Hint below a list of actions */
 .list-note {
   margin: 0.5rem 0.25rem 0;
 }
@@ -405,7 +405,7 @@ button.btn-danger {
   height: 1.15rem;
 }
 
-/* ---------- Listen ---------- */
+/* ---------- Lists ---------- */
 .list-group {
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-muted-border-color);
@@ -424,7 +424,7 @@ button.btn-danger {
   border-top: 1px solid var(--pico-muted-border-color);
 }
 
-/* Überschneidet sich mit einem anderen Arbeitszeit-Eintrag und zählt nicht zur Wochensumme */
+/* Overlaps another work time entry and is not counted in the totals */
 .list-row.overlap {
   background: color-mix(in srgb, var(--c-danger) 12%, transparent);
 }
@@ -491,7 +491,7 @@ button.btn-danger {
   padding: 0 0.25rem;
 }
 
-/* Abweichung vom Tagessoll unter der Netto-Arbeitszeit */
+/* Difference to the daily target below the net work time */
 .value-diff {
   font-size: 0.78rem;
   font-weight: 400;
@@ -553,7 +553,7 @@ button.btn-danger {
   font-weight: 400;
 }
 
-/* ---------- Einstellungen: Übersicht und Unterseiten ---------- */
+/* ---------- Settings: overview and sub-pages ---------- */
 .settings-home,
 .settings-page {
   padding-top: 0.5rem;
@@ -587,7 +587,7 @@ button.btn-danger {
   height: 1rem;
 }
 
-/* Zurück-Pfeil vor dem Titel auf Einstellungs-Unterseiten */
+/* Back arrow in front of the title on settings sub-pages */
 .view-title-row {
   display: flex;
   align-items: center;
@@ -598,7 +598,7 @@ button.btn-danger {
   margin-left: -0.6rem;
 }
 
-/* ---------- Zeit erfassen ---------- */
+/* ---------- Track time ---------- */
 .timer-card {
   text-align: center;
   padding: 1.5rem 1rem 1rem;
@@ -661,7 +661,7 @@ button.btn-danger {
   color: #fff;
 }
 
-/* ---------- Arbeitszeit ---------- */
+/* ---------- Work time ---------- */
 .stat-label {
   font-size: 0.8rem;
   color: var(--pico-muted-color);
@@ -687,12 +687,7 @@ button.btn-danger {
   color: var(--pico-muted-color);
 }
 
-#weekProgress {
-  margin: 0.6rem 0 0.9rem;
-  height: 0.45rem;
-}
-
-/* Stundenkonto unter dem Wochenbalken, gleiche Form wie die Ruhezeit-Zeile */
+/* Overtime account below the week bar, styled like the rest period line */
 .balance-line .ok {
   color: var(--c-ok);
 }
@@ -726,7 +721,7 @@ button.btn-danger {
   margin-top: 0.8rem;
 }
 
-/* Eingabe des Startsaldos: Vorzeichen, Stunden, Minuten in einer Zeile */
+/* Balance input: sign, hours and minutes in one row */
 .balance-input {
   display: flex;
   align-items: center;
@@ -777,7 +772,7 @@ button.btn-danger {
   margin: 0;
 }
 
-/* ---------- Kalender ---------- */
+/* ---------- Calendar ---------- */
 .cal-head {
   display: flex;
   align-items: center;
@@ -877,7 +872,7 @@ button.btn-danger {
   height: 7px;
 }
 
-/* Summen des angezeigten Monats unter der Legende */
+/* Totals of the displayed month below the legend */
 .month-summary {
   display: flex;
   justify-content: center;
@@ -901,7 +896,7 @@ button.btn-danger {
   height: 7px;
 }
 
-/* ---------- Einstellungen ---------- */
+/* ---------- Settings ---------- */
 .segmented {
   margin: 0;
   display: grid;
@@ -934,7 +929,7 @@ button.btn-danger {
   outline: 2px solid var(--pico-primary);
 }
 
-/* Wochenfortschritt aus zwei Teilen: Arbeitszeit und Abwesenheit */
+/* Week progress in two segments: work time and absences */
 .week-bar {
   display: flex;
   height: 0.5rem;
@@ -952,12 +947,12 @@ button.btn-danger {
   background: var(--c-absence);
 }
 
-/* Dialog mit Eingabefeldern: Abstand zwischen Überschrift und erstem Feld */
+/* Dialog with inputs: space between heading and first field */
 .form-dialog > header {
   margin-bottom: 1rem;
 }
 
-/* Stand des Stundenkontos mit Button zum Ändern */
+/* Overtime account setup with a button to change it */
 .overtime-state {
   display: flex;
   align-items: center;
@@ -977,7 +972,7 @@ button.btn-danger {
   margin: 0.75rem 0 0;
 }
 
-/* Bereichsauswahl beim Löschen vor einem Datum */
+/* Scope switches for deleting entries before a date */
 .delete-scope {
   display: flex;
   flex-direction: column;
@@ -989,13 +984,13 @@ button.btn-danger {
   margin: 0;
 }
 
-/* Umschalter Arbeitszeit / Abwesenheit über dem Formular */
+/* Work time / absence switch above the form */
 .segmented.entry-mode {
   grid-template-columns: 1fr 1fr;
   margin-bottom: 1rem;
 }
 
-/* Auswahl der Arbeitstage Mo–So, mehrere gleichzeitig */
+/* Work day selection Mon–Sun, several at once */
 .segmented.weekdays {
   grid-template-columns: repeat(7, 1fr);
   margin: 0.25rem 0 0.75rem;
@@ -1006,37 +1001,37 @@ button.btn-danger {
   font-size: 0.85rem;
 }
 
-/* Beschriftung wie bei den Eingabefeldern, für Elemente ohne label */
+/* Label style of the inputs, for elements without a label */
 .field-label {
   font-size: 0.8rem;
   color: var(--pico-muted-color);
 }
 
-.pause-rule-row {
+.break-rule-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.pause-rule-row select,
-.pause-rule-row input {
+.break-rule-row select,
+.break-rule-row input {
   margin: 0;
 }
 
-.pause-rule-row select {
+.break-rule-row select {
   width: 6rem;
 }
 
-.pause-rule-row input {
+.break-rule-row input {
   width: 5rem;
 }
 
-.pause-rule-row .icon-btn {
+.break-rule-row .icon-btn {
   margin-left: auto;
 }
 
-#addPauseRuleBtn {
+#addBreakRuleBtn {
   width: 100%;
   margin: 0.5rem 0 0;
   padding: 0.5rem;
@@ -1059,8 +1054,8 @@ button.btn-danger {
   color: inherit;
 }
 
-#ruhezeitOptionsWrap,
+#restOptionsWrap,
 #bannerWindowWrap,
-#pauseRulesWrap {
+#breakRulesWrap {
   margin-top: 1rem;
 }

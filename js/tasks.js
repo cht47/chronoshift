@@ -134,17 +134,19 @@ export function buildTaskRow(entry) {
   return row;
 }
 
-// Today's tasks, but at least the two most recent ones; everything else is in the calendar
+// All of today's tasks and below them the most recent earlier ones, as many as set under Settings → Lists;
+// everything else is in the calendar
 function visibleTasks() {
   const today = todayISO();
   const sorted = [...state.tasks].sort((a, b) => b.stopMs - a.stopMs);
   const todays = sorted.filter((e) => taskDateISO(e) === today);
-  return todays.length >= 2 ? todays : sorted.slice(0, 2);
+  const earlier = sorted.filter((e) => taskDateISO(e) !== today).slice(0, state.settings.taskListCount);
+  return [...todays, ...earlier];
 }
 
 export function renderTasks() {
   const visible = visibleTasks();
   const hidden = state.tasks.length - visible.length;
-  taskListHint.textContent = hidden > 0 ? t("tasks.moreInCalendar", { count: hidden }) : "";
+  taskListHint.textContent = hidden > 0 ? t("common.moreInCalendar", { count: hidden }) : "";
   renderList(tasksContainer, visible, buildTaskRow, t("tasks.empty"));
 }

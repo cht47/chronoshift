@@ -368,6 +368,42 @@ svg {
   height: 1rem;
 }
 
+/* Banner for a work time entry with an open end, styled like the rest period banner */
+.open-banner {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--c-danger);
+  background: color-mix(in srgb, var(--c-danger) 14%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.open-banner:hover,
+.open-banner:focus-visible {
+  background: color-mix(in srgb, var(--c-danger) 22%, transparent);
+}
+
+.open-banner svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.open-banner-action {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 button.btn-danger {
   background: var(--c-danger);
   border-color: var(--c-danger);
@@ -424,12 +460,12 @@ button.btn-danger {
   border-top: 1px solid var(--pico-muted-border-color);
 }
 
-/* Overlaps another work time entry and is not counted in the totals */
-.list-row.overlap {
+/* Open end or overlap with another work time entry: not counted in the totals */
+.list-row.error {
   background: color-mix(in srgb, var(--c-danger) 12%, transparent);
 }
 
-.list-row-meta.overlap-note {
+.list-row-meta.error-note {
   color: var(--c-danger);
 }
 
@@ -460,7 +496,7 @@ button.btn-danger {
   font-weight: 600;
 }
 
-.dot.overlap {
+.dot.error {
   background: var(--c-danger);
 }
 
@@ -999,6 +1035,12 @@ button.btn-danger {
 .segmented.weekdays button {
   padding: 0.5rem 0;
   font-size: 0.85rem;
+}
+
+/* Number of tasks and days of work time in the lists */
+.segmented.list-limit {
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0.25rem 0 0.5rem;
 }
 
 /* Label style of the inputs, for elements without a label */

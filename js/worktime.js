@@ -5,15 +5,19 @@ import { refreshAll, switchView } from "./app.js";
 import { buildAbsenceRow, resetAbsenceForm } from "./absence.js";
 import { fmtDate, fmtDateParts, fmtDateRange, t } from "./i18n.js";
 import { icon } from "./icons.js";
+import { BANNER_VIEWS } from "./rest.js";
 import { state } from "./state.js";
 import { saveWork } from "./storage.js";
 import { confirmAction, renderList, showInfo } from "./ui.js";
-import { $, dateFromISO, esc, fmtDiff, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
+import { $, combineDateTime, dateFromISO, esc, fmtDiff, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
 import {
   absenceCreditMin,
   computeWorktimeStats,
   entrySortKey,
+  hasError,
   isAbsence,
+  isCounted,
+  isOpen,
   overtimeBalance,
   workListContext,
   worktimeBreakRange,
@@ -37,6 +41,8 @@ const wtBreakEnd = $("wtBreakEnd");
 const wtSaveBtn = $("wtSaveBtn");
 const wtCancelBtn = $("wtCancelBtn");
 const worktimeContainer = $("worktimeContainer");
+const workListHint = $("workListHint");
+const openBanner = $("openBanner");
 const entryModeSwitch = $("entryModeSwitch");
 const absenceForm = $("absenceForm");
 
@@ -71,6 +77,13 @@ export function resetWorktimeForm() {
 
 worktimeForm.addEventListener("submit", (e) => {
   e.preventDefault();
+  // A new entry may have an open end on the current day only; an entry that is already open may stay open,
+  // e.g. a night shift after midnight
+  const stored = state.work.find((x) => x.id === state.editingWorkId);
+  if (!wtEnd.value && wtDate.value !== todayISO() && !(stored && isOpen(stored))) {
+    showInfo(t("worktime.errorEndOpen"));
+    return;
+  }
   if (wtStart.value === wtEnd.value) {
     showInfo(t("worktime.errorSameStartEnd"));
     return;
@@ -87,13 +100,16 @@ worktimeForm.addEventListener("submit", (e) => {
     id: state.editingWorkId ?? Date.now(),
     date: wtDate.value,
     start: wtStart.value,
-    end: wtEnd.value,
+    end: wtEnd.value || null,
     breakStart: wtBreakStart.value || null,
     breakEnd: wtBreakEnd.value || null,
   };
   const manualBreak = worktimeBreakRange(entry);
   if (manualBreak) {
-    const { startMs, endMs } = worktimeRange(entry);
+    // With an open end only the start can be checked; the rest is checked once the end is entered
+    const { startMs, endMs } = isOpen(entry)
+      ? { startMs: combineDateTime(entry.date, entry.start), endMs: Infinity }
+      : worktimeRange(entry);
     if (manualBreak.startMs < startMs || manualBreak.endMs > endMs) {
       showInfo(t("worktime.errorBreakOutside"));
       return;
@@ -110,7 +126,7 @@ worktimeForm.addEventListener("submit", (e) => {
   };
 
   // An end before the start is most likely a typo unless it really is a night shift
-  if (entry.end < entry.start) {
+  if (entry.end && entry.end < entry.start) {
     confirmAction(t("worktime.confirmNightShift", { end: entry.end, start: entry.start }), t("common.save"), save);
   } else {
     save();
@@ -125,12 +141,13 @@ function editWorkEntry(id) {
   setEntryMode("work");
   wtDate.value = entry.date;
   wtStart.value = entry.start;
-  wtEnd.value = entry.end;
+  wtEnd.value = entry.end || "";
   wtBreakStart.value = entry.breakStart || "";
   wtBreakEnd.value = entry.breakEnd || "";
   state.editingWorkId = id;
   updateWorktimeFormText();
   worktimeForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!entry.end) wtEnd.focus({ preventScroll: true });
 }
 
 function deleteWorkEntry(id) {
@@ -140,31 +157,35 @@ function deleteWorkEntry(id) {
   refreshAll();
 }
 
+// stats is null for an entry with an open end: its automatic break is not known yet
 function breakText(entry, stats) {
-  if (stats.breakManual) return t("worktime.breakManual", { from: entry.breakStart, to: entry.breakEnd });
+  if (entry.breakStart && entry.breakEnd) return t("worktime.breakManual", { from: entry.breakStart, to: entry.breakEnd });
+  if (!stats) return t(state.settings.autoBreakEnabled ? "worktime.breakAutoOpen" : "worktime.noBreak");
   if (stats.breakMin > 0) return t("worktime.breakAuto", { duration: fmtDur(stats.breakMin) });
   return t("worktime.noBreak");
 }
 
 // ctx: result of workListContext, calculated once per list
 function buildWorkRow(entry, ctx) {
-  const stats = computeWorktimeStats(entry);
-  const overlap = ctx.overlaps.has(entry.id);
+  const open = isOpen(entry);
+  const stats = open ? null : computeWorktimeStats(entry);
+  const errorText = open ? t("worktime.endOpen") : ctx.overlaps.has(entry.id) ? t("worktime.overlapNote") : "";
   const dayDiff = ctx.dayDiffs.get(entry);
   const diffNote =
     dayDiff === undefined ? "" : `<small class="value-diff ${dayDiff >= 0 ? "ok" : "warn"}">${fmtDiff(dayDiff)}</small>`;
-  const overlapNote = overlap ? `<div class="list-row-meta overlap-note">${esc(t("worktime.overlapNote"))}</div>` : "";
+  const errorNote = errorText ? `<div class="list-row-meta error-note">${esc(errorText)}</div>` : "";
+  const end = open ? t("worktime.open") : entry.end;
   const title = fmtDateParts(dateFromISO(entry.date), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   const row = document.createElement("div");
-  row.className = overlap ? "list-row overlap" : "list-row";
+  row.className = errorText ? "list-row error" : "list-row";
   row.innerHTML = `
     <span class="row-accent work"></span>
     <div class="list-row-main">
       <div class="list-row-title">${esc(title)}</div>
-      <div class="list-row-meta">${esc(entry.start)}–${esc(entry.end)} · ${esc(breakText(entry, stats))}</div>
-      ${overlapNote}
+      <div class="list-row-meta">${esc(entry.start)}–${esc(end)} · ${esc(breakText(entry, stats))}</div>
+      ${errorNote}
     </div>
-    <span class="list-row-value">${fmtDur(stats.netMin)}${diffNote}</span>
+    <span class="list-row-value">${open ? "–" : fmtDur(stats.netMin)}${diffNote}</span>
     <button type="button" class="icon-btn" aria-label="${esc(t("worktime.editAria"))}">${icon("pencil")}</button>
     <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("worktime.deleteAria"))}">${icon("trash")}</button>
   `;
@@ -175,7 +196,7 @@ function buildWorkRow(entry, ctx) {
   });
   deleteBtn.addEventListener("click", () =>
     confirmAction(
-      t("worktime.confirmDelete", { date: fmtDate(entry.date), from: entry.start, to: entry.end }),
+      t("worktime.confirmDelete", { date: fmtDate(entry.date), from: entry.start, to: end }),
       t("common.delete"),
       () => deleteWorkEntry(entry.id)
     )
@@ -188,10 +209,25 @@ export function buildEntryRow(entry, ctx) {
   return isAbsence(entry) ? buildAbsenceRow(entry, ctx) : buildWorkRow(entry, ctx);
 }
 
+// Entries of the last days set under Settings → Lists; planned entries and entries with an error always stay
+// visible. Everything else is in the calendar.
+function visibleWorkEntries(sorted, overlaps) {
+  const days = state.settings.workListDays;
+  if (!days) return sorted;
+  const from = new Date();
+  from.setDate(from.getDate() - (days - 1));
+  const fromISO = isoOf(from);
+  return sorted.filter((e) => e.date >= fromISO || hasError(e, overlaps));
+}
+
 export function renderWorkEntries() {
   const sorted = [...state.work, ...state.absences].sort((a, b) => entrySortKey(b).localeCompare(entrySortKey(a)));
   const ctx = workListContext(state.work, state.absences);
-  renderList(worktimeContainer, sorted, (e) => buildEntryRow(e, ctx), t("worktime.empty"));
+  const visible = visibleWorkEntries(sorted, ctx.overlaps);
+  const hidden = sorted.length - visible.length;
+  workListHint.textContent = hidden > 0 ? t("common.moreInCalendar", { count: hidden }) : "";
+  const emptyText = sorted.length ? t("worktime.emptyRange", { count: state.settings.workListDays }) : t("worktime.empty");
+  renderList(worktimeContainer, visible, (e) => buildEntryRow(e, ctx), emptyText);
   renderWeekSummary(ctx.overlaps);
 }
 
@@ -207,7 +243,7 @@ function renderWeekSummary(overlaps) {
 
   const inWeek = (e) => e.date >= mondayISO && e.date <= sundayISO;
   const workMin = state.work
-    .filter((e) => inWeek(e) && !overlaps.has(e.id))
+    .filter((e) => inWeek(e) && isCounted(e, overlaps))
     .reduce((sum, e) => sum + computeWorktimeStats(e).netMin, 0);
   const absenceMin = state.absences.filter(inWeek).reduce((sum, a) => sum + absenceCreditMin(a), 0);
   const totalMin = workMin + absenceMin;
@@ -237,3 +273,21 @@ function renderBalance(overlaps) {
   const forecast = balance.forecast === null ? "" : row("worktime.forecast", balance.forecast, "forecast");
   balanceLine.innerHTML = `${icon("scale")}<div class="balance-rows">${row("worktime.balance", balance.current, "current")}${forecast}</div>`;
 }
+
+// Banner below the title while a work time entry has an open end; a tap opens the newest one for editing
+export function updateOpenBanner() {
+  const open = state.work.filter(isOpen).sort((a, b) => entrySortKey(b).localeCompare(entrySortKey(a)))[0];
+  openBanner.hidden = !open || !BANNER_VIEWS.includes(state.currentView);
+  if (openBanner.hidden) return;
+  const text =
+    open.date === todayISO()
+      ? t("worktime.openSince", { time: open.start })
+      : t("worktime.openOn", { date: fmtDateParts(dateFromISO(open.date), { weekday: "short", day: "2-digit", month: "2-digit" }) });
+  openBanner.dataset.id = open.id;
+  openBanner.innerHTML = `${icon("alert")}<span>${esc(text)}</span><span class="open-banner-action">${esc(t("worktime.enterEnd"))}${icon("chevronRight")}</span>`;
+}
+
+openBanner.addEventListener("click", () => {
+  switchView("worktime");
+  editWorkEntry(Number(openBanner.dataset.id));
+});

@@ -2,7 +2,7 @@
 // with the cache as fallback when offline.
 
 // Increase together with APP_VERSION in js/config.js on every release; a new version renews the cache
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",

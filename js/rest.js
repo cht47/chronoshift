@@ -4,8 +4,8 @@
 import { fmtDateTime, fmtNumber, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { state } from "./state.js";
-import { $, esc } from "./util.js";
-import { worktimeRange } from "./worktime-calc.js";
+import { $, combineDateTime, esc } from "./util.js";
+import { isOpen, worktimeRange } from "./worktime-calc.js";
 
 const restBanner = $("restBanner");
 const restInfo = $("restInfo");
@@ -17,12 +17,18 @@ function getLastWorkEndMs() {
     if (e.stopMs && (last === null || e.stopMs > last)) last = e.stopMs;
   });
   state.work.forEach((e) => {
+    if (isOpen(e)) return;
     const { startMs, endMs } = worktimeRange(e);
     // Work time entered in advance only counts once it has started
     if (startMs > now) return;
     if (last === null || endMs > last) last = endMs;
   });
   return last;
+}
+
+// Work time with an open end that has already started keeps running like a task, also past midnight
+function workIsOpen() {
+  return state.work.some((e) => isOpen(e) && combineDateTime(e.date, e.start) <= Date.now());
 }
 
 function restLabel() {
@@ -33,9 +39,14 @@ function restLabel() {
 function restStatus() {
   const lastEnd = getLastWorkEndMs();
   const now = Date.now();
-  // A running task only matters if it is still running after the latest end of work
-  if (state.running && (lastEnd === null || now >= lastEnd)) {
-    return { cls: "rest-active", icon: "hourglass", text: t("rest.taskRunning", { label: restLabel() }), short: t("rest.taskRunningShort") };
+  // A running task or open work time only matters if it is still running after the latest end of work
+  if (lastEnd === null || now >= lastEnd) {
+    if (state.running) {
+      return { cls: "rest-active", icon: "hourglass", text: t("rest.taskRunning", { label: restLabel() }), short: t("rest.taskRunningShort") };
+    }
+    if (workIsOpen()) {
+      return { cls: "rest-active", icon: "hourglass", text: t("rest.workOpen", { label: restLabel() }), short: t("rest.workOpenShort") };
+    }
   }
   if (lastEnd === null) return null;
   const restEndMs = lastEnd + state.settings.restHours * 60 * 60 * 1000;
@@ -62,7 +73,7 @@ function isInBannerWindow() {
 }
 
 // The banner belongs to time tracking; it stays hidden in the calendar and the settings
-const BANNER_VIEWS = ["tasks", "worktime"];
+export const BANNER_VIEWS = ["tasks", "worktime"];
 
 export function updateRestUi() {
   const { restEnabled, restBannerEnabled } = state.settings;

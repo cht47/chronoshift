@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.0
+**Version:** 1.1.1
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -20,16 +20,18 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ### ⏱️ Track time
 - Start a task with one tap (or press Enter on the keyboard)
 - Live timer while a task is running – it keeps running even if you close the app
-- Shows today's tasks and at least the two most recent ones; older entries are in the calendar
+- Shows today's tasks and the most recent earlier ones (2 by default, adjustable under *Settings → Lists*); older entries are in the calendar
 - Made for quick use, e.g. logging on-call jobs or project time
 
 ### 💼 Work time
 - Log start and end of your working day, editable at any time
+- Don't know yet when you'll finish? Leave the end open for today: the entry is highlighted in red, only counted once the end is entered, and a banner at the top reminds you of it
 - Breaks either entered manually (exact from–to times) or deducted automatically
 - Configurable automatic break rules that add up (default as required by German law: 30 min for more than 6 h, another 15 min for more than 9 h)
 - Night shifts across midnight are supported
 - Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
+- The list shows the last 7 days (adjustable under *Settings → Lists*); planned entries and entries with an error always stay visible
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
 - Optional overtime account: enter your balance on a given date (e.g. the monthly carry-over from your employer), the app keeps it up to date and shows a forecast including days you already planned
 - Difference to the daily target for each day; work on days off counts entirely as overtime
@@ -39,15 +41,17 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Duration is configurable (e.g. 11 h in Germany/EU, UK, Switzerland; 8 h in Canada) or can be turned off completely
 - Optional banner at the top, limited to a time window (e.g. only outside regular working hours)
 - Work time entered in advance only counts once it has started
+- While work time has an open end, the rest period starts after the end of work, like with a running task (also for night shifts across midnight)
 
 ### 📅 Calendar
-- Monthly overview with markers for tasks, work time and overlapping work time entries
+- Monthly overview with markers for tasks, work time and errors (overlapping work time entries or an open end)
 - Monthly totals of work time and tasks below the calendar
 - Tap a day to see its entries, delete them or edit work time
 
 ### ⚙️ Settings
 - Light, dark or system theme
 - German and English, following the device language by default
+- Lists: how many earlier tasks and how many days of work time are shown
 - Weekly hours and work days Mon–Sun (daily target is calculated)
 - Backup and restore of all tasks, work time, absences and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept

@@ -3,14 +3,14 @@
 
 import { refreshAll, updateViewTitle } from "./app.js";
 import { updateAbsenceFormText } from "./absence.js";
-import { LANGUAGES, WEEK_FROM_MONDAY } from "./config.js";
+import { LANGUAGES, TASK_LIST_COUNTS, WEEK_FROM_MONDAY, WORK_LIST_DAYS } from "./config.js";
 import { applyI18n, fmtDate, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
-import { renderSettingsHome } from "./settings-nav.js";
+import { listDaysText, renderSettingsHome, taskCountText } from "./settings-nav.js";
 import { state } from "./state.js";
 import { saveSettings, storageChars } from "./storage.js";
-import { setRunningUi } from "./tasks.js";
+import { renderTasks, setRunningUi } from "./tasks.js";
 import { showInfo, showToast } from "./ui.js";
 import { $, esc, fmtDiff, fmtMin, isoOf } from "./util.js";
 import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
@@ -41,6 +41,8 @@ const overtimeDateInput = $("overtimeDateInput");
 const overtimeSign = $("overtimeSign");
 const overtimeHours = $("overtimeHours");
 const overtimeMinutes = $("overtimeMinutes");
+const taskListSwitch = $("taskListSwitch");
+const workListSwitch = $("workListSwitch");
 
 function updateDailyTargetInfo() {
   dailyTargetInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
@@ -187,7 +189,36 @@ export function renderSettingsForm() {
   updateStorageInfo();
   renderBreakRules();
   renderOvertime();
+  renderListSwitches();
 }
+
+// ----- Lists -----
+// How many earlier tasks and how many days of work time the lists show; the rest is in the calendar
+function renderListSwitch(container, values, key, label) {
+  container.innerHTML = values
+    .map((v) => `<button type="button" data-value="${v}" aria-pressed="${state.settings[key] === v}">${esc(label(v))}</button>`)
+    .join("");
+}
+
+function renderListSwitches() {
+  renderListSwitch(taskListSwitch, TASK_LIST_COUNTS, "taskListCount", taskCountText);
+  renderListSwitch(workListSwitch, WORK_LIST_DAYS, "workListDays", listDaysText);
+}
+
+function bindListSwitch(container, key) {
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-value]");
+    if (!btn) return;
+    state.settings[key] = Number(btn.dataset.value);
+    saveSettings();
+    renderListSwitches();
+    renderTasks();
+    renderWorkEntries();
+  });
+}
+
+bindListSwitch(taskListSwitch, "taskListCount");
+bindListSwitch(workListSwitch, "workListDays");
 
 // ----- Overtime account -----
 // The page only shows the current setup; date and balance are changed in a dialog with an explicit save

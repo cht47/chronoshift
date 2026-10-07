@@ -36,6 +36,8 @@
           data-i18n-aria="common.back" hidden></button>
         <h1 class="view-title" id="viewTitle"></h1>
       </div>
+      <!-- Reminder of a work time entry with an open end; a tap opens the entry -->
+      <button type="button" class="open-banner" id="openBanner" hidden></button>
       <!-- Rest period banner, depending on the settings and the time window -->
       <div id="restBanner" role="status" hidden></div>
     </div>
@@ -73,7 +75,7 @@
             <input type="time" id="wtStart" required />
           </label>
           <label><span data-i18n="worktime.end"></span>
-            <input type="time" id="wtEnd" required />
+            <input type="time" id="wtEnd" />
           </label>
         </div>
         <div class="two-col">
@@ -84,7 +86,8 @@
             <input type="time" id="wtBreakEnd" />
           </label>
         </div>
-        <small class="hint" data-i18n="worktime.breakHint"></small>
+        <small class="hint" data-i18n="worktime.endOpenHint"></small>
+        <small class="hint gap-top" data-i18n="worktime.breakHint"></small>
         <div class="form-actions">
           <button type="button" id="wtCancelBtn" class="secondary" data-i18n="common.cancel" hidden></button>
           <button type="submit" id="wtSaveBtn"></button>
@@ -123,7 +126,7 @@
         <div class="rest-line" id="restInfo" role="status" hidden></div>
       </div>
 
-      <div class="section-label"><span data-i18n="worktime.entries"></span></div>
+      <div class="section-label"><span data-i18n="worktime.entries"></span><span id="workListHint"></span></div>
       <div id="worktimeContainer"></div>
     </section>
 
@@ -140,7 +143,7 @@
         <div class="legend">
           <span><span class="dot task"></span> <span data-i18n="common.task"></span></span>
           <span><span class="dot work"></span> <span data-i18n="common.worktime"></span></span>
-          <span><span class="dot overlap"></span> <span data-i18n="calendar.overlap"></span></span>
+          <span><span class="dot error"></span> <span data-i18n="calendar.error"></span></span>
           <span><span class="dot absence"></span> <span data-i18n="calendar.absence"></span></span>
         </div>
         <div class="month-summary" id="calMonthSummary"></div>
@@ -173,6 +176,11 @@
             <select id="setLanguage"></select>
           </label>
         </div>
+        <div class="list-group">
+          <button type="button" class="action-row nav-row" data-page="lists"><span data-icon="list"></span><span
+              class="nav-row-label" data-i18n="settings.lists"></span><span class="nav-row-value" id="sumLists"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
+        </div>
 
         <div class="section-label"><span data-i18n="settings.groupTimes"></span></div>
         <div class="list-group">
@@ -200,6 +208,23 @@
           <div><span id="appVersion"></span> · <a href="https://github.com/cht47/chronoshift" target="_blank"
               rel="noopener">GitHub</a> · <a href="privacy.html" target="_blank" rel="noopener"
               data-i18n="settings.privacy"></a></div>
+        </div>
+      </div>
+
+      <!-- Sub-page: lists -->
+      <div class="settings-page" id="settingsPage-lists" hidden>
+        <div class="section-label first"><span data-i18n="nav.tasks"></span></div>
+        <div class="card">
+          <div class="field-label" id="taskListLabel" data-i18n="settings.taskListCount"></div>
+          <div class="segmented list-limit" role="group" aria-labelledby="taskListLabel" id="taskListSwitch"></div>
+          <small class="hint" data-i18n="settings.taskListHint"></small>
+        </div>
+
+        <div class="section-label"><span data-i18n="nav.worktime"></span></div>
+        <div class="card">
+          <div class="field-label" id="workListLabel" data-i18n="settings.workListDays"></div>
+          <div class="segmented list-limit" role="group" aria-labelledby="workListLabel" id="workListSwitch"></div>
+          <small class="hint" data-i18n="settings.workListHint"></small>
         </div>
       </div>
 

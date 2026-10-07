@@ -2,13 +2,27 @@
 //
 // Stored data (format version DATA_VERSION, see migrate.js for older formats):
 //   tasks      [{ id, task, startMs, stopMs, durationMin }]           timestamps in ms, duration in whole minutes
-//   worktime   [{ id, date, start, end, breakStart, breakEnd }]       "YYYY-MM-DD" and "HH:MM"; break times null for an automatic break
+//   worktime   [{ id, date, start, end, breakStart, breakEnd }]       "YYYY-MM-DD" and "HH:MM"; break times null for an automatic break,
+//                                                                    end null while the end is still open
 //   absences   [{ id, date, type }]                                   type: one of ABSENCE_TYPES
 //   settings   see DEFAULT_SETTINGS in config.js
 //   timer      { running, startTime, task } while a task is running
 // IDs are Date.now() values at creation time.
 
-import { ABSENCES_KEY, ALL_KEYS, DEFAULT_SETTINGS, LAST_BACKUP_KEY, LAST_CLOUD_BACKUP_KEY, NEXT_REMINDER_KEY, SETTINGS_KEY, TASKS_KEY, TIMER_STATE_KEY, WORKTIME_KEY } from "./config.js";
+import {
+  ABSENCES_KEY,
+  ALL_KEYS,
+  DEFAULT_SETTINGS,
+  LAST_BACKUP_KEY,
+  LAST_CLOUD_BACKUP_KEY,
+  NEXT_REMINDER_KEY,
+  SETTINGS_KEY,
+  TASK_LIST_COUNTS,
+  TASKS_KEY,
+  TIMER_STATE_KEY,
+  WORK_LIST_DAYS,
+  WORKTIME_KEY,
+} from "./config.js";
 import { state } from "./state.js";
 import { isDate, isPlainObject, isTime } from "./util.js";
 
@@ -107,6 +121,8 @@ const SETTING_CHECKS = {
   overtimeDate: (v) => v === "" || isDate(v),
   overtimeMin: Number.isInteger,
   workDays: (v) => v.length > 0 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
+  taskListCount: (v) => TASK_LIST_COUNTS.includes(v),
+  workListDays: (v) => WORK_LIST_DAYS.includes(v),
 };
 
 function isValidSetting(key, value) {

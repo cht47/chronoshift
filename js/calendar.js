@@ -6,7 +6,7 @@ import { buildTaskRow, taskDateISO } from "./tasks.js";
 import { renderList } from "./ui.js";
 import { $, dateFromISO, esc, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
 import { buildEntryRow } from "./worktime.js";
-import { computeWorktimeStats, entrySortKey, workListContext } from "./worktime-calc.js";
+import { computeWorktimeStats, entrySortKey, hasError, isCounted, workListContext } from "./worktime-calc.js";
 
 const calGrid = $("calGrid");
 const calWeekdays = $("calWeekdays");
@@ -32,7 +32,7 @@ export function renderCalendar() {
   const workDates = new Set(state.work.map((e) => e.date));
   const absenceDates = new Set(state.absences.map((a) => a.date));
   const ctx = workListContext(state.work, state.absences);
-  const overlapDates = new Set(state.work.filter((e) => ctx.overlaps.has(e.id)).map((e) => e.date));
+  const errorDates = new Set(state.work.filter((e) => hasError(e, ctx.overlaps)).map((e) => e.date));
   const todayIso = todayISO();
 
   let html = "<div></div>".repeat(startOffset);
@@ -48,7 +48,7 @@ export function renderCalendar() {
       <span class="cal-dots">
         ${taskDates.has(iso) ? '<span class="dot task"></span>' : ""}
         ${workDates.has(iso) ? '<span class="dot work"></span>' : ""}
-        ${overlapDates.has(iso) ? '<span class="dot overlap"></span>' : ""}
+        ${errorDates.has(iso) ? '<span class="dot error"></span>' : ""}
         ${absenceDates.has(iso) ? '<span class="dot absence"></span>' : ""}
       </span>
     </button>`;
@@ -65,11 +65,11 @@ export function renderCalendar() {
   renderDayDetail(ctx);
 }
 
-// Totals of the displayed month; overlapping work time is left out like in the weekly total
+// Totals of the displayed month; open and overlapping work time is left out like in the weekly total
 function renderMonthSummary(overlaps) {
   const monthPrefix = isoOf(new Date(state.cal.year, state.cal.month, 1)).slice(0, 8);
   const workMin = state.work
-    .filter((e) => e.date.startsWith(monthPrefix) && !overlaps.has(e.id))
+    .filter((e) => e.date.startsWith(monthPrefix) && isCounted(e, overlaps))
     .reduce((sum, e) => sum + computeWorktimeStats(e).netMin, 0);
   const tasks = state.tasks.filter((e) => taskDateISO(e).startsWith(monthPrefix));
   const taskMin = tasks.reduce((sum, e) => sum + e.durationMin, 0);

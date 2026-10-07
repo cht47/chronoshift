@@ -1,5 +1,5 @@
 // Work time calculations: duration and breaks of an entry, daily target, overlaps and the overtime account.
-// All durations are in minutes.
+// All durations are in minutes. Entries with an open end are not counted anywhere until the end is entered.
 
 import { state } from "./state.js";
 import { combineDateTime, dateFromISO, nextDayISO, todayISO } from "./util.js";
@@ -43,7 +43,7 @@ export function computeWorktimeStats(entry) {
 function overlappingWorkIds(entries) {
   const ids = new Set();
   let countedEnd = -Infinity;
-  const ranges = entries.map((e) => ({ id: e.id, ...worktimeRange(e) }));
+  const ranges = entries.filter((e) => !isOpen(e)).map((e) => ({ id: e.id, ...worktimeRange(e) }));
   ranges.sort((a, b) => a.startMs - b.startMs || a.id - b.id);
   for (const r of ranges) {
     if (r.startMs < countedEnd) ids.add(r.id);
@@ -72,6 +72,15 @@ export function absenceCreditMin(absence) {
 // Absences have a "type", work time entries do not
 export const isAbsence = (entry) => "type" in entry;
 
+// Work time saved without an end, because the end is not known yet
+export const isOpen = (entry) => !isAbsence(entry) && !entry.end;
+
+// Open and overlapping entries are left out of all totals
+export const isCounted = (entry, overlaps) => !isOpen(entry) && !overlaps.has(entry.id);
+
+// Shown in red and marked in the calendar
+export const hasError = (entry, overlaps) => isOpen(entry) || (!isAbsence(entry) && overlaps.has(entry.id));
+
 // Sort key for lists that mix work time and absences; absences come first on their day
 export function entrySortKey(entry) {
   return isAbsence(entry) ? entry.date : entry.date + entry.start;
@@ -84,7 +93,7 @@ export function workListContext(work, absences) {
   const overlaps = overlappingWorkIds(work);
   const items = [
     ...absences.map((a) => ({ entry: a, min: absenceCreditMin(a) })),
-    ...work.filter((e) => !overlaps.has(e.id)).map((e) => ({ entry: e, min: computeWorktimeStats(e).netMin })),
+    ...work.filter((e) => isCounted(e, overlaps)).map((e) => ({ entry: e, min: computeWorktimeStats(e).netMin })),
   ].sort((a, b) => entrySortKey(a.entry).localeCompare(entrySortKey(b.entry)));
   const lastOfDay = new Map();
   const sumOfDay = new Map();
@@ -109,7 +118,7 @@ export function overtimeBalance(work, absences, overlaps) {
   const add = (date, min) => {
     if (date > overtimeDate) totals.set(date, (totals.get(date) || 0) + min);
   };
-  work.forEach((e) => !overlaps.has(e.id) && add(e.date, computeWorktimeStats(e).netMin));
+  work.forEach((e) => isCounted(e, overlaps) && add(e.date, computeWorktimeStats(e).netMin));
   absences.forEach((a) => add(a.date, absenceCreditMin(a)));
 
   const today = todayISO();

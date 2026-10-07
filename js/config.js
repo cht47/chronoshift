@@ -1,7 +1,7 @@
 // App-wide constants: version, storage keys, default settings.
 
 // Increase together with VERSION in service-worker.js and the version in README.md on every release
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.1.1";
 export const FIRST_YEAR = 2025;
 
 // Version of the stored data format (localStorage and backup files).
@@ -60,7 +60,14 @@ export const DEFAULT_SETTINGS = {
   overtimeEnabled: false,
   overtimeDate: "",
   overtimeMin: 0,
+  // Lists: earlier tasks shown below today's, and days of work time and absences (0 = all)
+  taskListCount: 2,
+  workListDays: 7,
 };
+
+// Choices for the list settings above
+export const TASK_LIST_COUNTS = [2, 5, 10, 20];
+export const WORK_LIST_DAYS = [7, 14, 30, 0];
 
 // Kinds of absence; a half vacation day credits half the daily target, all others the full daily target
 export const ABSENCE_TYPES = ["vacation", "vacationHalf", "sick", "holiday"];

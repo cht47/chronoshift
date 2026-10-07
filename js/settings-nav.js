@@ -11,6 +11,7 @@ import { $, isoOf } from "./util.js";
 
 // Sub-page name -> translation key of its title. Each page is an element with id "settingsPage-<name>".
 export const SETTINGS_PAGES = {
+  lists: "settings.lists",
   worktime: "settings.worktime",
   rest: "settings.rest",
   backup: "settings.backupPage",
@@ -57,9 +58,14 @@ function workDaysText() {
   return indexes.map((i) => names[i]).join(", ");
 }
 
+// Labels of the list settings, also used on the "Lists" page
+export const taskCountText = (count) => t("settings.taskCount", { count });
+export const listDaysText = (days) => (days ? t("settings.listDays", { count: days }) : t("settings.listAll"));
+
 // Current values shown next to each sub-page in the overview
 export function renderSettingsHome() {
   const s = state.settings;
+  $("sumLists").textContent = `${taskCountText(s.taskListCount)} · ${listDaysText(s.workListDays)}`;
   $("sumWorktime").textContent = `${fmtNumber(s.weeklyHours)} h · ${workDaysText()}`;
   $("sumRest").textContent = s.restEnabled
     ? `${fmtNumber(s.restHours)} h${s.restBannerEnabled ? ` · ${t("settings.sumBanner")}` : ""}`

@@ -15,7 +15,7 @@ import { damagedKeys, loadAbsences, loadSettings, loadTasks, loadWork } from "./
 import { renderTasks, restoreTimerState } from "./tasks.js";
 import { showInfo } from "./ui.js";
 import { $ } from "./util.js";
-import { renderWorkEntries, resetWorktimeForm } from "./worktime.js";
+import { renderWorkEntries, resetWorktimeForm, updateOpenBanner } from "./worktime.js";
 
 // Redraws everything that depends on the data; called after every change
 export function refreshAll() {
@@ -23,6 +23,7 @@ export function refreshAll() {
   renderWorkEntries();
   renderCalendar();
   updateRestUi();
+  updateOpenBanner();
   updateStorageInfo();
   updateBackupInfo();
 }
@@ -45,6 +46,7 @@ export function switchView(view) {
   });
   updateViewTitle();
   updateRestUi();
+  updateOpenBanner();
   window.scrollTo(0, 0);
   if (view === "tasks") renderTasks();
   if (view === "worktime") renderWorkEntries();
@@ -81,7 +83,11 @@ async function init() {
   renderSettingsForm();
   initCloudBackup();
   refreshAll();
-  setInterval(updateRestUi, 60000);
+  // The open work time banner changes its text at midnight
+  setInterval(() => {
+    updateRestUi();
+    updateOpenBanner();
+  }, 60000);
   switchView("tasks");
   showRestoreResult();
   checkBackupReminder();

@@ -46,7 +46,7 @@
     "entries": "Einträge",
     "empty": "Noch keine Arbeitszeiten erfasst.",
     "emptyRange": "Keine Einträge in den letzten {count} Tagen.",
-    "breakManual": "Pause {from}–{to}",
+    "breakManual": "Pause {duration} ({from}–{to})",
     "breakAuto": "Pause {duration} (auto)",
     "breakAutoOpen": "Pause (auto)",
     "noBreak": "ohne Pause",

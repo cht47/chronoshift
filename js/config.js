@@ -1,7 +1,7 @@
 // App-wide constants: version, storage keys, default settings.
 
 // Increase together with VERSION in service-worker.js and the version in README.md on every release
-export const APP_VERSION = "1.1.1";
+export const APP_VERSION = "1.1.2";
 export const FIRST_YEAR = 2025;
 
 // Version of the stored data format (localStorage and backup files).

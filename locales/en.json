@@ -46,7 +46,7 @@
     "entries": "Entries",
     "empty": "No work time yet.",
     "emptyRange": "No entries in the last {count} days.",
-    "breakManual": "Break {from}–{to}",
+    "breakManual": "Break {duration} ({from}–{to})",
     "breakAuto": "Break {duration} (auto)",
     "breakAutoOpen": "Break (auto)",
     "noBreak": "no break",

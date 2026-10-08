@@ -159,10 +159,21 @@ function deleteWorkEntry(id) {
 
 // stats is null for an entry with an open end: its automatic break is not known yet
 function breakText(entry, stats) {
-  if (entry.breakStart && entry.breakEnd) return t("worktime.breakManual", { from: entry.breakStart, to: entry.breakEnd });
+  const manualBreak = worktimeBreakRange(entry);
+  if (manualBreak) {
+    const duration = fmtDur(Math.round((manualBreak.endMs - manualBreak.startMs) / 60000));
+    return t("worktime.breakManual", { duration, from: entry.breakStart, to: entry.breakEnd });
+  }
   if (!stats) return t(state.settings.autoBreakEnabled ? "worktime.breakAutoOpen" : "worktime.noBreak");
   if (stats.breakMin > 0) return t("worktime.breakAuto", { duration: fmtDur(stats.breakMin) });
   return t("worktime.noBreak");
+}
+
+// Keeps "Pause 45 min" and "(auto)" or "(12:00–12:30)" in one piece each, so a narrow row only wraps between them
+function breakHtml(text) {
+  const i = text.lastIndexOf(" (");
+  const parts = i > 0 ? [text.slice(0, i), text.slice(i + 1)] : [text];
+  return parts.map((part) => `<span class="nowrap">${esc(part)}</span>`).join(" ");
 }
 
 // ctx: result of workListContext, calculated once per list
@@ -182,7 +193,7 @@ function buildWorkRow(entry, ctx) {
     <span class="row-accent work"></span>
     <div class="list-row-main">
       <div class="list-row-title">${esc(title)}</div>
-      <div class="list-row-meta">${esc(entry.start)}–${esc(end)} · ${esc(breakText(entry, stats))}</div>
+      <div class="list-row-meta">${esc(entry.start)}–${esc(end)} · ${breakHtml(breakText(entry, stats))}</div>
       ${errorNote}
     </div>
     <span class="list-row-value">${open ? "–" : fmtDur(stats.netMin)}${diffNote}</span>

@@ -516,6 +516,10 @@ button.btn-danger {
   font-variant-numeric: tabular-nums;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .list-row-value {
   display: flex;
   flex-direction: column;

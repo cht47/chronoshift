@@ -108,9 +108,10 @@ export function workListContext(work, absences) {
 
 // Overtime account: the balance at the end of overtimeDate plus every following day
 // (work + absences - daily target). Work days without an entry count as minus; today only counts
-// once something is entered for it. The forecast also adds all future days that are already entered;
-// future days without entries are left out. Returns { current, forecast } (forecast null without
-// future entries), or null if the account is off or not set up.
+// once something is entered for it. The forecast also adds all future days with planned work time;
+// other future days, including days with only an absence, are left out. Work time with an open end is
+// not counted anywhere. Returns { current, forecast } (forecast null if the planned work time does not
+// change the balance), or null if the account is off or not set up.
 export function overtimeBalance(work, absences, overlaps) {
   const { overtimeEnabled, overtimeDate, overtimeMin } = state.settings;
   if (!overtimeEnabled || !overtimeDate) return null;
@@ -118,20 +119,20 @@ export function overtimeBalance(work, absences, overlaps) {
   const add = (date, min) => {
     if (date > overtimeDate) totals.set(date, (totals.get(date) || 0) + min);
   };
-  work.forEach((e) => isCounted(e, overlaps) && add(e.date, computeWorktimeStats(e).netMin));
+  const counted = work.filter((e) => isCounted(e, overlaps));
+  counted.forEach((e) => add(e.date, computeWorktimeStats(e).netMin));
   absences.forEach((a) => add(a.date, absenceCreditMin(a)));
+  const workDates = new Set(counted.map((e) => e.date));
 
   const today = todayISO();
   let current = overtimeMin;
   for (let d = nextDayISO(overtimeDate); d < today; d = nextDayISO(d)) current += (totals.get(d) || 0) - dayTargetMin(d);
   let forecast = current;
-  let planned = false;
   for (const [date, min] of totals) {
-    if (date < today) continue;
+    if (date < today || (date > today && !workDates.has(date))) continue;
     const diff = min - dayTargetMin(date);
     forecast += diff;
     if (date === today) current += diff;
-    else planned = true;
   }
-  return { current, forecast: planned ? forecast : null };
+  return { current, forecast: forecast !== current ? forecast : null };
 }

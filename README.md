@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.2
+**Version:** 1.1.3
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -31,7 +31,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Night shifts across midnight are supported
 - Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
-- The list shows the last 7 days (adjustable under *Settings → Lists*); planned entries and entries with an error always stay visible
+- The list shows the last and the next 7 days (adjustable under *Settings → Lists*); entries with an error always stay visible
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
 - Optional overtime account: enter your balance on a given date (e.g. the monthly carry-over from your employer), the app keeps it up to date and shows a forecast including days you already planned
 - Difference to the daily target for each day; work on days off counts entirely as overtime

@@ -220,15 +220,19 @@ export function buildEntryRow(entry, ctx) {
   return isAbsence(entry) ? buildAbsenceRow(entry, ctx) : buildWorkRow(entry, ctx);
 }
 
-// Entries of the last days set under Settings → Lists; planned entries and entries with an error always stay
-// visible. Everything else is in the calendar.
+// Entries of the last and the next days set under Settings → Lists (7: today and the 6 days before, plus the
+// 7 days after); entries with an error always stay visible. Everything else is in the calendar.
 function visibleWorkEntries(sorted, overlaps) {
   const days = state.settings.workListDays;
   if (!days) return sorted;
-  const from = new Date();
-  from.setDate(from.getDate() - (days - 1));
-  const fromISO = isoOf(from);
-  return sorted.filter((e) => e.date >= fromISO || hasError(e, overlaps));
+  const dayISO = (offset) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return isoOf(d);
+  };
+  const from = dayISO(-(days - 1));
+  const to = dayISO(days);
+  return sorted.filter((e) => (e.date >= from && e.date <= to) || hasError(e, overlaps));
 }
 
 export function renderWorkEntries() {
@@ -274,7 +278,7 @@ function renderWeekSummary(overlaps) {
   renderBalance(overlaps);
 }
 
-// Overtime account below the week bar; the forecast only if future days are entered
+// Overtime account below the week bar; the forecast only if planned work time changes the balance
 function renderBalance(overlaps) {
   const balance = overtimeBalance(state.work, state.absences, overlaps);
   balanceLine.hidden = !balance;

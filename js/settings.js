@@ -228,6 +228,11 @@ bindListSwitch(workListSwitch, "workListDays");
 // ----- Converter -----
 // Hours and minutes <-> decimal hours as used by many time recording systems (6 h 03 min = 6.05 h).
 // Both sides update each other while typing; nothing is saved.
+
+// True when the decimal field was typed in last. Its text is then kept and not calculated again from the
+// whole minutes, otherwise 6.01 h would become 6.02 h (6.01 h = 360.6 min, rounded to 361 min = 6.0167 h).
+let decimalTyped = false;
+
 function converterSign() {
   return Number(convSign.querySelector('[aria-pressed="true"]').dataset.sign);
 }
@@ -243,7 +248,9 @@ function convertFromHoursMinutes() {
   }
   const minutes = Math.max(0, Math.floor(Number(convHours.value) || 0)) * 60 + Math.max(0, Math.floor(Number(convMinutes.value) || 0));
   // "|| 0" avoids showing "-0"
-  convDecimal.value = fmtNumber((converterSign() * Math.round((minutes / 60) * 100)) / 100 || 0);
+  const hours = (converterSign() * Math.round((minutes / 60) * 100)) / 100 || 0;
+  // No thousands separator, it would be read as decimal separator when the field is edited
+  convDecimal.value = fmtNumber(hours, undefined, { useGrouping: false });
 }
 
 // Accepts comma and point as decimal separator and a leading minus
@@ -262,20 +269,35 @@ function convertFromDecimal() {
   convMinutes.value = minutes % 60;
 }
 
-// After a language change the decimal separator changes
+// After a language change the decimal separator changes; a typed value only gets the new separator
 function renderConverter() {
   convDecimal.placeholder = fmtNumber(0, 2);
-  if (convDecimal.value) convertFromHoursMinutes();
+  if (!convDecimal.value) return;
+  if (decimalTyped) convDecimal.value = convDecimal.value.replace(/[.,]/, fmtNumber(1.5).replace(/\d/g, ""));
+  else convertFromHoursMinutes();
 }
 
-convHours.addEventListener("input", convertFromHoursMinutes);
-convMinutes.addEventListener("input", convertFromHoursMinutes);
-convDecimal.addEventListener("input", convertFromDecimal);
+[convHours, convMinutes].forEach((input) =>
+  input.addEventListener("input", () => {
+    decimalTyped = false;
+    convertFromHoursMinutes();
+  })
+);
+convDecimal.addEventListener("input", () => {
+  decimalTyped = true;
+  convertFromDecimal();
+});
+// A typed decimal value only changes its sign
 convSign.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-sign]");
   if (!btn) return;
   setConverterSign(Number(btn.dataset.sign));
-  convertFromHoursMinutes();
+  if (!decimalTyped) {
+    convertFromHoursMinutes();
+    return;
+  }
+  const text = convDecimal.value.trim().replace(/^[-+]/, "");
+  convDecimal.value = converterSign() < 0 && text ? `-${text}` : text;
 });
 
 // ----- Overtime account -----

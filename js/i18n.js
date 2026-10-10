@@ -82,7 +82,8 @@ export function fmtDateTime(ms) {
   return `${fmtDateParts(new Date(ms), { day: "2-digit", month: "2-digit", year: "2-digit" })} ${clockOf(ms)}`;
 }
 
-export function fmtNumber(n, fractionDigits) {
+// extra: further Intl.NumberFormat options, e.g. { useGrouping: false }
+export function fmtNumber(n, fractionDigits, extra = {}) {
   const options = fractionDigits === undefined ? {} : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits };
-  return new Intl.NumberFormat(intlLocale, options).format(n);
+  return new Intl.NumberFormat(intlLocale, { ...options, ...extra }).format(n);
 }

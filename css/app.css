@@ -1047,6 +1047,18 @@ button.btn-danger {
   margin: 0.25rem 0 0.5rem;
 }
 
+/* Converter: decimal hours with the unit behind the field */
+.decimal-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.decimal-input input {
+  margin: 0;
+}
+
 /* Label style of the inputs, for elements without a label */
 .field-label {
   font-size: 0.8rem;

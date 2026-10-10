@@ -14,6 +14,7 @@ export const SETTINGS_PAGES = {
   lists: "settings.lists",
   worktime: "settings.worktime",
   rest: "settings.rest",
+  converter: "settings.converter",
   backup: "settings.backupPage",
   data: "settings.dataPage",
 };

@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.3
+**Version:** 1.1.4
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -52,6 +52,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Light, dark or system theme
 - German and English, following the device language by default
 - Lists: how many earlier tasks and how many days of work time are shown
+- Converter between hours and minutes and decimal hours in both directions (e.g. 6 h 03 min = 6.05 h), for time recording systems that use decimal hours
 - Weekly hours and work days Mon–Sun (daily target is calculated)
 - Backup and restore of all tasks, work time, absences and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept

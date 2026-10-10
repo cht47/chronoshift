@@ -190,6 +190,9 @@
           <button type="button" class="action-row nav-row" data-page="rest"><span data-icon="hourglass"></span><span
               class="nav-row-label" data-i18n="settings.rest"></span><span class="nav-row-value" id="sumRest"></span><span
               class="nav-row-chevron" data-icon="chevronRight"></span></button>
+          <button type="button" class="action-row nav-row" data-page="converter"><span data-icon="calculator"></span><span
+              class="nav-row-label" data-i18n="settings.converter"></span><span class="nav-row-value"
+              data-i18n="settings.converterSum"></span><span class="nav-row-chevron" data-icon="chevronRight"></span></button>
         </div>
 
         <div class="section-label"><span data-i18n="settings.groupData"></span></div>
@@ -300,6 +303,31 @@
             </div>
           </div>
           <small class="hint gap-top" id="restHint" data-i18n="settings.restHint"></small>
+        </div>
+      </div>
+
+      <!-- Sub-page: converter between hours and minutes and decimal hours -->
+      <div class="settings-page" id="settingsPage-converter" hidden>
+        <div class="card">
+          <div class="field-label" id="convHmLabel" data-i18n="settings.converterHm"></div>
+          <div class="balance-input" role="group" aria-labelledby="convHmLabel">
+            <div class="segmented balance-sign" role="group" data-i18n-aria="settings.converterSignAria" id="convSign">
+              <button type="button" data-sign="1" aria-pressed="true">+</button>
+              <button type="button" data-sign="-1" aria-pressed="false">−</button>
+            </div>
+            <input type="number" id="convHours" min="0" max="9999" step="1" inputmode="numeric"
+              data-i18n-aria="settings.balanceHoursAria" />
+            <span>h</span>
+            <input type="number" id="convMinutes" min="0" max="59" step="1" inputmode="numeric"
+              data-i18n-aria="settings.balanceMinutesAria" />
+            <span>min</span>
+          </div>
+          <label class="field-label" for="convDecimal" data-i18n="settings.converterDecimal"></label>
+          <div class="decimal-input">
+            <input type="text" id="convDecimal" inputmode="decimal" autocomplete="off" />
+            <span>h</span>
+          </div>
+          <small class="hint" data-i18n="settings.converterHint"></small>
         </div>
       </div>
 

@@ -43,6 +43,10 @@ const overtimeHours = $("overtimeHours");
 const overtimeMinutes = $("overtimeMinutes");
 const taskListSwitch = $("taskListSwitch");
 const workListSwitch = $("workListSwitch");
+const convSign = $("convSign");
+const convHours = $("convHours");
+const convMinutes = $("convMinutes");
+const convDecimal = $("convDecimal");
 
 function updateDailyTargetInfo() {
   dailyTargetInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
@@ -190,6 +194,7 @@ export function renderSettingsForm() {
   renderBreakRules();
   renderOvertime();
   renderListSwitches();
+  renderConverter();
 }
 
 // ----- Lists -----
@@ -219,6 +224,59 @@ function bindListSwitch(container, key) {
 
 bindListSwitch(taskListSwitch, "taskListCount");
 bindListSwitch(workListSwitch, "workListDays");
+
+// ----- Converter -----
+// Hours and minutes <-> decimal hours as used by many time recording systems (6 h 03 min = 6.05 h).
+// Both sides update each other while typing; nothing is saved.
+function converterSign() {
+  return Number(convSign.querySelector('[aria-pressed="true"]').dataset.sign);
+}
+
+function setConverterSign(sign) {
+  convSign.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.sign) === sign)));
+}
+
+function convertFromHoursMinutes() {
+  if (!convHours.value && !convMinutes.value) {
+    convDecimal.value = "";
+    return;
+  }
+  const minutes = Math.max(0, Math.floor(Number(convHours.value) || 0)) * 60 + Math.max(0, Math.floor(Number(convMinutes.value) || 0));
+  // "|| 0" avoids showing "-0"
+  convDecimal.value = fmtNumber((converterSign() * Math.round((minutes / 60) * 100)) / 100 || 0);
+}
+
+// Accepts comma and point as decimal separator and a leading minus
+function convertFromDecimal() {
+  const text = convDecimal.value.trim().replace(",", ".");
+  if (text === "" || text === "-") {
+    convHours.value = "";
+    convMinutes.value = "";
+    return;
+  }
+  const hours = Number(text);
+  if (!Number.isFinite(hours)) return;
+  const minutes = Math.round(Math.abs(hours) * 60);
+  setConverterSign(hours < 0 ? -1 : 1);
+  convHours.value = Math.floor(minutes / 60);
+  convMinutes.value = minutes % 60;
+}
+
+// After a language change the decimal separator changes
+function renderConverter() {
+  convDecimal.placeholder = fmtNumber(0, 2);
+  if (convDecimal.value) convertFromHoursMinutes();
+}
+
+convHours.addEventListener("input", convertFromHoursMinutes);
+convMinutes.addEventListener("input", convertFromHoursMinutes);
+convDecimal.addEventListener("input", convertFromDecimal);
+convSign.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-sign]");
+  if (!btn) return;
+  setConverterSign(Number(btn.dataset.sign));
+  convertFromHoursMinutes();
+});
 
 // ----- Overtime account -----
 // The page only shows the current setup; date and balance are changed in a dialog with an explicit save

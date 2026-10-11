@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.5
+**Version:** 1.1.6
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -57,7 +57,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Backup and restore of all tasks, work time, absences and settings as a JSON file; a reminder pops up at startup if there was no backup for 30 days (and then again every 30 days)
 - Optional cloud backup to Google Drive: stored in a folder only ChronoShift can access, the latest 10 backups are kept
 - Excel export (.xlsx) for tasks and for work time including absences – opens in Excel, Google Sheets, Numbers and LibreOffice
-- Delete entries before a chosen date (tasks, work time and/or absences), or reset everything (both with a 5-second safety countdown)
+- Delete entries before a chosen date (tasks, work time and/or absences), or reset everything (with a 5-second safety countdown)
 
 ## 📱 Installation
 

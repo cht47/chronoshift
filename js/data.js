@@ -27,7 +27,7 @@ import { renderSettingsForm } from "./settings.js";
 import { taskDateISO } from "./tasks.js";
 import { confirmAction, downloadFile, showInfo, showToast } from "./ui.js";
 import { $, dateFromISO, esc, isDate, isPlainObject, isTime, isoOf, nextDayISO, prevDayISO, todayISO } from "./util.js";
-import { absenceCreditMin, computeWorktimeStats, entrySortKey, isAbsence, isOpen } from "./worktime-calc.js";
+import { absenceCreditMin, computeWorktimeStats, entrySortKey, isAbsence, isCounted, workListContext } from "./worktime-calc.js";
 import { resetWorktimeForm } from "./worktime.js";
 import { XLSX_STYLE, buildXlsx, excelDateTime, excelTime } from "./xlsx.js";
 
@@ -345,9 +345,13 @@ $("exportTasksBtn").addEventListener("click", () => {
 
 // Work time and absences in one sheet, sorted by day. "Net" is pure work time; absences have their own
 // columns for type and credit, so net + credit adds up to the totals shown in the app.
-// Overlapping entries are exported as they are, entries with an open end without end and net time.
+// Like in the totals of the app, overlapping work time and work time with an open end are left out.
 $("exportWorkBtn").addEventListener("click", () => {
-  if (!state.work.length && !state.absences.length) {
+  const { overlaps } = workListContext(state.work, state.absences);
+  const entries = [...state.work.filter((e) => isCounted(e, overlaps)), ...state.absences].sort((a, b) =>
+    entrySortKey(a).localeCompare(entrySortKey(b))
+  );
+  if (!entries.length) {
     showInfo(t("data.noWorkToExport"));
     return;
   }
@@ -365,10 +369,8 @@ $("exportWorkBtn").addEventListener("click", () => {
   ];
   const time = (hhmm) => (hhmm ? { v: excelTime(hhmm), s: XLSX_STYLE.time } : null);
   const date = (iso) => ({ v: excelDateTime(dateFromISO(iso)), s: XLSX_STYLE.date });
-  const entries = [...state.work, ...state.absences].sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
   const rows = entries.map((e) => {
     if (isAbsence(e)) return [date(e.date), null, null, null, null, null, "", null, t(`absence.types.${e.type}`), absenceCreditMin(e)];
-    if (isOpen(e)) return [date(e.date), time(e.start), null, time(e.breakStart), time(e.breakEnd), null, "", null];
     const s = computeWorktimeStats(e);
     const breakType = s.breakManual ? t("export.breakManual") : s.breakMin > 0 ? t("export.breakAuto") : "";
     return [date(e.date), time(e.start), time(e.end), time(e.breakStart), time(e.breakEnd), s.breakMin, breakType, s.netMin];

@@ -69,7 +69,8 @@
     "forecast": "Prognose",
     "openSince": "Arbeitszeit seit {time} offen",
     "openOn": "Arbeitszeit vom {date} offen",
-    "enterEnd": "Ende eintragen"
+    "enterEnd": "Ende eintragen",
+    "vacation": "Resturlaub {year}"
   },
   "rest": {
     "label": "{hours}h Ruhezeit",
@@ -167,7 +168,18 @@
     "balanceEdit": "Ändern",
     "balanceSetup": "Einrichten",
     "balanceSaved": "Stundenkonto übernommen.",
-    "balanceModalHint": "Saldo am Ende dieses Tages, z. B. der Monatsübertrag aus der Zeiterfassung deines Arbeitgebers."
+    "balanceModalHint": "Saldo am Ende dieses Tages, z. B. der Monatsübertrag aus der Zeiterfassung deines Arbeitgebers.",
+    "vacationPage": "Urlaub & Feiertage",
+    "vacation": "Urlaubskonto",
+    "vacationEnable": "Urlaubskonto führen",
+    "vacationPrevYear": "Vorheriges Jahr",
+    "vacationNextYear": "Nächstes Jahr",
+    "vacationDays": "Urlaubstage",
+    "vacationCarry": "Übertrag aus Vorjahr",
+    "vacationYearState": "{total} Tage · genommen {taken} · geplant {planned} · übrig {remaining}",
+    "vacationNotSet": "Für {year} noch nicht eingetragen.",
+    "vacationHint": "Für jedes Jahr selbst eintragen, z. B. aus der Abrechnung deines Arbeitgebers. Ein halber Urlaubstag zählt 0,5, Feiertage und Krankheit zählen nicht.",
+    "sumVacationDays": "{count} Tage"
   },
   "data": {
     "noTasksToExport": "Es gibt keine Task-Einträge zum Exportieren!",
@@ -270,5 +282,24 @@
     "editAria": "Abwesenheit bearbeiten",
     "deleteAria": "Abwesenheit löschen",
     "confirmDelete": "{type} am {date} löschen?"
+  },
+  "holidays": {
+    "title": "Feiertage",
+    "import": "Feiertage übernehmen",
+    "save": "Übernehmen",
+    "country": "Land",
+    "region": "Region",
+    "regionNone": "Nur landesweite Feiertage",
+    "modalHint": "Übernimmt die Feiertage von {from} und {to} als Abwesenheit an deinen Arbeitstagen.",
+    "state": "{region} · übernommen am {date}",
+    "notSet": "Noch keine Feiertage übernommen.",
+    "hint": "Übernimmt die Feiertage für dieses und nächstes Jahr als freie Tage.",
+    "privacy": "Datenschutz: Die App verbindet sich nur beim Tippen auf „Feiertage übernehmen“ mit der OpenHolidays API (STÜBER SYSTEMS GmbH, Berlin). Dabei werden deine IP-Adresse sowie das gewählte Land und die Region übertragen, keine Einträge.",
+    "privacyLink": "Datenschutzerklärung von STÜBER SYSTEMS",
+    "source": "Feiertagsdaten:",
+    "imported": "{count} Feiertage für {from} und {to} übernommen.",
+    "replaced": "Ersetzte Urlaubstage: {count}.",
+    "error": "Die Feiertage sind gerade nicht erreichbar. Bitte prüfe deine Internetverbindung und versuche es erneut.",
+    "missing": "Feiertage für {year} fehlen noch"
   }
 }

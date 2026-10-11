@@ -54,3 +54,11 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
+
+## Public holiday data
+
+Not included in the project. The public holidays are loaded on demand from the
+OpenHolidays API, https://www.openholidaysapi.org, whose data is available under
+the Open Data Commons Open Database License (ODbL) v1.0,
+https://opendatacommons.org/licenses/odbl/1-0/. The source is named in the app
+under *Settings → Vacation & holidays*.

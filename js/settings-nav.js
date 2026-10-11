@@ -4,6 +4,7 @@
 import { updateViewTitle } from "./app.js";
 import { WEEK_FROM_MONDAY } from "./config.js";
 import { backupIsStale, newestBackup, resetDeleteBefore } from "./data.js";
+import { holidaysMissingYear } from "./holidays.js";
 import { fmtDate, fmtNumber, t, weekdayShortNames } from "./i18n.js";
 import { state } from "./state.js";
 import { storageChars } from "./storage.js";
@@ -13,6 +14,7 @@ import { $, isoOf } from "./util.js";
 export const SETTINGS_PAGES = {
   lists: "settings.lists",
   worktime: "settings.worktime",
+  vacation: "settings.vacationPage",
   rest: "settings.rest",
   converter: "settings.converter",
   backup: "settings.backupPage",
@@ -68,6 +70,10 @@ export function renderSettingsHome() {
   const s = state.settings;
   $("sumLists").textContent = `${taskCountText(s.taskListCount)} · ${listDaysText(s.workListDays)}`;
   $("sumWorktime").textContent = `${fmtNumber(s.weeklyHours)} h · ${workDaysText()}`;
+  const year = s.vacationEnabled ? s.vacationYears[new Date().getFullYear()] : null;
+  const vacationParts = [s.holidaySynced ? s.holidayLabel : "", year ? t("settings.sumVacationDays", { count: fmtNumber(year.days) }) : ""];
+  $("sumVacation").textContent = vacationParts.filter(Boolean).join(" · ") || t("settings.sumOff");
+  $("sumVacation").classList.toggle("warn", !!holidaysMissingYear());
   $("sumRest").textContent = s.restEnabled
     ? `${fmtNumber(s.restHours)} h${s.restBannerEnabled ? ` · ${t("settings.sumBanner")}` : ""}`
     : t("settings.sumOff");

@@ -4,7 +4,8 @@
 //   tasks      [{ id, task, startMs, stopMs, durationMin }]           timestamps in ms, duration in whole minutes
 //   worktime   [{ id, date, start, end, breakStart, breakEnd }]       "YYYY-MM-DD" and "HH:MM"; break times null for an automatic break,
 //                                                                    end null while the end is still open
-//   absences   [{ id, date, type }]                                   type: one of ABSENCE_TYPES
+//   absences   [{ id, date, type, name? }]                            type: one of ABSENCE_TYPES; name only for public
+//                                                                    holidays imported in the settings (see holidays.js)
 //   settings   see DEFAULT_SETTINGS in config.js
 //   timer      { running, startTime, task } while a task is running
 // IDs are Date.now() values at creation time.
@@ -123,6 +124,12 @@ const SETTING_CHECKS = {
   workDays: (v) => v.length > 0 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
   taskListCount: (v) => TASK_LIST_COUNTS.includes(v),
   workListDays: (v) => WORK_LIST_DAYS.includes(v),
+  vacationYears: (v) =>
+    isPlainObject(v) &&
+    Object.entries(v).every(
+      ([year, y]) => /^\d{4}$/.test(year) && isPlainObject(y) && Number.isFinite(y.days) && y.days >= 0 && Number.isFinite(y.carry)
+    ),
+  holidaySynced: (v) => v === "" || isDate(v),
 };
 
 function isValidSetting(key, value) {

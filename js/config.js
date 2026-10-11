@@ -1,7 +1,7 @@
 // App-wide constants: version, storage keys, default settings.
 
 // Increase together with VERSION in service-worker.js and the version in README.md on every release
-export const APP_VERSION = "1.1.6";
+export const APP_VERSION = "1.1.7";
 export const FIRST_YEAR = 2025;
 
 // Version of the stored data format (localStorage and backup files).
@@ -63,6 +63,16 @@ export const DEFAULT_SETTINGS = {
   // Lists: earlier tasks shown below today's, and days of work time and absences (0 = all)
   taskListCount: 2,
   workListDays: 7,
+  // Vacation account: days per year and carry-over from the previous year, both entered by hand per year,
+  // e.g. { "2026": { days: 30, carry: 2.5 } }
+  vacationEnabled: false,
+  vacationYears: {},
+  // Public holidays imported from the OpenHolidays API: country and region code ("" = only nationwide holidays),
+  // their display name at the time of the import and the date of the last import ("" = never)
+  holidayCountry: "",
+  holidayRegion: "",
+  holidayLabel: "",
+  holidaySynced: "",
 };
 
 // Choices for the list settings above

@@ -61,6 +61,8 @@ function updateExisting(type) {
     return false;
   }
   const entry = state.absences.find((a) => a.id === state.editingAbsenceId);
+  // A changed imported holiday counts as entered by hand from now on, so a new import leaves it alone
+  if (entry.date !== date || entry.type !== type) delete entry.name;
   entry.date = date;
   entry.type = type;
   return true;
@@ -129,8 +131,8 @@ export function buildAbsenceRow(entry, ctx) {
   const diffNote =
     dayDiff === undefined ? "" : `<small class="value-diff ${dayDiff >= 0 ? "ok" : "warn"}">${fmtDiff(dayDiff)}</small>`;
   const title = fmtDateParts(dateFromISO(entry.date), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
-  // The half vacation day already says "half day" in its name
-  const meta = entry.type === "vacationHalf" ? "" : ` · ${esc(t("absence.fullDay"))}`;
+  // The half vacation day already says "half day" in its name; an imported holiday shows its name instead
+  const meta = entry.name ? ` · ${esc(entry.name)}` : entry.type === "vacationHalf" ? "" : ` · ${esc(t("absence.fullDay"))}`;
   const row = document.createElement("div");
   row.className = "list-row";
   row.innerHTML = `

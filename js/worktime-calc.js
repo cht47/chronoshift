@@ -136,3 +136,26 @@ export function overtimeBalance(work, absences, overlaps) {
   }
   return { current, forecast: forecast !== current ? forecast : null };
 }
+
+// Vacation days of a full or half vacation day; other absences do not use vacation
+export function vacationDays(absence) {
+  return absence.type === "vacation" ? 1 : absence.type === "vacationHalf" ? 0.5 : 0;
+}
+
+// Vacation account of a year: days per year plus carry-over, both entered by hand per year, minus vacation
+// up to and including today (taken) and after today (planned). Returns
+// { total, taken, planned, remaining, forecast }, or null if the year is not set up.
+export function vacationBalance(year) {
+  const entry = state.settings.vacationYears[year];
+  if (!entry) return null;
+  const today = todayISO();
+  let taken = 0;
+  let planned = 0;
+  for (const a of state.absences) {
+    if (!a.date.startsWith(`${year}-`)) continue;
+    if (a.date <= today) taken += vacationDays(a);
+    else planned += vacationDays(a);
+  }
+  const total = entry.days + entry.carry;
+  return { total, taken, planned, remaining: total - taken, forecast: total - taken - planned };
+}

@@ -2,7 +2,7 @@
 // with the cache as fallback when offline.
 
 // Increase together with APP_VERSION in js/config.js on every release; a new version renews the cache
-const VERSION = "1.1.6";
+const VERSION = "1.1.7";
 const CACHE_NAME = `chronoshift-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",
@@ -16,6 +16,7 @@ const FILES_TO_CACHE = [
   "./js/config.js",
   "./js/data.js",
   "./js/gdrive.js",
+  "./js/holidays.js",
   "./js/i18n.js",
   "./js/icons.js",
   "./js/migrate.js",
@@ -58,7 +59,7 @@ self.addEventListener("activate", (evt) => {
 
 self.addEventListener("fetch", (evt) => {
   if (evt.request.method !== "GET") return;
-  // Other origins (Google sign-in, Drive API) go to the network unchanged and are never cached
+  // Other origins (Google sign-in, Drive API, holiday API) go to the network unchanged and are never cached
   if (new URL(evt.request.url).origin !== self.location.origin) return;
   // GitHub Pages allows 10 minutes of HTTP caching; "no-cache" still checks with the server (usually a 304).
   // A new request from the URL, because navigation requests cannot be copied with new options.

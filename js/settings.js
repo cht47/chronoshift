@@ -1,9 +1,10 @@
-// Settings: form fields of the settings pages, theme, language, app installation and overtime account.
+// Settings: form fields of the settings pages, theme, language, app installation, overtime and vacation account.
 // Every change is saved immediately; there is no save button.
 
 import { refreshAll, updateViewTitle } from "./app.js";
 import { updateAbsenceFormText } from "./absence.js";
-import { LANGUAGES, TASK_LIST_COUNTS, WEEK_FROM_MONDAY, WORK_LIST_DAYS } from "./config.js";
+import { FIRST_YEAR, LANGUAGES, TASK_LIST_COUNTS, WEEK_FROM_MONDAY, WORK_LIST_DAYS } from "./config.js";
+import { renderHolidayInfo } from "./holidays.js";
 import { applyI18n, fmtDate, fmtNumber, loadLocale, systemLanguage, t, weekdayShortNames } from "./i18n.js";
 import { icon } from "./icons.js";
 import { updateRestUi } from "./rest.js";
@@ -14,7 +15,7 @@ import { renderTasks, setRunningUi } from "./tasks.js";
 import { showInfo, showToast } from "./ui.js";
 import { $, esc, fmtDiff, fmtMin, isoOf } from "./util.js";
 import { renderWorkEntries, updateWorktimeFormText } from "./worktime.js";
-import { dailyTargetMin } from "./worktime-calc.js";
+import { dailyTargetMin, vacationBalance } from "./worktime-calc.js";
 
 const setLanguage = $("setLanguage");
 const setWeeklyHours = $("setWeeklyHours");
@@ -47,6 +48,14 @@ const convSign = $("convSign");
 const convHours = $("convHours");
 const convMinutes = $("convMinutes");
 const convDecimal = $("convDecimal");
+const setVacation = $("setVacation");
+const vacationWrap = $("vacationWrap");
+const vacationYearLabel = $("vacationYearLabel");
+const vacationPrevBtn = $("vacationPrevBtn");
+const vacationNextBtn = $("vacationNextBtn");
+const vacationDaysInput = $("vacationDaysInput");
+const vacationCarryInput = $("vacationCarryInput");
+const vacationYearInfo = $("vacationYearInfo");
 
 function updateDailyTargetInfo() {
   dailyTargetInfo.textContent = t("settings.dailyTarget", { duration: fmtMin(dailyTargetMin()) });
@@ -193,6 +202,9 @@ export function renderSettingsForm() {
   updateStorageInfo();
   renderBreakRules();
   renderOvertime();
+  vacationYear = new Date().getFullYear();
+  renderVacation();
+  renderHolidayInfo();
   renderListSwitches();
   renderConverter();
 }
@@ -357,6 +369,72 @@ $("overtimeSaveBtn").addEventListener("click", () => {
   renderWorkEntries();
   showToast(t("settings.balanceSaved"));
 });
+
+// ----- Vacation account -----
+// Days and carry-over are entered by hand for each year, because the rules differ between countries and employers.
+// The year shown starts at the current one whenever the settings are shown again.
+let vacationYear = new Date().getFullYear();
+
+function renderVacation() {
+  const { vacationEnabled, vacationYears } = state.settings;
+  setVacation.checked = vacationEnabled;
+  vacationWrap.hidden = !vacationEnabled;
+  vacationYearLabel.textContent = vacationYear;
+  vacationPrevBtn.disabled = vacationYear <= FIRST_YEAR;
+  vacationNextBtn.disabled = vacationYear > new Date().getFullYear();
+  const entry = vacationYears[vacationYear];
+  vacationDaysInput.value = entry ? entry.days : "";
+  vacationCarryInput.value = entry ? entry.carry : "";
+  renderVacationYearInfo();
+}
+
+// Also called after a holiday import, which can replace vacation days
+export function renderVacationYearInfo() {
+  const balance = vacationBalance(vacationYear);
+  vacationYearInfo.textContent = balance
+    ? t("settings.vacationYearState", {
+        total: fmtNumber(balance.total),
+        taken: fmtNumber(balance.taken),
+        planned: fmtNumber(balance.planned),
+        remaining: fmtNumber(balance.remaining),
+      })
+    : t("settings.vacationNotSet", { year: vacationYear });
+  vacationYearInfo.classList.toggle("warn", !!balance && balance.forecast < 0);
+}
+
+setVacation.addEventListener("change", () => {
+  state.settings.vacationEnabled = setVacation.checked;
+  saveSettings();
+  vacationYear = new Date().getFullYear();
+  renderVacation();
+  renderWorkEntries();
+});
+
+[vacationPrevBtn, vacationNextBtn].forEach((btn, i) =>
+  btn.addEventListener("click", () => {
+    vacationYear += i ? 1 : -1;
+    renderVacation();
+  })
+);
+
+// Both fields empty: the year is not set up. Like the other number fields, the values are not written back
+// while typing; an incomplete number counts as 0 until it is complete.
+[vacationDaysInput, vacationCarryInput].forEach((input) =>
+  input.addEventListener("input", () => {
+    const years = state.settings.vacationYears;
+    if (vacationDaysInput.value === "" && vacationCarryInput.value === "") {
+      delete years[vacationYear];
+    } else {
+      years[vacationYear] = {
+        days: Math.max(0, Number(vacationDaysInput.value) || 0),
+        carry: Number(vacationCarryInput.value) || 0,
+      };
+    }
+    saveSettings();
+    renderVacationYearInfo();
+    renderWorkEntries();
+  })
+);
 
 // ----- Automatic break rules -----
 function renderBreakRules() {

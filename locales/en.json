@@ -69,7 +69,8 @@
     "forecast": "Forecast",
     "openSince": "Work time open since {time}",
     "openOn": "Work time on {date} open",
-    "enterEnd": "Enter end"
+    "enterEnd": "Enter end",
+    "vacation": "Vacation left {year}"
   },
   "rest": {
     "label": "{hours}h rest period",
@@ -167,7 +168,18 @@
     "balanceEdit": "Change",
     "balanceSetup": "Set up",
     "balanceSaved": "Overtime account updated.",
-    "balanceModalHint": "Balance at the end of this day, e.g. the monthly carry-over from your employer's time tracking."
+    "balanceModalHint": "Balance at the end of this day, e.g. the monthly carry-over from your employer's time tracking.",
+    "vacationPage": "Vacation & holidays",
+    "vacation": "Vacation account",
+    "vacationEnable": "Keep a vacation account",
+    "vacationPrevYear": "Previous year",
+    "vacationNextYear": "Next year",
+    "vacationDays": "Vacation days",
+    "vacationCarry": "Carried over",
+    "vacationYearState": "{total} days · taken {taken} · planned {planned} · left {remaining}",
+    "vacationNotSet": "Not entered for {year} yet.",
+    "vacationHint": "Enter them yourself for each year, e.g. from your employer's statement. A half vacation day counts 0.5; public holidays and sick leave don't count.",
+    "sumVacationDays": "{count} days"
   },
   "data": {
     "noTasksToExport": "There are no tasks to export.",
@@ -270,5 +282,24 @@
     "editAria": "Edit absence",
     "deleteAria": "Delete absence",
     "confirmDelete": "Delete {type} on {date}?"
+  },
+  "holidays": {
+    "title": "Public holidays",
+    "import": "Import public holidays",
+    "save": "Import",
+    "country": "Country",
+    "region": "Region",
+    "regionNone": "Nationwide holidays only",
+    "modalHint": "Imports the public holidays of {from} and {to} as absences on your work days.",
+    "state": "{region} · imported on {date}",
+    "notSet": "No public holidays imported yet.",
+    "hint": "Imports the public holidays for this year and next year as days off.",
+    "privacy": "Privacy: The app only connects to the OpenHolidays API (STÜBER SYSTEMS GmbH, Berlin) when you tap “Import public holidays”. Your IP address and the selected country and region are transferred, none of your entries.",
+    "privacyLink": "STÜBER SYSTEMS privacy policy",
+    "source": "Holiday data:",
+    "imported": "{count} public holidays imported for {from} and {to}.",
+    "replaced": "Replaced vacation days: {count}.",
+    "error": "The public holidays can't be loaded right now. Please check your internet connection and try again.",
+    "missing": "holidays for {year} still missing"
   }
 }

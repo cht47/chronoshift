@@ -123,6 +123,7 @@
           <span class="week-bar-work" id="weekBarWork"></span><span class="week-bar-absence" id="weekBarAbsence"></span>
         </div>
         <div class="balance-line" id="balanceLine" hidden></div>
+        <div class="balance-line" id="vacationLine" hidden></div>
         <div class="rest-line" id="restInfo" role="status" hidden></div>
       </div>
 
@@ -186,6 +187,9 @@
         <div class="list-group">
           <button type="button" class="action-row nav-row" data-page="worktime"><span data-icon="briefcase"></span><span
               class="nav-row-label" data-i18n="settings.worktime"></span><span class="nav-row-value" id="sumWorktime"></span><span
+              class="nav-row-chevron" data-icon="chevronRight"></span></button>
+          <button type="button" class="action-row nav-row" data-page="vacation"><span data-icon="sun"></span><span
+              class="nav-row-label" data-i18n="settings.vacationPage"></span><span class="nav-row-value" id="sumVacation"></span><span
               class="nav-row-chevron" data-icon="chevronRight"></span></button>
           <button type="button" class="action-row nav-row" data-page="rest"><span data-icon="hourglass"></span><span
               class="nav-row-label" data-i18n="settings.rest"></span><span class="nav-row-value" id="sumRest"></span><span
@@ -272,6 +276,51 @@
             <small class="hint" data-i18n="settings.balanceHint"></small>
           </div>
         </div>
+      </div>
+
+      <!-- Sub-page: vacation account and public holidays -->
+      <div class="settings-page" id="settingsPage-vacation" hidden>
+        <div class="section-label first"><span data-i18n="settings.vacation"></span></div>
+        <div class="card">
+          <label>
+            <input type="checkbox" id="setVacation" role="switch" />
+            <span data-i18n="settings.vacationEnable"></span>
+          </label>
+          <!-- Days and carry-over are entered per year; the arrows switch the year -->
+          <div id="vacationWrap">
+            <div class="cal-head vacation-year">
+              <button type="button" class="icon-btn" id="vacationPrevBtn" data-i18n-aria="settings.vacationPrevYear"
+                data-icon="chevronLeft"></button>
+              <span class="cal-title" id="vacationYearLabel"></span>
+              <button type="button" class="icon-btn" id="vacationNextBtn" data-i18n-aria="settings.vacationNextYear"
+                data-icon="chevronRight"></button>
+            </div>
+            <div class="two-col">
+              <label><span data-i18n="settings.vacationDays"></span>
+                <input type="number" id="vacationDaysInput" min="0" max="365" step="0.5" inputmode="decimal" />
+              </label>
+              <label><span data-i18n="settings.vacationCarry"></span>
+                <input type="number" id="vacationCarryInput" min="-365" max="365" step="0.5" inputmode="decimal" />
+              </label>
+            </div>
+            <p class="vacation-state" id="vacationYearInfo"></p>
+            <small class="hint" data-i18n="settings.vacationHint"></small>
+          </div>
+        </div>
+
+        <div class="section-label"><span data-i18n="holidays.title"></span></div>
+        <div class="list-group">
+          <button type="button" class="action-row" id="holidayImportBtn"><span data-icon="cloudDownload"></span><span
+              data-i18n="holidays.import"></span></button>
+        </div>
+        <p class="hint list-note" id="holidayInfo"></p>
+        <p class="hint list-note" data-i18n="holidays.hint"></p>
+        <p class="hint list-note"><span data-i18n="holidays.privacy"></span>
+          <a href="https://www.stueber.de/legal/privacy.php" target="_blank" rel="noopener"
+            data-i18n="holidays.privacyLink"></a></p>
+        <p class="hint list-note"><span data-i18n="holidays.source"></span>
+          <a href="https://www.openholidaysapi.org" target="_blank" rel="noopener">OpenHolidays API</a>
+          (<a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL</a>)</p>
       </div>
 
       <!-- Sub-page: rest period -->
@@ -492,6 +541,26 @@
       <footer>
         <button class="secondary" id="overtimeCancelBtn" data-i18n="common.cancel"></button>
         <button id="overtimeSaveBtn" data-i18n="common.save"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <!-- Dialog: choose country and region for the public holidays -->
+  <dialog id="holidayModal">
+    <article class="form-dialog">
+      <header>
+        <h3 data-i18n="holidays.import"></h3>
+      </header>
+      <label><span data-i18n="holidays.country"></span>
+        <select id="holidayCountry"></select>
+      </label>
+      <label id="holidayRegionWrap"><span data-i18n="holidays.region"></span>
+        <select id="holidayRegion"></select>
+      </label>
+      <p class="hint" id="holidayModalHint"></p>
+      <footer>
+        <button class="secondary" id="holidayCancelBtn" data-i18n="common.cancel"></button>
+        <button id="holidaySaveBtn" data-i18n="holidays.save"></button>
       </footer>
     </article>
   </dialog>

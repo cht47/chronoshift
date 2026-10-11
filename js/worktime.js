@@ -1,9 +1,9 @@
 // "Work time" tab: form for work time entries, the list of work time and absences, and the week card
-// with weekly total and overtime account.
+// with weekly total, overtime account and vacation account.
 
 import { refreshAll, switchView } from "./app.js";
 import { buildAbsenceRow, resetAbsenceForm } from "./absence.js";
-import { fmtDate, fmtDateParts, fmtDateRange, t } from "./i18n.js";
+import { fmtDate, fmtDateParts, fmtDateRange, fmtNumber, t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { BANNER_VIEWS } from "./rest.js";
 import { state } from "./state.js";
@@ -19,6 +19,7 @@ import {
   isCounted,
   isOpen,
   overtimeBalance,
+  vacationBalance,
   workListContext,
   worktimeBreakRange,
   worktimeRange,
@@ -31,6 +32,7 @@ const weekDelta = $("weekDelta");
 const weekBarWork = $("weekBarWork");
 const weekBarAbsence = $("weekBarAbsence");
 const balanceLine = $("balanceLine");
+const vacationLine = $("vacationLine");
 const worktimeForm = $("worktimeForm");
 const wtFormTitle = $("wtFormTitle");
 const wtDate = $("wtDate");
@@ -276,6 +278,7 @@ function renderWeekSummary(overlaps) {
   weekBarWork.style.width = `${workPercent}%`;
   weekBarAbsence.style.width = `${Math.min(100 - workPercent, percent(absenceMin))}%`;
   renderBalance(overlaps);
+  renderVacation();
 }
 
 // Overtime account below the week bar; the forecast only if planned work time changes the balance
@@ -287,6 +290,19 @@ function renderBalance(overlaps) {
     `<div class="balance-row ${cls}"><span>${esc(t(label))}</span><span class="${min >= 0 ? "ok" : "warn"}">${fmtDiff(min)}</span></div>`;
   const forecast = balance.forecast === null ? "" : row("worktime.forecast", balance.forecast, "forecast");
   balanceLine.innerHTML = `${icon("scale")}<div class="balance-rows">${row("worktime.balance", balance.current, "current")}${forecast}</div>`;
+}
+
+// Vacation account of the current year below the overtime account; the forecast only if vacation is planned
+function renderVacation() {
+  const year = new Date().getFullYear();
+  const balance = state.settings.vacationEnabled ? vacationBalance(year) : null;
+  vacationLine.hidden = !balance;
+  if (!balance) return;
+  const days = (n) => t(n === 1 ? "calendar.absenceDay" : "calendar.absenceDays", { count: fmtNumber(n) });
+  const row = (label, n, cls) =>
+    `<div class="balance-row ${cls}"><span>${esc(label)}</span><span class="${n >= 0 ? "ok" : "warn"}">${esc(days(n))}</span></div>`;
+  const forecast = balance.planned ? row(t("worktime.forecast"), balance.forecast, "forecast") : "";
+  vacationLine.innerHTML = `${icon("sun")}<div class="balance-rows">${row(t("worktime.vacation", { year }), balance.remaining, "current")}${forecast}</div>`;
 }
 
 // Banner below the title while a work time entry has an open end; a tap opens the newest one for editing

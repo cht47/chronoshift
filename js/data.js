@@ -151,7 +151,7 @@ function isValidWork(e) {
 }
 
 function isValidAbsence(e) {
-  return Number.isFinite(e?.id) && isDate(e.date) && ABSENCE_TYPES.includes(e.type);
+  return Number.isFinite(e?.id) && isDate(e.date) && ABSENCE_TYPES.includes(e.type) && (e.name === undefined || typeof e.name === "string");
 }
 
 // Returns { created, data: { tasks, work, absences, settings } } in the current data format.
@@ -370,7 +370,10 @@ $("exportWorkBtn").addEventListener("click", () => {
   const time = (hhmm) => (hhmm ? { v: excelTime(hhmm), s: XLSX_STYLE.time } : null);
   const date = (iso) => ({ v: excelDateTime(dateFromISO(iso)), s: XLSX_STYLE.date });
   const rows = entries.map((e) => {
-    if (isAbsence(e)) return [date(e.date), null, null, null, null, null, "", null, t(`absence.types.${e.type}`), absenceCreditMin(e)];
+    if (isAbsence(e)) {
+      const type = t(`absence.types.${e.type}`);
+      return [date(e.date), null, null, null, null, null, "", null, e.name ? `${type} (${e.name})` : type, absenceCreditMin(e)];
+    }
     const s = computeWorktimeStats(e);
     const breakType = s.breakManual ? t("export.breakManual") : s.breakMin > 0 ? t("export.breakAuto") : "";
     return [date(e.date), time(e.start), time(e.end), time(e.breakStart), time(e.breakEnd), s.breakMin, breakType, s.netMin];

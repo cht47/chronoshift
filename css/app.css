@@ -603,8 +603,10 @@ button.btn-danger {
   margin-top: 1.5rem;
 }
 
+/* A long value (e.g. a region name) wraps instead of the name of the row */
 .nav-row .nav-row-label {
   flex: 1;
+  white-space: nowrap;
 }
 
 .nav-row .nav-row-value {
@@ -757,7 +759,8 @@ button.btn-danger {
   color: var(--pico-muted-color);
 }
 
-.balance-line + .rest-line:not([hidden]) {
+.balance-line + .rest-line:not([hidden]),
+.balance-line:not([hidden]) + .balance-line:not([hidden]) {
   margin-top: 0.8rem;
 }
 
@@ -1006,6 +1009,21 @@ button.btn-danger {
   margin: 0;
   padding: 0.35rem 0.9rem;
   font-size: 0.85rem;
+}
+
+/* Vacation account: year with arrows above its fields */
+.vacation-year {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.vacation-state {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vacation-state.warn {
+  color: var(--c-warn);
 }
 
 .delete-summary {

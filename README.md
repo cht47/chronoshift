@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.6
+**Version:** 1.1.7
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -35,6 +35,12 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
 - Optional overtime account: enter your balance on a given date (e.g. the monthly carry-over from your employer), the app keeps it up to date and shows a forecast including days you already planned
 - Difference to the daily target for each day; work on days off counts entirely as overtime
+
+### 🌴 Vacation & public holidays
+- Optional vacation account: enter your vacation days and the carry-over for each year yourself, as the rules differ between countries and employers
+- The *Work time* tab shows the vacation left this year and a forecast including vacation you already planned; a half vacation day counts 0.5
+- Import the public holidays of your country and region (e.g. a German state) for this year and next year with one tap, from the [OpenHolidays API](https://www.openholidaysapi.org); once the holidays of next year are missing, the settings show a hint
+- Vacation on a public holiday is replaced by the holiday; importing again replaces the holidays imported before, holidays you entered yourself stay
 
 ### 😴 Rest period
 - Shows when your minimum rest period ends, based on the latest task or working day
@@ -71,7 +77,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ## 🔒 Data & privacy
 
 - All data is stored **only on your device** (browser `localStorage`). Nothing is sent to a server.
-- The app loads no external resources: no CDN, no fonts, no tracking. The only exception is the optional Google Drive backup: the app connects to Google only when you tap one of its buttons.
+- The app loads no external resources: no CDN, no fonts, no tracking. The only exceptions are the optional Google Drive backup and the optional import of public holidays: the app connects to Google or to the OpenHolidays API only when you tap one of their buttons.
 - Storage is limited by the browser to about 5 MB – enough for many years of entries. Current usage is shown under *Settings*.
 - **Clearing your browser data deletes all entries.** Create a backup under *Settings → Backup* regularly; it can be restored on any device. A task that is currently running is not part of the backup.
 - The app asks the browser to keep its data even when storage runs low (persistent storage).
@@ -105,6 +111,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/tasks.js`, `js/worktime.js`, `js/absence.js`, `js/calendar.js`, `js/settings.js`, `js/settings-nav.js`, `js/data.js` | One module per area of the app |
 | `js/rest.js`, `js/worktime-calc.js` | Rest period and work time calculations |
 | `js/gdrive.js` | Google Drive cloud backup (sign-in and Drive API, loaded only when used) |
+| `js/holidays.js` | Import of public holidays from the OpenHolidays API, with the dialog to choose country and region |
 | `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |
 | `locales/*.json` | UI texts per language |
 | `pico.min.css` | [Pico CSS](https://picocss.com) v2.0.6, bundled locally |

@@ -91,7 +91,8 @@
     "tasks": "Tasks",
     "absence": "Abwesenheit",
     "absenceDay": "1 Tag",
-    "absenceDays": "{count} Tage"
+    "absenceDays": "{count} Tage",
+    "addEntry": "Eintrag erfassen"
   },
   "settings": {
     "install": "App installieren",
@@ -271,7 +272,8 @@
       "vacation": "Urlaub",
       "vacationHalf": "Urlaub (halber Tag)",
       "sick": "Krank",
-      "holiday": "Feiertag"
+      "holiday": "Feiertag",
+      "dayOff": "Arbeitsfrei"
     },
     "fullDay": "ganztägig",
     "savedDays": "{count} Abwesenheitstage gespeichert.",
@@ -290,7 +292,7 @@
     "country": "Land",
     "region": "Region",
     "regionNone": "Nur landesweite Feiertage",
-    "modalHint": "Übernimmt die Feiertage von {from} und {to} als Abwesenheit an deinen Arbeitstagen.",
+    "modalHint": "Übernimmt die Feiertage von {from} und {to} als Abwesenheit.",
     "state": "{region} · übernommen am {date}",
     "notSet": "Noch keine Feiertage übernommen.",
     "hint": "Übernimmt die Feiertage für dieses und nächstes Jahr als freie Tage.",

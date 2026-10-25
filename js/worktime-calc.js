@@ -142,9 +142,9 @@ export function vacationDays(absence) {
   return absence.type === "vacation" ? 1 : absence.type === "vacationHalf" ? 0.5 : 0;
 }
 
-// Vacation account of a year: days per year plus carry-over, both entered by hand per year, minus vacation
-// up to and including today (taken) and after today (planned). Returns
-// { total, taken, planned, remaining, forecast }, or null if the year is not set up.
+// Vacation account of a year: days per year plus carry-over, both entered by hand per year. Entered vacation
+// counts at once, like booked vacation: taken up to and including today, planned after today, and both are
+// subtracted from what remains. Returns { total, taken, planned, remaining }, or null if the year is not set up.
 export function vacationBalance(year) {
   const entry = state.settings.vacationYears[year];
   if (!entry) return null;
@@ -157,5 +157,5 @@ export function vacationBalance(year) {
     else planned += vacationDays(a);
   }
   const total = entry.days + entry.carry;
-  return { total, taken, planned, remaining: total - taken, forecast: total - taken - planned };
+  return { total, taken, planned, remaining: total - taken - planned };
 }

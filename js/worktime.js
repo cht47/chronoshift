@@ -47,6 +47,7 @@ const workListHint = $("workListHint");
 const openBanner = $("openBanner");
 const entryModeSwitch = $("entryModeSwitch");
 const absenceForm = $("absenceForm");
+const abFrom = $("abFrom");
 
 // Switch above the form: "work" shows the work time form, "absence" the absence form
 export function setEntryMode(mode) {
@@ -55,13 +56,22 @@ export function setEntryMode(mode) {
   absenceForm.hidden = mode !== "absence";
 }
 
+// The date stays when switching, e.g. after "Add entry" in the calendar
 entryModeSwitch.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-mode]");
   if (!btn) return;
-  resetWorktimeForm();
-  resetAbsenceForm();
+  const date = (worktimeForm.hidden ? abFrom.value : wtDate.value) || todayISO();
+  resetWorktimeForm(date);
+  resetAbsenceForm(date);
   setEntryMode(btn.dataset.mode);
 });
+
+// New entry on a given day, e.g. from the calendar; the form stays in its mode (work time or absence)
+export function newEntryOn(date) {
+  switchView("worktime");
+  resetWorktimeForm(date);
+  resetAbsenceForm(date);
+}
 
 export function updateWorktimeFormText() {
   const editing = state.editingWorkId !== null ? state.work.find((x) => x.id === state.editingWorkId) : null;
@@ -70,9 +80,9 @@ export function updateWorktimeFormText() {
   wtCancelBtn.hidden = !editing;
 }
 
-export function resetWorktimeForm() {
+export function resetWorktimeForm(date = todayISO()) {
   worktimeForm.reset();
-  wtDate.value = todayISO();
+  wtDate.value = date;
   state.editingWorkId = null;
   updateWorktimeFormText();
 }
@@ -292,17 +302,16 @@ function renderBalance(overlaps) {
   balanceLine.innerHTML = `${icon("scale")}<div class="balance-rows">${row("worktime.balance", balance.current, "current")}${forecast}</div>`;
 }
 
-// Vacation account of the current year below the overtime account; the forecast only if vacation is planned
+// Vacation account of the current year below the overtime account
 function renderVacation() {
   const year = new Date().getFullYear();
   const balance = state.settings.vacationEnabled ? vacationBalance(year) : null;
   vacationLine.hidden = !balance;
   if (!balance) return;
-  const days = (n) => t(n === 1 ? "calendar.absenceDay" : "calendar.absenceDays", { count: fmtNumber(n) });
-  const row = (label, n, cls) =>
-    `<div class="balance-row ${cls}"><span>${esc(label)}</span><span class="${n >= 0 ? "ok" : "warn"}">${esc(days(n))}</span></div>`;
-  const forecast = balance.planned ? row(t("worktime.forecast"), balance.forecast, "forecast") : "";
-  vacationLine.innerHTML = `${icon("sun")}<div class="balance-rows">${row(t("worktime.vacation", { year }), balance.remaining, "current")}${forecast}</div>`;
+  const n = balance.remaining;
+  const days = t(n === 1 ? "calendar.absenceDay" : "calendar.absenceDays", { count: fmtNumber(n) });
+  const label = t("worktime.vacation", { year });
+  vacationLine.innerHTML = `${icon("sun")}<div class="balance-rows"><div class="balance-row current"><span>${esc(label)}</span><span class="${n >= 0 ? "ok" : "warn"}">${esc(days)}</span></div></div>`;
 }
 
 // Banner below the title while a work time entry has an open end; a tap opens the newest one for editing

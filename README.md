@@ -4,15 +4,16 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.7
+**Version:** 1.1.8
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
 <p align="center">
-  <img src="screenshots/track-time.jpg" alt="Track time with a running task" width="200">
-  <img src="screenshots/work-time.jpg" alt="Work time with weekly overview" width="200">
-  <img src="screenshots/calendar.jpg" alt="Calendar with day details" width="200">
-  <img src="screenshots/settings.jpg" alt="Settings" width="200">
+  <img src="screenshots/track-time.jpg" alt="Track time with a running task" width="160">
+  <img src="screenshots/work-time.jpg" alt="Work time with weekly overview, overtime and vacation left" width="160">
+  <img src="screenshots/calendar.jpg" alt="Calendar with day details" width="160">
+  <img src="screenshots/settings.jpg" alt="Settings" width="160">
+  <img src="screenshots/vacation.jpg" alt="Vacation account and public holidays" width="160">
 </p>
 
 ## ✨ Features
@@ -29,7 +30,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Breaks either entered manually (exact from–to times) or deducted automatically
 - Configurable automatic break rules that add up (default as required by German law: 30 min for more than 6 h, another 15 min for more than 9 h)
 - Night shifts across midnight are supported
-- Absences (vacation, half-day vacation, sick leave, public holiday) for a single day or a date range; they count towards the daily target
+- Absences (vacation, half-day vacation, sick leave, public holiday, a day off from your employer such as 24 and 31 December) for a single day or a date range; they count towards the daily target
 - Overlapping entries can be saved (e.g. while correcting times), but are highlighted in red and not counted twice in the weekly total
 - The list shows the last and the next 7 days (adjustable under *Settings → Lists*); entries with an error always stay visible
 - Weekly overview with progress bar: actual hours vs. weekly target and the difference
@@ -38,9 +39,9 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 
 ### 🌴 Vacation & public holidays
 - Optional vacation account: enter your vacation days and the carry-over for each year yourself, as the rules differ between countries and employers
-- The *Work time* tab shows the vacation left this year and a forecast including vacation you already planned; a half vacation day counts 0.5
+- The *Work time* tab shows the vacation left this year; vacation counts as soon as it is entered, and a half vacation day counts 0.5
 - Import the public holidays of your country and region (e.g. a German state) for this year and next year with one tap, from the [OpenHolidays API](https://www.openholidaysapi.org); once the holidays of next year are missing, the settings show a hint
-- Vacation on a public holiday is replaced by the holiday; importing again replaces the holidays imported before, holidays you entered yourself stay
+- Holidays on days off are shown in the calendar too, but count no time; vacation on a public holiday is replaced by the holiday; importing again replaces the holidays imported before, holidays you entered yourself stay
 
 ### 😴 Rest period
 - Shows when your minimum rest period ends, based on the latest task or working day
@@ -52,7 +53,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 ### 📅 Calendar
 - Monthly overview with markers for tasks, work time and errors (overlapping work time entries or an open end)
 - Monthly totals of work time and tasks below the calendar
-- Tap a day to see its entries, delete them or edit work time
+- Tap a day to see its entries, delete them or edit work time; an empty day has a button to add an entry for it
 
 ### ⚙️ Settings
 - Light, dark or system theme

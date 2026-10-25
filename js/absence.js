@@ -41,10 +41,10 @@ export function updateAbsenceFormText() {
   abCancelBtn.hidden = !editing;
 }
 
-export function resetAbsenceForm() {
+export function resetAbsenceForm(date = todayISO()) {
   absenceForm.reset();
-  abFrom.value = todayISO();
-  abTo.value = todayISO();
+  abFrom.value = date;
+  abTo.value = date;
   state.editingAbsenceId = null;
   updateAbsenceFormText();
 }

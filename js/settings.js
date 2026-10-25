@@ -399,7 +399,7 @@ export function renderVacationYearInfo() {
         remaining: fmtNumber(balance.remaining),
       })
     : t("settings.vacationNotSet", { year: vacationYear });
-  vacationYearInfo.classList.toggle("warn", !!balance && balance.forecast < 0);
+  vacationYearInfo.classList.toggle("warn", !!balance && balance.remaining < 0);
 }
 
 setVacation.addEventListener("change", () => {

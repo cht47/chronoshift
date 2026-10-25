@@ -8,7 +8,7 @@ import { renderVacationYearInfo } from "./settings.js";
 import { state } from "./state.js";
 import { saveAbsences, saveSettings } from "./storage.js";
 import { showInfo, showToast } from "./ui.js";
-import { $, dateFromISO, esc, nextDayISO, todayISO } from "./util.js";
+import { $, esc, nextDayISO, todayISO } from "./util.js";
 import { vacationDays } from "./worktime-calc.js";
 
 const API = "https://openholidaysapi.org";
@@ -71,9 +71,10 @@ async function loadHolidays(country, region, from, to) {
   return days;
 }
 
-// Replaces the imported holidays between from and to by the new ones, on work days only. A vacation day on a
-// holiday is replaced, because no vacation is needed that day; other absences (sick leave, holidays entered by
-// hand) stay. Returns { count, replaced }.
+// Replaces the imported holidays between from and to by the new ones. Holidays on days off are imported too, so
+// the calendar shows them; they credit no time there (see absenceCreditMin). A vacation day on a holiday is
+// replaced, because no vacation is needed that day; other absences (sick leave, holidays entered by hand) stay.
+// Returns { count, replaced }.
 function applyHolidays(holidays, from, to) {
   const isOldImport = (a) => a.type === "holiday" && a.name !== undefined && a.date >= from && a.date <= to;
   const kept = state.absences.filter((a) => !isOldImport(a));
@@ -82,7 +83,6 @@ function applyHolidays(holidays, from, to) {
   const added = [];
   const baseId = Date.now();
   for (const { date, name } of holidays) {
-    if (!state.settings.workDays.includes(dateFromISO(date).getDay())) continue;
     const existing = byDate.get(date);
     if (existing && !vacationDays(existing)) continue;
     if (existing) replaced.add(existing.id);

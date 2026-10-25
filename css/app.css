@@ -593,6 +593,12 @@ button.btn-danger {
   font-weight: 400;
 }
 
+/* "Add entry" below an empty day in the calendar */
+.empty-state + .add-entry {
+  justify-content: center;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
 /* ---------- Settings: overview and sub-pages ---------- */
 .settings-home,
 .settings-page {

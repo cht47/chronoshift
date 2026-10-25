@@ -1,11 +1,12 @@
 // "Calendar" tab: month grid with markers, monthly totals and the entries of the selected day.
 
 import { fmtDateParts, fmtNumber, t, weekdayShortNames } from "./i18n.js";
+import { icon } from "./icons.js";
 import { state } from "./state.js";
 import { buildTaskRow, taskDateISO } from "./tasks.js";
 import { renderList } from "./ui.js";
 import { $, dateFromISO, esc, fmtDur, fmtMin, isoOf, todayISO } from "./util.js";
-import { buildEntryRow } from "./worktime.js";
+import { buildEntryRow, newEntryOn } from "./worktime.js";
 import { computeWorktimeStats, entrySortKey, hasError, isCounted, workListContext } from "./worktime-calc.js";
 
 const calGrid = $("calGrid");
@@ -73,9 +74,9 @@ function renderMonthSummary(overlaps) {
     .reduce((sum, e) => sum + computeWorktimeStats(e).netMin, 0);
   const tasks = state.tasks.filter((e) => taskDateISO(e).startsWith(monthPrefix));
   const taskMin = tasks.reduce((sum, e) => sum + e.durationMin, 0);
-  // A half vacation day counts as half an absence day
+  // A half vacation day counts as half an absence day; holidays on days off are no absence from work
   const absenceDays = state.absences
-    .filter((a) => a.date.startsWith(monthPrefix))
+    .filter((a) => a.date.startsWith(monthPrefix) && state.settings.workDays.includes(dateFromISO(a.date).getDay()))
     .reduce((sum, a) => sum + (a.type === "vacationHalf" ? 0.5 : 1), 0);
   const absenceText = t(absenceDays === 1 ? "calendar.absenceDay" : "calendar.absenceDays", { count: fmtNumber(absenceDays) });
   calMonthSummary.innerHTML = `
@@ -101,6 +102,15 @@ function renderDayDetail(ctx) {
   // Tasks have no "date" field, work time and absences do
   const buildRow = (e) => ("date" in e ? buildEntryRow(e, ctx) : buildTaskRow(e));
   renderList(container, [...dayWork, ...dayTasks], buildRow, t("calendar.empty"));
+  // An empty day gets a shortcut to the work time tab with this date already filled in
+  if (!dayWork.length && !dayTasks.length) {
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "action-row accent add-entry";
+    addBtn.innerHTML = `${icon("plus")}<span>${esc(t("calendar.addEntry"))}</span>`;
+    addBtn.addEventListener("click", () => newEntryOn(selected));
+    container.querySelector(".list-group").appendChild(addBtn);
+  }
   calDayDetail.appendChild(container);
 }
 

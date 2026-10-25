@@ -1,7 +1,7 @@
 // App-wide constants: version, storage keys, default settings.
 
 // Increase together with VERSION in service-worker.js and the version in README.md on every release
-export const APP_VERSION = "1.1.7";
+export const APP_VERSION = "1.1.8";
 export const FIRST_YEAR = 2025;
 
 // Version of the stored data format (localStorage and backup files).
@@ -79,8 +79,9 @@ export const DEFAULT_SETTINGS = {
 export const TASK_LIST_COUNTS = [2, 5, 10, 20];
 export const WORK_LIST_DAYS = [7, 14, 30, 0];
 
-// Kinds of absence; a half vacation day credits half the daily target, all others the full daily target
-export const ABSENCE_TYPES = ["vacation", "vacationHalf", "sick", "holiday"];
+// Kinds of absence; a half vacation day credits half the daily target, all others the full daily target.
+// "dayOff" is a day the employer gives off without it being a public holiday (e.g. 24 and 31 December).
+export const ABSENCE_TYPES = ["vacation", "vacationHalf", "sick", "holiday", "dayOff"];
 
 // Weekdays in display order starting with Monday, as Date.getDay() values
 export const WEEK_FROM_MONDAY = [1, 2, 3, 4, 5, 6, 0];

@@ -91,7 +91,8 @@
     "tasks": "Tasks",
     "absence": "Absence",
     "absenceDay": "1 day",
-    "absenceDays": "{count} days"
+    "absenceDays": "{count} days",
+    "addEntry": "Add entry"
   },
   "settings": {
     "install": "Install app",
@@ -271,7 +272,8 @@
       "vacation": "Vacation",
       "vacationHalf": "Vacation (half day)",
       "sick": "Sick",
-      "holiday": "Public holiday"
+      "holiday": "Public holiday",
+      "dayOff": "Paid day off"
     },
     "fullDay": "full day",
     "savedDays": "{count} days of absence saved.",
@@ -290,7 +292,7 @@
     "country": "Country",
     "region": "Region",
     "regionNone": "Nationwide holidays only",
-    "modalHint": "Imports the public holidays of {from} and {to} as absences on your work days.",
+    "modalHint": "Imports the public holidays of {from} and {to} as absences.",
     "state": "{region} · imported on {date}",
     "notSet": "No public holidays imported yet.",
     "hint": "Imports the public holidays for this year and next year as days off.",

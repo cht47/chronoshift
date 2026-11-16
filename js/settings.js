@@ -354,7 +354,8 @@ overtimeSign.addEventListener("click", (e) => {
 $("overtimeCancelBtn").addEventListener("click", () => overtimeModal.close());
 
 $("overtimeSaveBtn").addEventListener("click", () => {
-  if (!overtimeDateInput.value) {
+  // checkValidity: a year with more than four digits is not a valid date for the app
+  if (!overtimeDateInput.value || !overtimeDateInput.checkValidity()) {
     showInfo(t("data.chooseDate"));
     return;
   }

@@ -27,6 +27,8 @@
     "stop": "Stoppen",
     "listTitle": "Heute & zuletzt",
     "empty": "Noch keine Tasks erfasst.",
+    "editAria": "Task bearbeiten",
+    "editTitle": "Task bearbeiten",
     "deleteAria": "Task löschen",
     "confirmDelete": "Task „{name}“ vom {date} löschen?",
     "missingDescription": "Bitte gib eine Task-Beschreibung ein!"

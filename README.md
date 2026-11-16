@@ -4,7 +4,7 @@ A fast, private time tracker for your phone. Track tasks with one tap, log your 
 
 Built as a Progressive Web App (PWA): open it in the browser, install it to your home screen and use it offline like a native app.
 
-**Version:** 1.1.8
+**Version:** 1.1.9
 
 👉 **Use it now:** https://cht47.github.io/chronoshift/
 
@@ -22,6 +22,7 @@ Built as a Progressive Web App (PWA): open it in the browser, install it to your
 - Start a task with one tap (or press Enter on the keyboard)
 - Live timer while a task is running – it keeps running even if you close the app
 - Shows today's tasks and the most recent earlier ones (2 by default, adjustable under *Settings → Lists*); older entries are in the calendar
+- The description of a finished task can be changed afterwards; its times stay as recorded
 - Made for quick use, e.g. logging on-call jobs or project time
 
 ### 💼 Work time
@@ -116,7 +117,7 @@ Then open the URL shown in the terminal (e.g. http://localhost:3000).
 | `js/i18n.js`, `js/ui.js`, `js/util.js`, `js/icons.js`, `js/xlsx.js` | Translations and formatting, dialogs, helpers, icons, Excel export |
 | `locales/*.json` | UI texts per language |
 | `pico.min.css` | [Pico CSS](https://picocss.com) v2.0.6, bundled locally |
-| `service-worker.js` | Offline support (network first, cache as fallback) |
+| `service-worker.js` | Offline support (network first, cache as fallback when offline or after 3 seconds without an answer) |
 | `manifest.json` | PWA manifest |
 | `privacy.html` | Privacy policy (German and English) |
 | `icon.svg` | App icon source, also used as favicon |

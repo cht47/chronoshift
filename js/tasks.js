@@ -110,6 +110,42 @@ function deleteTask(id) {
   refreshAll();
 }
 
+// ----- Edit -----
+// Only the description of a finished task can be changed; start, stop and duration stay as recorded
+const taskEditModal = $("taskEditModal");
+const taskEditInput = $("taskEditInput");
+let editingTaskId = null;
+
+function editTask(entry) {
+  editingTaskId = entry.id;
+  taskEditInput.value = entry.task;
+  $("taskEditMeta").textContent = `${taskTimeRange(entry)} · ${fmtDur(entry.durationMin)}`;
+  taskEditModal.showModal();
+}
+
+function saveTaskEdit() {
+  const name = taskEditInput.value.trim();
+  if (!name) {
+    showInfo(t("tasks.missingDescription"));
+    return;
+  }
+  const entry = state.tasks.find((e) => e.id === editingTaskId);
+  taskEditModal.close();
+  if (!entry || entry.task === name) return;
+  entry.task = name;
+  saveTasks();
+  refreshAll();
+}
+
+$("taskEditCancelBtn").addEventListener("click", () => taskEditModal.close());
+$("taskEditSaveBtn").addEventListener("click", saveTaskEdit);
+taskEditInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    saveTaskEdit();
+  }
+});
+
 function taskTimeRange(e) {
   if (isoOf(new Date(e.startMs)) !== isoOf(new Date(e.stopMs))) return `${fmtDateTime(e.startMs)} – ${fmtDateTime(e.stopMs)}`;
   const day = fmtDateParts(new Date(e.stopMs), { weekday: "short", day: "2-digit", month: "2-digit" });
@@ -126,9 +162,12 @@ export function buildTaskRow(entry) {
       <div class="list-row-meta">${esc(taskTimeRange(entry))}</div>
     </div>
     <span class="list-row-value">${fmtDur(entry.durationMin)}</span>
+    <button type="button" class="icon-btn" aria-label="${esc(t("tasks.editAria"))}">${icon("pencil")}</button>
     <button type="button" class="icon-btn danger-icon" aria-label="${esc(t("tasks.deleteAria"))}">${icon("trash")}</button>
   `;
-  row.querySelector(".icon-btn").addEventListener("click", () =>
+  const [editBtn, deleteBtn] = row.querySelectorAll(".icon-btn");
+  editBtn.addEventListener("click", () => editTask(entry));
+  deleteBtn.addEventListener("click", () =>
     confirmAction(t("tasks.confirmDelete", { name: entry.task, date: fmtDateTime(entry.startMs) }), t("common.delete"), () => deleteTask(entry.id))
   );
   return row;

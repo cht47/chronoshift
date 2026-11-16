@@ -14,7 +14,7 @@ import { state } from "./state.js";
 import { damagedKeys, loadAbsences, loadSettings, loadTasks, loadWork } from "./storage.js";
 import { renderTasks, restoreTimerState } from "./tasks.js";
 import { showInfo } from "./ui.js";
-import { $ } from "./util.js";
+import { $, todayISO } from "./util.js";
 import { renderWorkEntries, resetWorktimeForm, updateOpenBanner } from "./worktime.js";
 
 // Redraws everything that depends on the data; called after every change
@@ -57,6 +57,35 @@ export function switchView(view) {
   }
 }
 
+// The app often stays open for days, e.g. installed on a phone. On a new day everything that depends on
+// "today" is drawn again, and forms and calendar that still point to the old day move on to today.
+let currentDay = todayISO();
+
+function checkDayChange() {
+  const today = todayISO();
+  if (today === currentDay) return;
+  const previous = currentDay;
+  currentDay = today;
+  const wtDate = $("wtDate");
+  const abFrom = $("abFrom");
+  const abTo = $("abTo");
+  if (state.editingWorkId === null && wtDate.value === previous) wtDate.value = today;
+  if (state.editingAbsenceId === null && abFrom.value === previous && abTo.value === previous) {
+    abFrom.value = today;
+    abTo.value = today;
+  }
+  if (state.cal.selectedISO === previous) initCalendarState();
+  refreshAll();
+}
+
+// Timers pause while the app is in the background, so everything time-based is updated when it comes back
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  checkDayChange();
+  updateRestUi();
+  updateOpenBanner();
+});
+
 document.querySelectorAll(".nav-item").forEach((btn) => {
   btn.addEventListener("click", () => switchView(btn.dataset.view));
 });
@@ -85,6 +114,7 @@ async function init() {
   refreshAll();
   // The open work time banner changes its text at midnight
   setInterval(() => {
+    checkDayChange();
     updateRestUi();
     updateOpenBanner();
   }, 60000);

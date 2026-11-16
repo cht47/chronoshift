@@ -68,7 +68,7 @@
       <form id="worktimeForm" class="card">
         <div class="form-title" id="wtFormTitle"></div>
         <label><span data-i18n="worktime.date"></span>
-          <input type="date" id="wtDate" required />
+          <input type="date" id="wtDate" max="9999-12-31" required />
         </label>
         <div class="two-col">
           <label><span data-i18n="worktime.start"></span>
@@ -100,10 +100,10 @@
           <select id="abType"></select>
         </label>
         <label><span id="abFromLabel"></span>
-          <input type="date" id="abFrom" required />
+          <input type="date" id="abFrom" max="9999-12-31" required />
         </label>
         <label id="abToWrap"><span data-i18n="absence.to"></span>
-          <input type="date" id="abTo" />
+          <input type="date" id="abTo" max="9999-12-31" />
         </label>
         <small class="hint" data-i18n="absence.hint"></small>
         <div class="form-actions">
@@ -431,7 +431,7 @@
         <div class="card" id="deleteBeforeCard">
           <div class="form-title" data-i18n="settings.deleteBefore"></div>
           <label><span data-i18n="data.deleteBeforeDate"></span>
-            <input type="date" id="deleteBeforeDate" />
+            <input type="date" id="deleteBeforeDate" max="9999-12-31" />
           </label>
           <fieldset class="delete-scope">
             <label><input type="checkbox" role="switch" data-scope="tasks" /> <span data-i18n="data.scopeTasks"></span></label>
@@ -522,7 +522,7 @@
         <h3 data-i18n="settings.balance"></h3>
       </header>
       <label><span data-i18n="settings.balanceDate"></span>
-        <input type="date" id="overtimeDateInput" />
+        <input type="date" id="overtimeDateInput" max="9999-12-31" />
       </label>
       <div class="field-label" id="overtimeValueLabel" data-i18n="settings.balanceValue"></div>
       <div class="balance-input" role="group" aria-labelledby="overtimeValueLabel">
@@ -541,6 +541,23 @@
       <footer>
         <button class="secondary" id="overtimeCancelBtn" data-i18n="common.cancel"></button>
         <button id="overtimeSaveBtn" data-i18n="common.save"></button>
+      </footer>
+    </article>
+  </dialog>
+
+  <!-- Dialog: change the description of a finished task; its times stay as recorded -->
+  <dialog id="taskEditModal">
+    <article class="form-dialog">
+      <header>
+        <h3 data-i18n="tasks.editTitle"></h3>
+      </header>
+      <label><span data-i18n="tasks.placeholder"></span>
+        <input type="text" id="taskEditInput" autocomplete="off" enterkeyhint="done" />
+      </label>
+      <p class="hint" id="taskEditMeta"></p>
+      <footer>
+        <button class="secondary" id="taskEditCancelBtn" data-i18n="common.cancel"></button>
+        <button id="taskEditSaveBtn" data-i18n="common.save"></button>
       </footer>
     </article>
   </dialog>

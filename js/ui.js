@@ -83,7 +83,8 @@ export function downloadFile(blob, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Not right away: some browsers (mainly Safari on iOS) only start the download after this function returns
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
   // Mobile browsers give little feedback on downloads, especially in the installed app
   showToast(t("data.exportDone", { file: filename }));
 }

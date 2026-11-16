@@ -27,6 +27,8 @@
     "stop": "Stop",
     "listTitle": "Today & recent",
     "empty": "No tasks yet.",
+    "editAria": "Edit task",
+    "editTitle": "Edit task",
     "deleteAria": "Delete task",
     "confirmDelete": "Delete task “{name}” from {date}?",
     "missingDescription": "Please enter a task description."
